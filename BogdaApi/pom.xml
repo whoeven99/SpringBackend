@@ -11,7 +11,6 @@
 
     <groupId>com.bogda.api</groupId>
     <artifactId>BogdaApi</artifactId>
-    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
@@ -20,57 +19,33 @@
             <version>${project.parent.version}</version>
         </dependency>
 
+        <!-- For bootstrap.yml-->
+        <!-- Spring Cloud Bootstrap：让 bootstrap.yml 在 application*.properties 之前加载 -->
+        <!-- Azure Key Vault：在 Web 模块中提前加载 Key Vault 配置 -->
         <dependency>
-            <groupId>com.bogda.common</groupId>
-            <artifactId>BogdaCommon</artifactId>
-            <version>${project.parent.version}</version>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+            <version>4.1.0</version>
         </dependency>
-
+        <!-- Key Vault Secrets 与 Spring 配置集成（通过 bootstrap.yml 读取） -->
         <dependency>
-            <groupId>com.bogda.integration</groupId>
-            <artifactId>BogdaIntegration</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.bogda.repository</groupId>
-            <artifactId>BogdaRepository</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>com.azure.spring</groupId>
+            <artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
+            <version>5.16.0</version>
         </dependency>
     </dependencies>
 
     <build>
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.springframework.boot</groupId>-->
-<!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-<!--                <configuration>-->
-<!--                    <skip>false</skip>-->
-<!--                    <includeSystemScope>true</includeSystemScope> &lt;!&ndash; 关键配置：包含系统依赖 &ndash;&gt;-->
-<!--                </configuration>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>false</skip>
+                    <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

@@ -13,25 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.bogda.api</groupId>
-            <artifactId>BogdaApi</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.bogda.common</groupId>
-            <artifactId>BogdaCommon</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.bogda.service</groupId>
             <artifactId>BogdaService</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.bogda.integration</groupId>
-            <artifactId>BogdaIntegration</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -39,6 +22,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Starter AOP for aspect-oriented programming -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
         <dependency>
@@ -51,6 +40,13 @@
             <groupId>com.azure.spring</groupId>
             <artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
             <version>5.16.0</version>
+        </dependency>
+
+        <!-- Test dependencies: include Spring Boot test starter (JUnit Jupiter 等) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

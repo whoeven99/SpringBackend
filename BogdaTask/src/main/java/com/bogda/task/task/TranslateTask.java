@@ -22,8 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-@EnableAsync
-@EnableScheduling
 public class TranslateTask {
     @Autowired
     private TencentEmailService tencentEmailService;
@@ -75,7 +73,7 @@ public class TranslateTask {
                 try {
                     for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
                         taskConsumer.accept(initialTaskV2DO);
-                        AppInsightsUtils.trackTrace("TranslateTaskV2 " + taskName + " success for group: " + groupKey + ", initialTaskId: " + initialTaskV2DO.getId());
+                        AppInsightsUtils.trackTrace("TranslateTaskV2 " + taskName + " success for group: " + groupKey + " , initialTaskId: " + initialTaskV2DO.getId());
                     }
                 } catch (Exception e) {
                     AppInsightsUtils.trackTrace("FatalException TaskRunFailed " + taskName + " " + e.getMessage());

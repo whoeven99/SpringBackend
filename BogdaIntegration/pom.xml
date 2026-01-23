@@ -112,6 +112,28 @@
             <version>1.0.0-beta.1</version>
         </dependency>
 
+        <!-- Azure Core (显式声明版本以确保与 azure-identity 兼容) -->
+        <!-- azure-identity 1.14.0 需要 azure-core 1.45.0+ (包含 AccessToken(String, OffsetDateTime, OffsetDateTime) 构造函数) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>1.57.0</version>
+        </dependency>
+
+        <!-- Azure Identity (AzureKeyVaultConfig 使用) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+
+        <!-- Azure Key Vault Secrets (AzureKeyVaultConfig 使用) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-secrets</artifactId>
+            <version>4.7.2</version>
+        </dependency>
+
         <!-- 腾讯云 COS SDK (HunYuanBucketIntegration 使用) -->
         <dependency>
             <groupId>com.qcloud</groupId>

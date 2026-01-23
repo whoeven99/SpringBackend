@@ -1,0 +1,439 @@
+name: CI - Pipeline before Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ========== 代码质量检查 ==========
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    # 如果前面的检查失败，可以继续执行其他检查
+    continue-on-error: false
+    permissions:
+      contents: read  # 需要权限来读取代码
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # Checkstyle 代码风格检查（已有配置文件，取消注释 pom.xml 中的插件即可启用）
+      - name: Run Checkstyle
+        run: mvn checkstyle:check
+        continue-on-error: true  # 暂时允许失败，等配置好后再改为 false
+
+      # SpotBugs 静态代码分析（需要先在 pom.xml 中添加插件）
+      # - name: Run SpotBugs
+      #   run: mvn spotbugs:check
+      #   continue-on-error: true
+
+  # ========== 安全扫描 ==========
+#  security-scan:
+#    name: Security Scan
+#    runs-on: ubuntu-latest
+#    continue-on-error: true  # 安全扫描失败不应该阻止 PR
+#    permissions:
+#      contents: read  # 需要权限来读取代码
+#      security-events: write  # CodeQL 需要权限来上传安全分析结果
+#      actions: read  # CodeQL 需要权限来读取 actions
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: '17'
+#
+#      - name: Cache Maven local repository
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-m2-
+
+      # OWASP Dependency-Check - 依赖漏洞扫描
+      # 需要先在 pom.xml 中添加 org.owasp:dependency-check-maven 插件
+      # - name: OWASP Dependency Check
+      #   run: mvn org.owasp:dependency-check-maven:check
+      #   continue-on-error: true
+
+      # GitHub CodeQL - 代码安全分析（GitHub 免费提供）
+#      - name: Initialize CodeQL
+#        uses: github/codeql-action/init@v3
+#        with:
+#          languages: java
+#          queries: security-extended,security-and-quality
+#
+#      - name: Perform CodeQL Analysis
+#        uses: github/codeql-action/analyze@v3
+#        continue-on-error: true
+
+  # ========== 构建和测试 ==========
+  build:
+    name: Build and Unit Test
+    runs-on: ubuntu-latest
+    needs: []  # 可以并行执行，不依赖其他 job
+    permissions:
+      checks: write      # 需要权限来创建 check runs（用于测试结果报告）
+      pull-requests: write  # 需要权限来在 PR 上创建评论
+      contents: read      # 需要权限来读取代码
+      statuses: write    # 可能需要用于创建状态
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      # 构建项目（包含测试）
+      - name: Build with Maven
+        run: mvn -B -V -e -T 1C clean verify
+
+      # 上传测试结果到 GitHub Checks（如果测试失败，会显示在 PR 中）
+      - name: Publish Test Results to Checks
+        uses: dorny/test-reporter@v1
+        if: always()  # 即使测试失败也上传结果
+        with:
+          name: Unit Test Results
+          path: '**/target/surefire-reports/TEST-*.xml'
+          reporter: 'java-junit'
+          fail-on-error: false  # 测试失败不阻止 workflow
+          list-suites: 'all'  # 显示所有测试套件
+          list-tests: 'failed'  # 只列出失败的测试
+          max-annotations: 50  # 最大注释数量
+          # token 会自动使用 GITHUB_TOKEN，无需显式传递
+
+      # 上传测试报告文件作为 artifact，供 pr-summary job 使用
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/target/surefire-reports/TEST-*.xml'
+          retention-days: 1
+
+
+      # 代码覆盖率报告（需要先在 pom.xml 中添加 JaCoCo 插件）
+      # - name: Generate Coverage Report
+      #   run: mvn jacoco:report
+      #   continue-on-error: true
+
+      # - name: Upload Coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     files: '**/target/site/jacoco/jacoco.xml'
+      #     fail_ci_if_error: false
+
+
+  # ========== 代码格式化检查 ==========
+#  format-check:
+#    name: Code Format Check
+#    runs-on: ubuntu-latest
+#    continue-on-error: true
+#
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: '17'
+
+      # 检查代码是否符合 Google Java Format（需要先配置格式化插件）
+      # - name: Check Code Format
+      #   run: mvn com.spotify.fmt:fmt-maven-plugin:check
+      #   continue-on-error: true
+
+  # ========== PR 注释总结（合并 CI 检查结果和单元测试结果） ==========
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [build, code-quality]
+    if: always()
+    permissions:
+      issues: write      # 需要权限来创建/更新 issue 评论（PR 也是 issue）
+      pull-requests: write  # 需要权限来在 PR 上操作
+      contents: read      # 需要权限来读取文件
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Test Reports
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: test-reports
+          path: test-reports
+
+          
+      - name: Generate Combined PR Comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            
+            // 获取各个 job 的状态
+            const buildStatus = '${{ needs.build.result }}';
+            const qualityStatus = '${{ needs.code-quality.result }}';
+            
+            // 状态图标映射
+            const getStatusIcon = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              if (status === 'cancelled') return '🚫';
+              if (status === 'skipped') return '⏭️';
+              return '⏳';
+            };
+            
+            // 解析测试结果
+            let totalTests = 0;
+            let totalFailures = 0;
+            let totalErrors = 0;
+            let totalSkipped = 0;
+            let totalTime = 0;
+            
+            try {
+              // 首先尝试从下载的 artifact 中读取
+              let reportFiles = [];
+              
+              // 方法1: 从下载的 artifact 目录读取
+              if (fs.existsSync('test-reports')) {
+                const walkDir = (dir, fileList = []) => {
+                  const files = fs.readdirSync(dir);
+                  files.forEach(file => {
+                    const filePath = dir + '/' + file;
+                    if (fs.statSync(filePath).isDirectory()) {
+                      walkDir(filePath, fileList);
+                    } else if (file.endsWith('.xml')) {
+                      fileList.push(filePath);
+                    }
+                  });
+                  return fileList;
+                };
+                reportFiles = walkDir('test-reports');
+                console.log(`Found ${reportFiles.length} files in test-reports artifact`);
+              }
+              
+              // 方法2: 如果 artifact 中没有，尝试从当前目录查找（多模块项目）
+              if (reportFiles.length === 0) {
+                try {
+                  const findResult = execSync('find . -name "TEST-*.xml" -path "*/target/surefire-reports/*" 2>/dev/null', { encoding: 'utf8' });
+                  reportFiles = findResult.trim().split('\n').filter(f => f);
+                  console.log(`Found ${reportFiles.length} files using find command`);
+                } catch (e) {
+                  console.log('Find command failed, trying glob pattern');
+                  // 使用简单的递归查找
+                  const findAllXml = (dir) => {
+                    let results = [];
+                    const list = fs.readdirSync(dir);
+                    list.forEach(file => {
+                      const filePath = dir + '/' + file;
+                      const stat = fs.statSync(filePath);
+                      if (stat && stat.isDirectory()) {
+                        results = results.concat(findAllXml(filePath));
+                      } else if (file.endsWith('.xml') && file.startsWith('TEST-')) {
+                        results.push(filePath);
+                      }
+                    });
+                    return results;
+                  };
+                  reportFiles = findAllXml('.');
+                  console.log(`Found ${reportFiles.length} files using recursive search`);
+                }
+              }
+              
+              console.log(`Total report files found: ${reportFiles.length}`);
+              
+              // 解析每个报告文件
+              reportFiles.forEach(file => {
+                try {
+                  if (!fs.existsSync(file)) {
+                    console.log(`File not found: ${file}`);
+                    return;
+                  }
+                  const content = fs.readFileSync(file, 'utf8');
+                  const testsMatch = content.match(/tests="(\d+)"/);
+                  const failuresMatch = content.match(/failures="(\d+)"/);
+                  const errorsMatch = content.match(/errors="(\d+)"/);
+                  const skippedMatch = content.match(/skipped="(\d+)"/);
+                  const timeMatch = content.match(/time="([\d.]+)"/);
+                  
+                  if (testsMatch) {
+                    const tests = parseInt(testsMatch[1]);
+                    totalTests += tests;
+                    console.log(`File ${file}: ${tests} tests`);
+                  }
+                  if (failuresMatch) totalFailures += parseInt(failuresMatch[1]);
+                  if (errorsMatch) totalErrors += parseInt(errorsMatch[1]);
+                  if (skippedMatch) totalSkipped += parseInt(skippedMatch[1]);
+                  if (timeMatch) totalTime += parseFloat(timeMatch[1]);
+                } catch (error) {
+                  console.log(`Error parsing ${file}: ${error.message}`);
+                }
+              });
+              
+              console.log(`Final totals - Tests: ${totalTests}, Failures: ${totalFailures}, Errors: ${totalErrors}, Skipped: ${totalSkipped}, Time: ${totalTime.toFixed(2)}s`);
+            } catch (error) {
+              console.log('Error finding test report files:', error.message);
+              console.log(error.stack);
+            }
+            
+            // 生成合并的评论内容
+            const testStatus = (totalFailures === 0 && totalErrors === 0) ? '✅' : '❌';
+            const passed = totalTests - totalFailures - totalErrors - totalSkipped;
+            
+            const comment = 
+              '## 📊 CI 检查结果\n\n' +
+              '### 检查项状态\n' +
+              '| 检查项 | 状态 |\n' +
+              '|--------|------|\n' +
+              '| 构建和测试 | ' + getStatusIcon(buildStatus) + ' ' + buildStatus + ' |\n' +
+              '| 代码质量 | ' + getStatusIcon(qualityStatus) + ' ' + qualityStatus + ' |\n\n' +
+              '### ' + testStatus + ' 单元测试结果\n' +
+              '| 指标 | 结果 |\n' +
+              '|------|------|\n' +
+              '| 总测试数 | ' + totalTests + ' |\n' +
+              '| 通过 | ' + passed + ' ✅ |\n' +
+              '| 失败 | ' + totalFailures + (totalFailures > 0 ? ' ❌' : '') + ' |\n' +
+              '| 错误 | ' + totalErrors + (totalErrors > 0 ? ' ❌' : '') + ' |\n' +
+              '| 跳过 | ' + totalSkipped + (totalSkipped > 0 ? ' 💤' : '') + ' |\n' +
+              '| 耗时 | ' + totalTime.toFixed(2) + 's ⏱️ |\n\n' +
+              (totalFailures === 0 && totalErrors === 0 && buildStatus === 'success' ? 
+                '🎉 所有检查通过！' : 
+                '⚠️ 请检查上述失败的检查项。\n\n> 详细结果请查看下方的检查详情');
+            
+            try {
+              // 检查是否是 PR
+              if (!context.payload.pull_request) {
+                console.log('这不是一个 PR，跳过评论');
+                return;
+              }
+              
+              console.log('开始处理 PR 评论...');
+              
+              // 获取当前 bot 的用户信息
+              let botLogin = null;
+              try {
+                const { data: botUser } = await github.rest.users.getAuthenticated();
+                botLogin = botUser.login;
+                console.log(`Bot 用户: ${botLogin}`);
+              } catch (error) {
+                console.log('获取 bot 用户信息失败，将使用类型判断:', error.message);
+              }
+              
+              // 获取 PR 的所有评论
+              let comments = [];
+              try {
+                const response = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number
+                });
+                comments = response.data;
+                console.log(`找到 ${comments.length} 条现有评论`);
+              } catch (error) {
+                console.log('获取评论列表失败:', error.message);
+              }
+              
+              // 查找之前的 CI 检查结果评论
+              // 通过评论内容（包含 "## 📊 CI 检查结果"）来识别
+              const commentMarker = '## 📊 CI 检查结果';
+              let existingCommentId = null;
+              
+              for (const oldComment of comments) {
+                // 检查是否包含标记，并且是 bot 创建的（如果能够识别）
+                const isBotComment = botLogin ? oldComment.user.login === botLogin : 
+                                     oldComment.user.type === 'Bot' || 
+                                     oldComment.user.login.includes('[bot]');
+                
+                if (isBotComment && oldComment.body && oldComment.body.includes(commentMarker)) {
+                  existingCommentId = oldComment.id;
+                  console.log(`找到现有评论 #${oldComment.id}`);
+                  break;
+                }
+              }
+              
+              if (existingCommentId) {
+                // 更新现有评论
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingCommentId,
+                    body: comment
+                  });
+                  console.log(`已更新评论 #${existingCommentId}`);
+                } catch (updateError) {
+                  console.log(`更新评论失败: ${updateError.message}，尝试创建新评论`);
+                  // 如果更新失败，尝试创建新评论
+                  try {
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: context.issue.number,
+                      body: comment
+                    });
+                    console.log('已创建新评论');
+                  } catch (createError) {
+                    console.error('创建评论也失败:', createError.message);
+                    throw createError;
+                  }
+                }
+              } else {
+                // 创建新评论
+                try {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body: comment
+                  });
+                  console.log('已创建新评论');
+                } catch (createError) {
+                  console.error('创建评论失败:', createError.message);
+                  console.error('错误详情:', createError);
+                  throw createError;
+                }
+              }
+              
+              console.log('PR 评论处理完成');
+            } catch (error) {
+              console.error('处理 PR 评论失败:', error.message);
+              console.error('错误堆栈:', error.stack);
+              // 不抛出错误，避免影响整个 workflow
+            }
