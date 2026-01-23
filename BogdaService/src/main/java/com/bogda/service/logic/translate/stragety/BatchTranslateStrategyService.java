@@ -49,21 +49,25 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         for (String v : originalTextMap.values()) {
             if (v != null && !v.isEmpty()) {
                 textOccurrences.merge(v, 1L, Long::sum);
-                if (seen.add(v)) unique.add(v);
+                if (seen.add(v)) {
+                    unique.add(v);
+                }
             }
         }
+        System.out.println("seen 1 : " + seen);
         for (int i = 0; i < unique.size(); i++) {
             int seq = i + 1;
             String t = unique.get(i);
             actuallyTranslateMap.put(seq, t);
             textToSeq.put(t, seq);
         }
+        System.out.println("textToSeq 2 : " + textToSeq);
         for (Map.Entry<Integer, String> e : originalTextMap.entrySet()) {
             if (e.getValue() != null && !e.getValue().isEmpty()) {
                 translateMappingMap.put(e.getKey(), textToSeq.get(e.getValue()));
             }
         }
-
+        System.out.println("translateMappingMap 3 : " + translateMappingMap);
         Map<Integer, String> translatedResultMap = new HashMap<>();
         List<Integer> glossarySeqList = new ArrayList<>();
         List<Integer> aiSeqList = new ArrayList<>();
@@ -82,10 +86,13 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
                 }
                 continue;
             }
+
             String glossaryed = GlossaryService.match(text, glossaryMap);
             if (glossaryed != null) {
                 translatedResultMap.put(seq, glossaryed);
-                for (int i = 0; i < textOccurrences.getOrDefault(text, 1L); i++) ctx.incrementGlossaryCount();
+                for (int i = 0; i < textOccurrences.getOrDefault(text, 1L); i++) {
+                    ctx.incrementGlossaryCount();
+                }
                 continue;
             }
             if (GlossaryService.hasGlossary(text, glossaryMap, ctx.getUsedGlossaryMap())) {
@@ -95,6 +102,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             aiSeqList.add(seq);
         }
 
+        System.out.println("aiSeqList 4 : " + aiSeqList);
         // 3. 翻译 glossarySeqList（词汇表+AI）
         if (!glossarySeqList.isEmpty()) {
             Map<Integer, String> glossMap = new HashMap<>();
@@ -119,6 +127,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             }
         }
 
+        System.out.println("translatedResultMap 5 : " + translatedResultMap);
         // 4. 翻译 aiSeqList（纯AI），按 600 字符分批
         Map<Integer, String> subMap = new HashMap<>();
         int totalChars = 0;
@@ -126,10 +135,14 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String t = actuallyTranslateMap.get(seq);
             subMap.put(seq, t);
             totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(t);
-            if (totalChars < 600) continue;
+            if (totalChars < 600) {
+                continue;
+            }
             String prompt = PromptUtils.JsonPrompt(target, subMap);
             Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), subMap);
-            if (pair == null) return;
+            if (pair == null) {
+                return;
+            }
             ctx.incrementUsedTokenCount(pair.getSecond());
             pair.getFirst().forEach((s, tr) -> {
                 translatedResultMap.put(s, tr);
@@ -138,17 +151,20 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             totalChars = 0;
             subMap.clear();
         }
+        System.out.println("translatedResultMap 6 : " + translatedResultMap);
         if (!subMap.isEmpty()) {
             String prompt = PromptUtils.JsonPrompt(target, subMap);
             Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), subMap);
-            if (pair == null) return;
+            if (pair == null) {
+                return;
+            }
             ctx.incrementUsedTokenCount(pair.getSecond());
             pair.getFirst().forEach((s, tr) -> {
                 translatedResultMap.put(s, tr);
                 redisProcessService.setCacheData(target, tr, actuallyTranslateMap.get(s));
             });
         }
-
+        System.out.println("translatedResultMap 6 : " + translatedResultMap);
         // 5. 通过 translateMappingMap 将 translatedResultMap 与 originalTextMap 对应，写入 TranslatedTextMap
         originalTextMap.forEach((key, value) -> {
             if (value == null || value.isEmpty()) {
@@ -159,6 +175,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
                 ctx.getTranslatedTextMap().put(key, tr != null ? tr : value);
             }
         });
+        System.out.println("getTranslatedTextMap 7 : "  + ctx.getTranslatedTextMap());
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {
