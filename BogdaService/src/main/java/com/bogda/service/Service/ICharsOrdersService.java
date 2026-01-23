@@ -11,4 +11,6 @@ public interface ICharsOrdersService extends IService<CharsOrdersDO> {
     List<CharsOrdersDO> getShopNameAndId();
 
     List<CharsOrdersDO> getCharsOrdersDoByShopName(String shopName);
+
+    List<CharsOrdersDO> listDataByShopNameAndStatus(String shopName, String active);
 }
