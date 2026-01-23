@@ -1072,10 +1072,11 @@ public class ShopifyService {
         try {
             infoByShopify = CompletableFuture
                     .supplyAsync(() -> getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, query))
-                    .get(10, TimeUnit.SECONDS); // ⏱ 10秒超时
+                    .get(5, TimeUnit.SECONDS); // ⏱ 10秒超时
         } catch (Exception e) {
             // Shopify 请求异常
-            infoByShopify = null;
+            AppInsightsUtils.trackTrace("FatalException task getUserSubscriptionPlan Shopify 请求异常： " + shopName + " "
+                            + e.getMessage());
         }
 
         if (infoByShopify == null || infoByShopify.isEmpty()) {
