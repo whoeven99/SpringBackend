@@ -1123,7 +1123,6 @@ public class TranslateV2Service {
         String target = initialTaskV2DO.getTarget();
 
         DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
-
         while (randomDo != null) {
             AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
