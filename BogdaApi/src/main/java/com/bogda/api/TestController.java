@@ -181,4 +181,73 @@ public class TestController {
         var rates = rateHttpIntegration.getFixerRate();
         rateRedisService.refreshRates(rates);
     }
+
+    // 假数据
+    @GetMapping("/gmv")
+    public BaseResponse<Object> getGmvOverview() {
+        String fakeData = """
+                {
+                  "totalGmv": 125430,
+                  "gmvGrowthRate": 15.2,
+                  "activeOffers": 24,
+                  "newOffersThisWeek": 3,
+                  "avgConversionRate": 2.8,
+                  "conversionTrend": 0
+                }
+                """;
+
+        return new BaseResponse<>().CreateSuccessResponse(fakeData);
+    }
+
+    @GetMapping("/ayt")
+    public BaseResponse<Object> getAnalytics() {
+        String fakeData = """
+                {
+                    "visitors": 33,
+                    "bundleOrders": 0,
+                    "conversionRate": 0.0,
+                    "addedRevenue": 0.0,
+                    "bundleConversion": {
+                      "converted": 0,
+                      "notConverted": 33
+                    },
+                    "dailyAddedRevenue": [
+                      { "date": "2025-11-29", "amount": 2 },
+                      { "date": "2025-12-02", "amount": 18 },
+                      { "date": "2025-12-05", "amount": 463 },
+                      { "date": "2025-12-08", "amount": 83 },
+                      { "date": "2025-12-11", "amount": 36 },
+                      { "date": "2025-12-14", "amount": 123 },
+                      { "date": "2025-12-17", "amount": 567 },
+                      { "date": "2025-12-20", "amount": 246 },
+                      { "date": "2025-12-23", "amount": 74 },
+                      { "date": "2025-12-26", "amount": 12 }
+                    ]
+                  }
+                """;
+
+        return new BaseResponse<>().CreateSuccessResponse(fakeData);
+    }
+
+    @GetMapping("/offers")
+    public BaseResponse<Object> getOffers() {
+        String fakeData = """
+                {
+                   "total": 1,
+                   "list": [
+                     {
+                       "offerId": 1769049030510,
+                       "offerName": "#Bundle 1769049030510",
+                       "status": "ACTIVE",
+                       "exposurePv": 120,
+                       "addToCartPv": 18,
+                       "gmv": 245.5,
+                       "conversionRate": 15.0
+                     }
+                   ]
+                 }
+                """;
+
+        return new BaseResponse<>().CreateSuccessResponse(fakeData);
+    }
 }
