@@ -182,13 +182,6 @@ public class TestController {
         rateRedisService.refreshRates(rates);
     }
 
-    // 手动写入一些数据
-    @PostMapping("/testWriteData")
-    public void testWriteData(@RequestBody Map<String, String> data) {
-        System.out.println("data: " + data);
-        aliyunSlsIntegration.writeLogs("product_viewed", "test", data);
-    }
-
     // 读数据
     @PostMapping("/testReadData")
     public List<Map<String, String>> testReadData() {

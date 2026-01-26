@@ -20,9 +20,9 @@ import java.util.Map;
 
 @Component
 public class AliyunSlsIntegration {
-    @Value("${aliyun.sls.accessKeyId.key.vault}")
+    @Value("${aliyun.sls.access.key.vault}")
     private String accessKeyId;
-    @Value("${aliyun.sls.accessKeySecret.key.vault}")
+    @Value("${aliyun.sls.access.secret.key.vault}")
     private String accessKeySecret;
     @Value("${aliyun.sls.endpoint.key.vault}")
     private String endpoint;
@@ -30,7 +30,6 @@ public class AliyunSlsIntegration {
     private String project;
     @Value("${aliyun.sls.logstore.key.vault}")
     private String logstore;
-    
     private Client client;
     
     /**

@@ -15,12 +15,11 @@ public class BundleExposureService {
     @Autowired
     private AliyunSlsIntegration aliyunSlsIntegration;
 
-
     public BaseResponse<Object> productView(BundleExposureVO bundleExposureVO) {
         Map<String, String> logMap = JsonUtils.OBJECT_MAPPER.convertValue(bundleExposureVO, new TypeReference<Map<String, String>>() {
         });
 
-        boolean flag = aliyunSlsIntegration.writeLogs("", "", logMap);
+        boolean flag = aliyunSlsIntegration.writeLogs(bundleExposureVO.getEvent(), "", logMap);
         if (flag){
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
