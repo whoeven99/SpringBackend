@@ -3,11 +3,11 @@ package com.bogda.api;
 import com.alibaba.fastjson.JSONObject;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
+import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.VO.UserDataReportVO;
-import com.bogda.integration.aimodel.GoogleMachineIntegration;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.service.logic.RedisDataReportService;
 import com.bogda.service.logic.RedisProcessService;
@@ -43,13 +43,13 @@ public class TestController {
     @Autowired
     private ITranslatesService iTranslatesService;
     @Autowired
-    private GoogleMachineIntegration googleMachineIntegration;
-    @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
     private RateHttpIntegration rateHttpIntegration;
     @Autowired
     private RateRedisService rateRedisService;
+    @Autowired
+    private AliyunSlsIntegration aliyunSlsIntegration;
 
     // 由 spring-cloud-azure-starter-keyvault-secrets 自动创建，使用 bootstrap.yml 中的配置
     @Autowired
@@ -180,6 +180,12 @@ public class TestController {
     public void testRate() {
         var rates = rateHttpIntegration.getFixerRate();
         rateRedisService.refreshRates(rates);
+    }
+
+    // 读数据
+    @PostMapping("/testReadData")
+    public List<Map<String, String>> testReadData() {
+        return aliyunSlsIntegration.readAggLogs(1769409842, 1769415028, "event:product_viewed | select productId, count(*) as pv group by productId");
     }
 
     // 假数据
