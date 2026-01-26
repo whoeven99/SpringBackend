@@ -1112,19 +1112,21 @@ public class TranslateV2Service {
         return true;
     }
 
-    public void deleteToShopify(InitialTaskV2DO initialTaskV2DO) {
-        Integer initialTaskId = initialTaskV2DO.getId();
+    public void deleteToShopify() {
+        // 从数据库中随机获取一个DeleteTasksDO，然后去获取shopName等数据
+        DeleteTasksDO deleteTasksDO = deleteTasksRepo.selectOneByNotDeleted();
+
+        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.getById(deleteTasksDO.getInitialTaskId());
         String shopName = initialTaskV2DO.getShopName();
         UsersDO userDO = iUsersService.getUserByName(shopName);
         String token = userDO.getAccessToken();
         String target = initialTaskV2DO.getTarget();
 
-        DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskId);
-
+        DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
         while (randomDo != null) {
             AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
-            List<DeleteTasksDO> taskList = deleteTasksRepo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
+            List<DeleteTasksDO> taskList = deleteTasksRepo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskV2DO.getId(), resourceId);
 
             // 删除shopify
             ShopifyTranslationsRemove remove = new ShopifyTranslationsRemove();
@@ -1153,7 +1155,7 @@ public class TranslateV2Service {
             }
 
 
-            randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskId);
+            randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
             AppInsightsUtils.trackTrace("TranslateTaskV2 delete SHOPIFY: " + shopName + " size: " + taskList.size());
         }
     }
