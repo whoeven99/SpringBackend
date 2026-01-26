@@ -1,6 +1,7 @@
 package com.bogda.repository.repo;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.repository.entity.DeleteTasksDO;
@@ -32,5 +33,14 @@ public class DeleteTasksRepo extends ServiceImpl<DeleteTasksMapper, DeleteTasksD
         return baseMapper.update(new LambdaUpdateWrapper<DeleteTasksDO>().eq(DeleteTasksDO::getId, id)
                 .set(DeleteTasksDO::getIsDeleted, true)
                 .set(DeleteTasksDO::getDeletedToShopify, true)) > 0;
+    }
+
+    public DeleteTasksDO selectOneByNotDeleted() {
+        QueryWrapper<DeleteTasksDO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP 1 id, initial_task_id")
+                .eq("deleted_to_shopify", false)
+                .eq("is_deleted", false);
+        List<DeleteTasksDO> list = baseMapper.selectList(wrapper);
+        return list.isEmpty() ? null : list.get(0);
     }
 }
