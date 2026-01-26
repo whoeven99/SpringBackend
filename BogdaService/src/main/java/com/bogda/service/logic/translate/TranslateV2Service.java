@@ -1115,7 +1115,10 @@ public class TranslateV2Service {
     public void deleteToShopify() {
         // 从数据库中随机获取一个DeleteTasksDO，然后去获取shopName等数据
         DeleteTasksDO deleteTasksDO = deleteTasksRepo.selectOneByNotDeleted();
-
+        if (deleteTasksDO == null) {
+            return;
+        }
+        
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.getById(deleteTasksDO.getInitialTaskId());
         String shopName = initialTaskV2DO.getShopName();
         UsersDO userDO = iUsersService.getUserByName(shopName);
@@ -1123,7 +1126,6 @@ public class TranslateV2Service {
         String target = initialTaskV2DO.getTarget();
 
         DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
-
         while (randomDo != null) {
             AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
