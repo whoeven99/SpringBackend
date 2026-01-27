@@ -4,6 +4,7 @@ import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.container.ShopifyDiscountDO;
+import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
 import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
@@ -16,16 +17,26 @@ import java.util.List;
 public class BundleDiscountService {
     @Autowired
     private ShopifyDiscountCosmos shopifyDiscountCosmos;
+    @Autowired
+    private BundleUsersDiscountRepo bundleUsersDiscountRepo;
     private static final String DISCOUNT_ID = "gid://shopify/DiscountAutomaticNode/";
 
     public BaseResponse<Object> saveUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
         if (shopName == null || shopifyDiscountDO == null || StringUtils.isBlank(shopName) || StringUtils.isBlank(shopifyDiscountDO.getDiscountGid())) {
             return new BaseResponse<>().CreateErrorResponse("Error: shopName or shopifyDiscountDO is null");
         }
+        String offerName = shopifyDiscountDO.getDiscountData().getBasicInformation().getOfferName();
+        if (offerName == null){
+            return new BaseResponse<>().CreateErrorResponse("Error: offerName is null");
+        }
 
         shopifyDiscountDO.setShopName(shopName);
-        shopifyDiscountDO.setId(shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, ""));
-        if (shopifyDiscountCosmos.saveDiscount(shopifyDiscountDO)) {
+        String replaceId = shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, "");
+        shopifyDiscountDO.setId(replaceId);
+        boolean flag1 = shopifyDiscountCosmos.saveDiscount(shopifyDiscountDO);
+        boolean flag2 = bundleUsersDiscountRepo.insertUserDiscount(shopName, replaceId, offerName);
+
+        if (flag1 && flag2) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to save discount");
