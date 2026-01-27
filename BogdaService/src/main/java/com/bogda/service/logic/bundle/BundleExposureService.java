@@ -21,7 +21,7 @@ public class BundleExposureService {
         Map<String, String> logMap = JsonUtils.OBJECT_MAPPER.convertValue(bundleExposureVO, new TypeReference<Map<String, String>>() {
         });
 
-        boolean flag = aliyunSlsIntegration.writeLogs(bundleExposureVO.getEvent(), "", logMap);
+        boolean flag = aliyunSlsIntegration.writeLogs(bundleExposureVO.getEvent(), bundleExposureVO.getShopName(), logMap);
         if (flag){
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
