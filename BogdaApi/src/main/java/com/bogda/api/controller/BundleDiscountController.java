@@ -47,4 +47,10 @@ public class BundleDiscountController {
     public BaseResponse<Object> updateUserDiscountStatus(@RequestParam String shopName, @RequestParam String discountGid, @RequestParam String status) {
         return bundleDiscountService.updateUserDiscountStatus(shopName, discountGid, status);
     }
+
+    // 获取Active Offers，status为true的数量
+    @PostMapping("/getActiveOffersByUser")
+    public BaseResponse<Object> getActiveOffersByUser(@RequestParam String shopName) {
+        return bundleDiscountService.getActiveOffersByUser(shopName);
+    }
 }

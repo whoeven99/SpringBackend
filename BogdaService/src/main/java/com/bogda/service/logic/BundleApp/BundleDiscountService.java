@@ -109,4 +109,13 @@ public class BundleDiscountService {
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount status");
     }
+
+    public BaseResponse<Object> getActiveOffersByUser(String shopName) {
+        if (shopName == null || StringUtils.isBlank(shopName)) {
+            return new BaseResponse<>().CreateErrorResponse("Error: shopName is null");
+        }
+
+        int countByShopName = bundleUsersDiscountRepo.getCountByShopName(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(countByShopName);
+    }
 }
