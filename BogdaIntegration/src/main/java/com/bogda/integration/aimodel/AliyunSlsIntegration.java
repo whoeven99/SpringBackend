@@ -90,10 +90,8 @@ public class AliyunSlsIntegration {
 
             AppInsightsUtils.trackTrace("AliyunSlsIntegration 写入日志成功，topic: " + topic);
             return true;
-        } catch (LogException e) {
-            AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 写入日志失败: " + e.getMessage());
-            return false;
         } catch (Exception e) {
+            AppInsightsUtils.trackException(e);
             AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 写入日志异常: " + e.getMessage());
             return false;
         }
