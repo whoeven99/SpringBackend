@@ -185,7 +185,7 @@ public class TestController {
     // 读数据
     @PostMapping("/testReadData")
     public List<Map<String, String>> testReadData() {
-        return aliyunSlsIntegration.readAggLogs(1769409842, 1769415028, "event:product_viewed | select productId, count(*) as pv group by productId");
+        return aliyunSlsIntegration.readLogs(1769409842, 1769415028, "event:product_viewed | select productId, count(*) as pv group by productId");
     }
 
     // 假数据
