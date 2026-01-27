@@ -24,4 +24,6 @@ public class BundleExposureController {
     public BaseResponse<Object> productUvByTimeAndShopName(@RequestParam String shopName, @RequestParam Integer day) {
         return bundleExposureService.productUvByTimeAndShopName(shopName, day);
     }
+
+    // 产品指定天数内的pv数据
 }
