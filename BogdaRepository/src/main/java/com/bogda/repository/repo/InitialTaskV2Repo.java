@@ -31,6 +31,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getSource, source)
                 .eq(InitialTaskV2DO::getIsDeleted, false)
+                .eq(InitialTaskV2DO::getTaskType, "manual")
                 .orderByDesc(InitialTaskV2DO::getCreatedAt));
     }
 

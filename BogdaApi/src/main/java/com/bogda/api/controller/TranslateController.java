@@ -64,30 +64,10 @@ public class TranslateController {
         return translateV2Service.singleTextTranslate(singleTranslateVO);
     }
 
-    // 用户手动点击停止翻译
-    @PutMapping("/stopTranslatingTask")
-    public BaseResponse<Object> stopTranslatingTask(@RequestParam String shopName, @RequestBody TranslatingStopVO translatingStopVO) {
-        redisStoppedRepository.manuallyStopped(shopName);
-
-        // 目前能用到的就是私有key
-        Future<?> future = TranslateService.userTasks.get(shopName);
-        if (future != null && !future.isDone()) {
-            // 中断正在执行的任务
-            future.cancel(true);
-        }
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
     // 用户手动点击停止翻译V2
     @PostMapping("/stopTranslatingTaskV2")
     public BaseResponse<Object> stopTranslatingTaskV2(@RequestParam String shopName, @RequestParam Integer taskId) {
         return translateService.stopTranslatingTaskV2(shopName, taskId);
-    }
-
-    // 用户手动点击继续翻译
-    @PostMapping("/continueTranslating")
-    public BaseResponse<Object> continueTranslating(@RequestParam String shopName, @RequestParam Integer taskId) {
-        return translateV2Service.continueTranslating(shopName, taskId);
     }
 
     // 用户手动点击继续翻译V2
@@ -98,16 +78,6 @@ public class TranslateController {
 
     // 当支付成功后，调用该方法，将该用户的状态3，改为状态6
     // 支付之后，前端调用api，停止状态改为继续翻译
-    @PostMapping("/updateStatus")
-    public BaseResponse<Object> updateStatus3To6(@RequestBody TranslateRequest request) {
-        if (translatesService.updateStatus3To6(request.getShopName())) {
-            translateV2Service.continueTranslating(request.getShopName());
-            return new BaseResponse<>().CreateSuccessResponse(true);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
-        }
-    }
-
     @PostMapping("/updateStatusV2")
     public BaseResponse<Object> updateStatus3To6V2(@RequestParam String shopName) {
         if (translatesService.updateStatus3To6(shopName)) {

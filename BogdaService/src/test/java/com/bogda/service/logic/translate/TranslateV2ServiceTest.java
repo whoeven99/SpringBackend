@@ -330,7 +330,6 @@ class TranslateV2ServiceTest {
 
         when(initialTaskV2Repo.selectByShopNameSource(testShopName, "en")).thenReturn(Arrays.asList(task));
         when(translateTaskMonitorV2RedisService.getAllByTaskId(1)).thenReturn(createTaskContext("10", "5", "0"));
-        when(redisStoppedRepository.isStoppedByTokenLimit(testShopName)).thenReturn(false);
         when(redisStoppedRepository.isStoppedByTokenLimit(testShopName, 1)).thenReturn(false);
 
         // When

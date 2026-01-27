@@ -239,7 +239,7 @@ public class TaskService {
             translatesService.updateStatus3To6(userPriceRequest.getShopName());
 
             // 继续翻译，将获取用户部分翻译的task去翻译
-            translateV2Service.continueTranslating(userPriceRequest.getShopName());
+            translateV2Service.continueTranslatingByShopName(userPriceRequest.getShopName());
 
             if ("Starter".equals(name)) {
                 return;
