@@ -12,11 +12,11 @@ public class BundleExposureController {
     @Autowired
     private BundleExposureService bundleExposureService;
 
-    // 产品曝光
-    @PostMapping("/productView")
-    public BaseResponse<Object> productView(@RequestParam String shopName, @RequestBody BundleExposureVO bundleExposureVO) {
+    // 产品曝光 产品加购 通过event区分
+    @PostMapping("/productExposure")
+    public BaseResponse<Object> productExposure(@RequestParam String shopName, @RequestBody BundleExposureVO bundleExposureVO) {
         bundleExposureVO.setShopName(shopName);
-        return bundleExposureService.productView(bundleExposureVO);
+        return bundleExposureService.productExposure(bundleExposureVO);
     }
 
     // 产品指定天数内的uv数据
@@ -25,5 +25,15 @@ public class BundleExposureController {
         return bundleExposureService.productUvByTimeAndShopName(shopName, day);
     }
 
-    // 产品指定天数内的pv数据
+    // 产品指定天数内的加购pv数据
+    @PostMapping("/productPvByTimeAndShopName")
+    public BaseResponse<Object> productPvByTimeAndShopName(@RequestParam String shopName, @RequestParam Integer day) {
+        return bundleExposureService.productPvByTimeAndShopName(shopName, day);
+    }
+
+    // 查询产品曝光的pv数据
+    @PostMapping("/getProductExposurePvByShopName")
+    public BaseResponse<Object> getProductExposurePvByShopName(@RequestParam String shopName) {
+        return bundleExposureService.getProductExposurePvByShopName(shopName);
+    }
 }
