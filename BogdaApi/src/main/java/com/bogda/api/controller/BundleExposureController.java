@@ -18,4 +18,10 @@ public class BundleExposureController {
         bundleExposureVO.setShopName(shopName);
         return bundleExposureService.productView(bundleExposureVO);
     }
+
+    // 产品指定天数内的uv数据
+    @PostMapping("/productUvByTimeAndShopName")
+    public BaseResponse<Object> productUvByTimeAndShopName(@RequestParam String shopName, @RequestParam Integer day) {
+        return bundleExposureService.productUvByTimeAndShopName(shopName, day);
+    }
 }
