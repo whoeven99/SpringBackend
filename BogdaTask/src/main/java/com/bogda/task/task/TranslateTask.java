@@ -51,7 +51,6 @@ public class TranslateTask {
             tasks = initialTaskV2Repo.selectByStoppedAndNotSaveLastDay();
         } else {
             tasks = initialTaskV2Repo.selectByStatus(status);
-            AppInsightsUtils.trackTrace("status : " + status + " tasks : " + tasks);
         }
         if (CollectionUtils.isEmpty(tasks)) {
             return;
@@ -67,11 +66,9 @@ public class TranslateTask {
             if (shopsSet.contains(groupKey)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
                 continue;
             }
-            AppInsightsUtils.trackTrace("shopsSet : " + shopsSet);
             executorService.submit(() -> {
                 shopsSet.add(groupKey);
                 List<InitialTaskV2DO> groupTasks = entry.getValue();
-                AppInsightsUtils.trackTrace("groupTasks:  " + groupTasks + " shopSet: " + shopsSet);
                 AppInsightsUtils.trackTrace("TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
                 try {
@@ -89,6 +86,7 @@ public class TranslateTask {
         }
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
         process(0,
@@ -97,6 +95,7 @@ public class TranslateTask {
                 translateV2Service::initialToTranslateTask);
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         process(1,
@@ -105,6 +104,7 @@ public class TranslateTask {
                 translateV2Service::translateEachTask);
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
 
