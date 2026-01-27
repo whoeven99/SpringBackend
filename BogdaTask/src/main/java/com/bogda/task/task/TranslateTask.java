@@ -6,6 +6,7 @@ import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.task.annotation.EnableScheduledTask;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -50,6 +51,7 @@ public class TranslateTask {
             tasks = initialTaskV2Repo.selectByStoppedAndNotSaveLastDay();
         } else {
             tasks = initialTaskV2Repo.selectByStatus(status);
+            AppInsightsUtils.trackTrace("status : " + status + " tasks : " + tasks);
         }
         if (CollectionUtils.isEmpty(tasks)) {
             return;
@@ -65,9 +67,11 @@ public class TranslateTask {
             if (shopsSet.contains(groupKey)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
                 continue;
             }
+            AppInsightsUtils.trackTrace("shopsSet : " + shopsSet);
             executorService.submit(() -> {
                 shopsSet.add(groupKey);
                 List<InitialTaskV2DO> groupTasks = entry.getValue();
+                AppInsightsUtils.trackTrace("groupTasks:  " + groupTasks + " shopSet: " + shopsSet);
                 AppInsightsUtils.trackTrace("TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
                 try {
