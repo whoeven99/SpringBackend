@@ -13,4 +13,5 @@ public class BundleUsersDiscountDO extends BaseDO{
     private String shopName;
     private String discountId;
     private String discountName;
+    private Boolean status;
 }
