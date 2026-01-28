@@ -1086,6 +1086,11 @@ public class TranslateV2Service {
                 return false;
             }
 
+            // 原字段如果 包含 class='jdgm-all-reviews__header' 不翻译
+            if (value.contains("class='jdgm-all-reviews__header'")) {
+                return false;
+            }
+
             //对CC_CC-PT的数据不翻译
             if ("CC_CC-PT".equals(value)) {
                 return false;
