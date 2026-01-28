@@ -5,6 +5,10 @@ create table Bundle_Users_Discount
     discount_id   nvarchar(255)      not null,
     discount_name nvarchar(255)      not null,
     status        BIT      DEFAULT 0 NOT NULL,
+    exposure_pv INT NOT NULL DEFAULT 0,           -- 曝光 pv
+    add_to_cart_pv INT NOT NULL DEFAULT 0,         -- 加购 pv
+    checkout_started_pv INT NOT NULL DEFAULT 0,    -- 下单 pv
+    gmv FLOAT NOT NULL DEFAULT 0,          -- 订单金额
     is_deleted    BIT      DEFAULT 0 NOT NULL,
     updated_at    DATETIME DEFAULT GETUTCDATE(),
     created_at    DATETIME DEFAULT GETUTCDATE()

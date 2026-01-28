@@ -69,8 +69,7 @@ public class ShopifyDiscountDO {
             private Boolean isExpanded;
             private String title;
 
-            @JsonProperty("trigger_scope")
-            private TriggerScope triggerScope;
+            private Integer quantity;
             private Discount discount;
             @JsonProperty("discount_reward")
             private List<DiscountReward> discountRewards;
@@ -189,6 +188,8 @@ public class ShopifyDiscountDO {
             private Schedule schedule;
             private Budget budget;
             private Boolean showOfferToBots;
+            @JsonProperty("quantity_scope")
+            private String quantityScope;
 
             @Data
             public static class Eligibility {

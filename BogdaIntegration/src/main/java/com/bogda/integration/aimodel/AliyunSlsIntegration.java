@@ -4,7 +4,6 @@ import com.aliyun.openservices.log.Client;
 import com.aliyun.openservices.log.common.LogItem;
 import com.aliyun.openservices.log.common.LogContent;
 import com.aliyun.openservices.log.common.QueriedLog;
-import com.aliyun.openservices.log.exception.LogException;
 import com.aliyun.openservices.log.request.PutLogsRequest;
 import com.aliyun.openservices.log.request.GetLogsRequest;
 import com.aliyun.openservices.log.response.GetLogsResponse;
@@ -20,15 +19,15 @@ import java.util.Map;
 
 @Component
 public class AliyunSlsIntegration {
-    @Value("${aliyun.sls.access.key.vault}")
+    @Value("${ali.sls.access.key.vault}")
     private String accessKeyId;
-    @Value("${aliyun.sls.access.secret.key.vault}")
+    @Value("${ali.sls.access.secret.key.vault}")
     private String accessKeySecret;
-    @Value("${aliyun.sls.endpoint.key.vault}")
+    @Value("${ali.sls.endpoint.key.vault}")
     private String endpoint;
-    @Value("${aliyun.sls.project.key.vault}")
+    @Value("${ali.sls.project.key.vault}")
     private String project;
-    @Value("${aliyun.sls.logstore.key.vault}")
+    @Value("${ali.sls.logstore.key.vault}")
     private String logstore;
     private Client client;
 

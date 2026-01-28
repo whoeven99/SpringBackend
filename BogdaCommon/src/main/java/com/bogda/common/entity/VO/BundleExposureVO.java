@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class BundleExposureVO {
     private String event; // 事件名
     private String shopName; // 店铺名
-    private String bundleId; // bundle id
     private String productId; // 商品id
     private String clientId; // 客户id
+    private String extra; //  额外字段
 }
