@@ -1086,6 +1086,11 @@ public class TranslateV2Service {
                 return false;
             }
 
+            // 原字段如果 包含 class='jdgm-all-reviews__header' 不翻译
+            if (value.contains("class='jdgm-all-reviews__header'")) {
+                return false;
+            }
+
             //对CC_CC-PT的数据不翻译
             if ("CC_CC-PT".equals(value)) {
                 return false;
@@ -1115,7 +1120,10 @@ public class TranslateV2Service {
     public void deleteToShopify() {
         // 从数据库中随机获取一个DeleteTasksDO，然后去获取shopName等数据
         DeleteTasksDO deleteTasksDO = deleteTasksRepo.selectOneByNotDeleted();
-
+        if (deleteTasksDO == null) {
+            return;
+        }
+        
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.getById(deleteTasksDO.getInitialTaskId());
         String shopName = initialTaskV2DO.getShopName();
         UsersDO userDO = iUsersService.getUserByName(shopName);
@@ -1123,7 +1131,6 @@ public class TranslateV2Service {
         String target = initialTaskV2DO.getTarget();
 
         DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
-
         while (randomDo != null) {
             AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
