@@ -6,7 +6,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.controller.response.SignResponse;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
@@ -37,12 +36,6 @@ public class AidgeIntegration {
 
     @Value("${aidge.secret.key.vault}")
     private String accessKeySecret;
-
-    @PostConstruct
-    public void init() {
-        AppInsightsUtils.trackTrace("accessKeyName: " + accessKeyName);
-        AppInsightsUtils.trackTrace("accessKeySecret: " + accessKeySecret);
-    }
 
     static class ApiConfig {
         /**

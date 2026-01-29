@@ -12,6 +12,8 @@
     <groupId>com.bogda.api</groupId>
     <artifactId>BogdaApi</artifactId>
 
+
+
     <dependencies>
         <dependency>
             <groupId>com.bogda.service</groupId>
@@ -33,6 +35,110 @@
             <artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
             <version>5.16.0</version>
         </dependency>
+
+
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.8.1.jre11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.30</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity-extensions</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>1.1.5</version>
+        </dependency>
+
+        <!--Azure 存放key value-->
+        <dependency>
+            <groupId>com.azure.spring</groupId>
+            <artifactId>spring-cloud-azure-starter-keyvault</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>5.16.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>applicationinsights-core</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>2.6.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>applicationinsights-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>2.6.1</version>
+        </dependency>
+
+        <!--		 MyBatis-Plus-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+            <version>1.2.24</version>
+        </dependency>
+
+        <!-- JUnit5 + Mockito -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.13.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.18.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- google Gemini相关 -->
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
