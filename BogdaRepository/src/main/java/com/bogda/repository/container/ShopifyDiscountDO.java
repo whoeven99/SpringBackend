@@ -42,6 +42,7 @@ public class ShopifyDiscountDO {
         @Data
         public static class BasicInformation {
             private String offerName;
+            private String displayName;
             private OfferType offerType;
 
 

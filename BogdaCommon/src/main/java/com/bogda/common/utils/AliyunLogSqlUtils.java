@@ -70,6 +70,8 @@ public class AliyunLogSqlUtils {
                 "    )";
     }
 
+
+
     // 根据shopName 获取支付金额的总和
     public static String getTotalPriceByShopName(String shopName, String eventName) {
         return "* | \n" +

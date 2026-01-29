@@ -53,16 +53,4 @@ public class BundleDiscountController {
     public BaseResponse<Object> getAllUserDiscount(@RequestParam String shopName) {
         return bundleDiscountService.getAllUserDiscount(shopName);
     }
-
-    // 获取用户折扣为ture 的Total GMV（所有的）
-    @PostMapping("/getTotalGMV")
-    public BaseResponse<Object> getTotalGMV(@RequestParam String shopName) {
-        return bundleDiscountService.getTotalGMV(shopName);
-    }
-
-    // 获取用户折扣为true 的 Avg. Conversion
-    @PostMapping("/getAvgConversion")
-    public BaseResponse<Object> getAvgConversion(@RequestParam String shopName) {
-        return bundleDiscountService.getAvgConversion(shopName);
-    }
 }

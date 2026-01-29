@@ -3,7 +3,6 @@ package com.bogda.service.logic.BundleApp;
 import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.entity.DTO.BundleAvgConversionDTO;
 import com.bogda.common.entity.DTO.BundleDiscountDTO;
 import com.bogda.common.entity.VO.BundleDisplayDataVO;
 import com.bogda.repository.container.ShopifyDiscountDO;
@@ -136,15 +135,5 @@ public class BundleDiscountService {
             discountList.add(bundleDisplayDataVO);
         });
         return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountDTO(discountList));
-    }
-
-    public BaseResponse<Object> getTotalGMV(String shopName) {
-        Double totalGmv = bundleUsersDiscountRepo.getAllGmvByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(totalGmv);
-    }
-
-    public BaseResponse<Object> getAvgConversion(String shopName) {
-        Double avgConversion = bundleUsersDiscountRepo.getAvgConversionByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(new BundleAvgConversionDTO(avgConversion));
     }
 }

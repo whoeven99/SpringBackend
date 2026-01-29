@@ -59,27 +59,6 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
                 : ((Number) result.get("total_gmv")).doubleValue();
     }
 
-    public Double getAvgConversionByShopName(String shopName) {
-        QueryWrapper<BundleUsersDiscountDO> wrapper = new QueryWrapper<>();
-        wrapper.eq("shop_name", shopName)
-                .eq("is_deleted", 0)
-                .select(
-                        "CASE " +
-                                "WHEN SUM(exposure_pv) = 0 THEN 0 " +
-                                "ELSE CAST(SUM(checkout_started_pv) AS FLOAT) / SUM(exposure_pv) " +
-                                "END AS avg_conversion"
-                );
-
-        Map<String, Object> map = baseMapper.selectMaps(wrapper)
-                .stream()
-                .findFirst()
-                .orElse(Collections.emptyMap());
-
-        return map.get("avg_conversion") == null
-                ? 0D
-                : ((Number) map.get("avg_conversion")).doubleValue();
-    }
-
     public String getDiscountNameByShopNameAndDiscountId(String shopName, String discountId) {
         List<BundleUsersDiscountDO> bundleUsersDiscountDOS = baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>().eq(BundleUsersDiscountDO::getShopName, shopName)
                 .eq(BundleUsersDiscountDO::getDiscountId, discountId));

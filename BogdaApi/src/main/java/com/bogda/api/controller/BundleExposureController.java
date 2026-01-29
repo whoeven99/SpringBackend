@@ -65,4 +65,10 @@ public class BundleExposureController {
     public BaseResponse<Object> getTotalGMVIndicator(@RequestParam String shopName) {
         return bundleExposureService.getTotalGMVIndicator(shopName, 60);
     }
+
+    // 获取用户折扣为true 的 Avg. Conversion
+    @PostMapping("/getAvgConversion")
+    public BaseResponse<Object> getAvgConversion(@RequestParam String shopName) {
+        return bundleExposureService.getAvgConversion(shopName);
+    }
 }

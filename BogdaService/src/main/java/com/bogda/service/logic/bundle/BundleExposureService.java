@@ -117,20 +117,18 @@ public class BundleExposureService {
 
         List<Map<String, String>> maps = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), exposurePv);
         if (maps != null && !maps.isEmpty()) {
-            System.out.println("maps: " + maps);
             productExposurePVData = Double.parseDouble(maps.get(0).getOrDefault("valid_bundle_order_count", "0"));
         }
 
         List<Map<String, String>> maps1 = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), exposureUv);
         if (maps1 != null && !maps1.isEmpty()) {
-            System.out.println("maps1: " + maps1);
             checkoutCompletedPVData = Double.parseDouble(maps1.get(0).getOrDefault("pv", "0"));
         }
 
         if (productExposurePVData == 0 || checkoutCompletedPVData == 0) {
             return new BaseResponse<>().CreateSuccessResponse(0);
         }
-        double finalData = checkoutCompletedPVData / productExposurePVData;
+        double finalData = checkoutCompletedPVData / productExposurePVData * 100;
         return new BaseResponse<>().CreateSuccessResponse(new BundleConversionDTO(finalData));
     }
 
@@ -273,16 +271,84 @@ public class BundleExposureService {
                 // 将货币转化为USD
                 double rate = rateDataService.getRateByRateMap(map.get("currency"), "USD");
                 final30Amount.updateAndGet(v -> v + Double.parseDouble(map.get("total_sum")) * rate);
-
             });
         }
 
         double finalLast30Amount = final60Amount.get() - final30Amount.get();
         if (finalLast30Amount == 0) {
-            return new BaseResponse<>().CreateSuccessResponse(0);
+            return new BaseResponse<>().CreateSuccessResponse(new BundleGmvIndicatorDTO(0D));
         }
 
-        double result = finalLast30Amount / final30Amount.get();
-        return new BaseResponse<>().CreateSuccessResponse(result);
+        double result = finalLast30Amount / final30Amount.get() * 100;
+        return new BaseResponse<>().CreateSuccessResponse(new BundleGmvIndicatorDTO(result));
+    }
+
+    public BaseResponse<Object> getAvgConversion(String shopName) {
+        Pair<Integer, Integer> timestamp60 = getTimestamps(60);
+        Pair<Integer, Integer> timestamp30 = getTimestamps(30);
+
+        BundleAvgConversionIndicatorDTO bundleAvgConversion = new BundleAvgConversionIndicatorDTO();
+        String pvCheckCompleted = AliyunLogSqlUtils.getPvByShopNameAndBundleTitleIsNotNull(shopName, CHECKOUT_COMPLETED);
+        String pvProductViewed = AliyunLogSqlUtils.getPvByShopNameAndBundleTitleIsNotNull(shopName, PRODUCT_VIEWED);
+
+        List<Map<String, String>> pvCheckCompleted60 = aliyunSlsIntegration.readLogs(timestamp60.getFirst(), timestamp60.getSecond(), pvCheckCompleted);
+        List<Map<String, String>> pvProductViewed60 = aliyunSlsIntegration.readLogs(timestamp60.getFirst(), timestamp60.getSecond(), pvProductViewed);
+
+
+        List<Map<String, String>> pvCheckCompleted30 = aliyunSlsIntegration.readLogs(timestamp30.getFirst(), timestamp30.getSecond(), pvCheckCompleted);
+        List<Map<String, String>> pvProductViewed30 = aliyunSlsIntegration.readLogs(timestamp30.getFirst(), timestamp30.getSecond(), pvProductViewed);
+
+        double pvCheckCompletedCount = 0D;
+        double pvProductViewedCount = 0D;
+        double pvCheckCompletedCountIndication = 0D;
+        double pvProductViewedCountIndication = 0D;
+
+        if (pvCheckCompleted60 != null && !pvCheckCompleted60.isEmpty()) {
+            System.out.println("pvCheckCompleted60: " + pvCheckCompleted60);
+            pvCheckCompletedCount = Double.parseDouble(pvCheckCompleted60.get(0).getOrDefault("pv", "0"));
+        }
+
+        if (pvProductViewed60 != null && !pvProductViewed60.isEmpty()) {
+            System.out.println("pvProductViewed60: " + pvProductViewed60);
+            pvProductViewedCount = Double.parseDouble(pvProductViewed60.get(0).getOrDefault("pv", "0"));
+        }
+
+        if (pvCheckCompleted30 != null && !pvCheckCompleted30.isEmpty()) {
+            System.out.println("pvCheckCompleted30: " + pvCheckCompleted30);
+            pvCheckCompletedCountIndication = Double.parseDouble(pvCheckCompleted30.get(0).getOrDefault("pv", "0"));
+        }
+
+        if (pvProductViewed30 != null && !pvProductViewed30.isEmpty()) {
+            System.out.println("pvProductViewed30: " + pvProductViewed30);
+            pvProductViewedCountIndication = Double.parseDouble(pvProductViewed30.get(0).getOrDefault("pv", "0"));
+        }
+
+        if (pvProductViewedCount == 0 || pvCheckCompletedCount == 0 ) {
+            bundleAvgConversion.setAvgConversion(0D);
+        }
+
+        if (pvProductViewedCountIndication == 0 || pvCheckCompletedCountIndication == 0) {
+            bundleAvgConversion.setAvgConversionIndicator(0D);
+        }
+
+        double avgConversion = 0D;
+        avgConversion = pvCheckCompletedCount / pvProductViewedCount * 100;
+        bundleAvgConversion.setAvgConversion(avgConversion);
+
+        double avgConversionFirst30 = 0D;
+        avgConversionFirst30 = pvCheckCompletedCountIndication / pvProductViewedCountIndication * 100;
+
+
+        double avgConversionIndicator = 0;
+        double lastMonthAvgConversion = 0;
+        lastMonthAvgConversion = avgConversion - avgConversionFirst30;
+        if (lastMonthAvgConversion == 0 || avgConversionFirst30 == 0) {
+            bundleAvgConversion.setAvgConversionIndicator(avgConversionIndicator);
+            return new BaseResponse<>().CreateSuccessResponse(bundleAvgConversion);
+        }
+
+        avgConversionIndicator = (avgConversionFirst30 - lastMonthAvgConversion) / lastMonthAvgConversion * 100;
+        bundleAvgConversion.setAvgConversionIndicator(avgConversionIndicator);
+        return new BaseResponse<>().CreateSuccessResponse(bundleAvgConversion);
     }
 }
