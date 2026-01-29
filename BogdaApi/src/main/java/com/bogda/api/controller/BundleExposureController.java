@@ -35,4 +35,16 @@ public class BundleExposureController {
     public BaseResponse<Object> bundleOrdersByTimeAndShopName(@RequestParam String shopName, @RequestParam Integer day) {
         return bundleExposureService.bundleOrdersByTimeAndShopName(shopName, day);
     }
+
+    // 获取用户conversion to bundle
+    @PostMapping("/getConversionToBundle")
+    public BaseResponse<Object> getConversionToBundle(@RequestParam String shopName, @RequestParam Integer day) {
+        return bundleExposureService.conversionToBundleByTimeAndShopName(shopName, day);
+    }
+
+    // 获取用户金额数据
+    @PostMapping("/getConversionToBundleAmount")
+    public BaseResponse<Object> getConversionToBundleAmount(@RequestParam String shopName, @RequestParam Integer day) {
+        return bundleExposureService.getAmountByTimeAndUserId(shopName, day);
+    }
 }

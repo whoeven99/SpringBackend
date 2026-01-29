@@ -73,13 +73,13 @@ public class BundleExposureService {
         Pair<Integer, Integer> timestamps = getTimestamps(days);
         int productExposurePVData = 0;
         int checkoutCompletedPVData = 0;
-        String exposurePv = AliyunLogSqlUtils.getPvByShopNameAndEventName(shopName, PRODUCT_VIEWED);
+        String exposurePv = AliyunLogSqlUtils.getPvByShopNameAndBundleTitleIsNotNull(shopName, PRODUCT_VIEWED);
         List<Map<String, String>> maps = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), exposurePv);
         if (maps != null && !maps.isEmpty()){
             productExposurePVData = Integer.parseInt(maps.get(0).getOrDefault("pv", "0"));
         }
 
-        String checkoutCompletedPV = AliyunLogSqlUtils.getPvByShopNameAndEventName(shopName, CHECKOUT_COMPLETED);
+        String checkoutCompletedPV = AliyunLogSqlUtils.getPvByShopNameAndBundleTitleIsNotNull(shopName, CHECKOUT_COMPLETED);
         List<Map<String, String>> maps1 = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), checkoutCompletedPV);
         if (maps1 != null && !maps1.isEmpty()){
             checkoutCompletedPVData = Integer.parseInt(maps1.get(0).getOrDefault("pv", "0"));
@@ -89,16 +89,8 @@ public class BundleExposureService {
             return new BaseResponse<>().CreateSuccessResponse(0);
         }
 
-        return new BaseResponse<>().CreateSuccessResponse(0);
+        return new BaseResponse<>().CreateSuccessResponse(checkoutCompletedPVData / productExposurePVData);
     }
-
-
-
-    // TODO: 计算total GMV(累积，存db查询)
-//    public BaseResponse<Object> totalGMVByTimeAndShopName(String shopName, Integer days) {
-//
-//    }
-    // TODO: avg conversion = 所有优惠的 conversion 的平均数(累积，存db查询)
 
     // 查询加购（product_added_to_cart）的PV数据
     public BaseResponse<Object> productPvByTimeAndShopName(String shopName, Integer days) {
@@ -134,5 +126,18 @@ public class BundleExposureService {
         int from = (int)(currentTime - days * 24 * 60 * 60);
         int to = (int)currentTime;
         return new Pair<>(from, to);
+    }
+
+    // 获取指定时间内，指定用户的金额数据
+    public BaseResponse<Object> getAmountByTimeAndUserId(String shopName, Integer days) {
+        Pair<Integer, Integer> timestamps = getTimestamps(days);
+        String amountByUserId = AliyunLogSqlUtils.getTotalPriceByShopName(shopName, CHECKOUT_COMPLETED, days);
+        List<Map<String, String>> maps = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), amountByUserId);
+        if (maps != null && !maps.isEmpty()){
+            Map<String, String> map = maps.get(0);
+            return new BaseResponse<>().CreateSuccessResponse(map);
+        }
+
+        return new BaseResponse<>().CreateErrorResponse("No data found");
     }
 }
