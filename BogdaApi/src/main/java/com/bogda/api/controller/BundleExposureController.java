@@ -47,6 +47,12 @@ public class BundleExposureController {
         return bundleExposureService.conversionToBundleByTimeAndShopName(shopName, bundleQueryVO.getDay(), bundleQueryVO.getBundleId());
     }
 
+    // 获取用户60天 bundle orders 和 对应指标
+    @PostMapping("/getBundleOrdersIndicator")
+    public BaseResponse<Object> getBundleOrdersIndicator(@RequestParam String shopName) {
+        return bundleExposureService.getBundleOrdersIndicator(shopName);
+    }
+
     // 获取用户金额数据 daliy add revenue
     @PostMapping("/getConversionToBundleAmount")
     public BaseResponse<Object> getConversionToBundleAmount(@RequestParam String shopName, @RequestBody BundleQueryVO bundleQueryVO) {

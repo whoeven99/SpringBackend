@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BundleOrdersDTO {
     private Integer bundleOrders;
+    private Double bundleIndicator;
 }

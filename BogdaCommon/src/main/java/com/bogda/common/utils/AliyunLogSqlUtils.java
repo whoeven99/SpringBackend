@@ -139,7 +139,6 @@ public class AliyunLogSqlUtils {
                 "        x -> (json_extract_scalar(x, '$.title') IS NOT NULL AND json_extract_scalar(x, '$.title') != 'NO_BUNDLE_TITLE')\n" +
                 "    )";
     }
-
     public static String getOrderCountByShopName(String shopName, String eventName, String bundleTitle) {
         return "* |\n" +
                 "SELECT \n" +
@@ -149,7 +148,7 @@ public class AliyunLogSqlUtils {
                 "    shopName = '" + shopName + "' \n" +
                 "    AND event = '" + eventName + "'\n" +
                 "    AND any_match(\n" +
-                "        cast(json_extract(extra, '$.bundle') AS array(json)), \n" +
+                "        cast(json_extract(json_parse(extra), '$.bundle') AS array(json)), \n" +
                 "        x -> (json_extract_scalar(x, '$.title') = '" + bundleTitle + "')\n" +
                 "    )";
     }

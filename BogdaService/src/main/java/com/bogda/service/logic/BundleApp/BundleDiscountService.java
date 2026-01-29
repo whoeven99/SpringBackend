@@ -117,10 +117,8 @@ public class BundleDiscountService {
         allByShopName.forEach(bd -> {
             BundleDisplayDataVO bundleDisplayDataVO = new BundleDisplayDataVO();
             bundleDisplayDataVO.setShopName(bd.getShopName());
-            bundleDisplayDataVO.setDiscountId(bd.getDiscountId());
-            bundleDisplayDataVO.setStatus(bd.getStatus());
+            bundleDisplayDataVO.setDiscountId(DISCOUNT_ID + bd.getDiscountId());
             bundleDisplayDataVO.setGmv(bd.getGmv());
-            bundleDisplayDataVO.setDiscountName(bd.getDiscountName());
             bundleDisplayDataVO.setExposurePv(bd.getExposurePv());
             bundleDisplayDataVO.setAddToCartPv(bd.getAddToCartPv());
 

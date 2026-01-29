@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 public class BundleDisplayDataVO {
     private String shopName;
     private String discountId; // 折扣id
-    private String discountName; // 折扣名称
-    private Boolean status; // 状态
     private Integer exposurePv; // 曝光pv
     private Integer addToCartPv; // 加购pv
     private Double gmv; // 订单金额
