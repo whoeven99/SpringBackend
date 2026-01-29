@@ -120,9 +120,10 @@ public class AliyunSlsIntegration {
                 result.add(row);
             }
 
-            AppInsightsUtils.trackTrace("AliyunSlsIntegration 聚合查询成功，数量: " + result.size());
+            System.out.println("AliyunSlsIntegration 聚合查询成功，数量: " + result.size());
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("AliyunSlsIntegration 聚合查询失败: " + e.getMessage());
+            System.out.println("AliyunSlsIntegration 聚合查询失败: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return result;
