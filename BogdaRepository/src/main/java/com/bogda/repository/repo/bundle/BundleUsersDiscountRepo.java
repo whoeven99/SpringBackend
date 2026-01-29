@@ -68,4 +68,19 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
 
         return null;
     }
+
+    /**
+     * 累积更新折扣数据：将前一天的 exposure_pv、add_to_cart_pv、checkout_started_pv、gmv 累加到数据库
+     */
+    public boolean updateAccumulateDiscountData(String shopName, String discountId,
+                                                int exposurePv, int addToCartPv, int checkoutStartedPv, double gmv) {
+        String sql = "exposure_pv = exposure_pv + " + exposurePv +
+                ", add_to_cart_pv = add_to_cart_pv + " + addToCartPv +
+                ", checkout_started_pv = checkout_started_pv + " + checkoutStartedPv +
+                ", gmv = gmv + " + gmv;
+        return baseMapper.update(null, new LambdaUpdateWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getDiscountId, discountId)
+                .setSql(sql)) > 0;
+    }
 }

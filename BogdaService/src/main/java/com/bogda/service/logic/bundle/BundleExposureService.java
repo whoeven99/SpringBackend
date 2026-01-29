@@ -27,16 +27,16 @@ public class BundleExposureService {
     private BundleUsersDiscountRepo bundleUsersDiscountRepo;
 
     // 曝光
-    public final String PRODUCT_VIEWED = "product_viewed";
+    public static final String PRODUCT_VIEWED = "product_viewed";
 
     // 加购
-    public final String PRODUCT_ADDED_TO_CART = "product_added_to_cart";
+    public static final String PRODUCT_ADDED_TO_CART = "product_added_to_cart";
 
     // 创建订单
-    public final String CHECKOUT_STARTED = "checkout_started";
+    public static final String CHECKOUT_STARTED = "checkout_started";
 
     // 下单
-    public final String CHECKOUT_COMPLETED = "checkout_completed";
+    public static final String CHECKOUT_COMPLETED = "checkout_completed";
 
     public BaseResponse<Object> productExposure(BundleExposureVO bundleExposureVO) {
         Map<String, String> logMap = JsonUtils.OBJECT_MAPPER.convertValue(bundleExposureVO, new TypeReference<Map<String, String>>() {
