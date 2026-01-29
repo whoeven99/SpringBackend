@@ -10,6 +10,7 @@ import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -139,5 +140,16 @@ public class BundleExposureService {
         }
 
         return new BaseResponse<>().CreateErrorResponse("No data found");
+    }
+
+    public BaseResponse<Object> getTotalGMV(String shopName, Integer day) {
+        Pair<Integer, Integer> timestamps = getTimestamps(day);
+        String amountByUserId = AliyunLogSqlUtils.getTotalPriceByShopNameAndBundleTitleIsNotNull(shopName, CHECKOUT_COMPLETED);
+        List<Map<String, String>> maps = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), amountByUserId);
+        if (maps != null && !maps.isEmpty()){
+            Map<String, String> map = maps.get(0);
+            return new BaseResponse<>().CreateSuccessResponse(map);
+        }
+        return new BaseResponse<>().CreateErrorResponse(0);
     }
 }

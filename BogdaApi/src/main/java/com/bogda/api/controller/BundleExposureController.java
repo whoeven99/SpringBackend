@@ -47,4 +47,10 @@ public class BundleExposureController {
     public BaseResponse<Object> getConversionToBundleAmount(@RequestParam String shopName, @RequestParam Integer day) {
         return bundleExposureService.getAmountByTimeAndUserId(shopName, day);
     }
+
+    // 获取用户指定时间totalGMV
+    @PostMapping("/getTotalGMV")
+    public BaseResponse<Object> getTotalGMV(@RequestParam String shopName, @RequestParam Integer day) {
+        return bundleExposureService.getTotalGMV(shopName, day);
+    }
 }
