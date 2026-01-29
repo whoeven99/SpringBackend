@@ -17,6 +17,7 @@ public class AliyunLogSqlUtils {
                 "\" | SELECT count(*) as pv";
     }
 
+
     // 根据shopName和bundle title查询加购的pv
     public static String getProductAddedToCartPvByShopNameAndBundleTitle(String shopName, String bundleTitle, String eventName) {
         return "event: \"" + eventName + "\" | \n" +
@@ -32,6 +33,41 @@ public class AliyunLogSqlUtils {
                 "    AND json_extract_scalar(bundle_item, '$.title') = '" + bundleTitle + "'\n" +
                 "GROUP BY \n" +
                 "    bundle_title, shopName";
+    }
+
+    // 根据shopName和bundle title查询加购的uv
+    public static String getProductAddedToCartUvByShopNameAndBundleTitle(String shopName, String bundleTitle, String eventName) {
+        return "event: \"" + eventName + "\" | \n" +
+                "SELECT \n" +
+                "    json_extract_scalar(bundle_item, '$.title') AS bundle_title, \n" +
+                "    shopName,\n" +
+                "    count(DISTINCT clientId) AS UV\n" + // 核心改动：对 clientId 进行去重计数
+                "FROM \n" +
+                "    log, \n" +
+                "    UNNEST(cast(json_extract(extra, '$.bundle') AS array(json))) AS t(bundle_item)\n" +
+                "WHERE \n" +
+                "    shopName = '" + shopName + "' \n" +
+                "    AND json_extract_scalar(bundle_item, '$.title') = '" + bundleTitle + "'\n" +
+                "GROUP BY \n" +
+                "    bundle_title, shopName";
+    }
+
+    // 计数所有含有bundle_title，且bundle_title不为NO_BUNDLE_TITLE的uv
+    public static String getUvByShopNameAndBundleTitleIsNotNull(String shopName, String eventName) {
+        return "* |\n" +
+                "SELECT \n" +
+                "    count(DISTINCT clientId) AS bundle_checkout_uv\n" +
+                "FROM log\n" +
+                "WHERE \n" +
+                "    shopName = '" + shopName + "' \n" +
+                "    AND event = '" + eventName + "'\n" +
+                "    AND any_match(\n" +
+                "        cast(json_extract(json_parse(extra), '$.bundle') AS array(json)), \n" +
+                "        x -> (\n" +
+                "            json_extract_scalar(x, '$.title') IS NOT NULL \n" +
+                "            AND json_extract_scalar(x, '$.title') <> 'NO_BUNDLE_TITLE'\n" +
+                "        )\n" +
+                "    )";
     }
 
     // 根据shopName 获取支付金额的总和
@@ -102,6 +138,20 @@ public class AliyunLogSqlUtils {
                 "    )";
     }
 
+    public static String getOrderCountByShopName(String shopName, String eventName, String bundleTitle) {
+        return "* |\n" +
+                "SELECT \n" +
+                "    count(*) AS valid_bundle_order_count\n" +
+                "FROM log\n" +
+                "WHERE \n" +
+                "    shopName = '" + shopName + "' \n" +
+                "    AND event = '" + eventName + "'\n" +
+                "    AND any_match(\n" +
+                "        cast(json_extract(extra, '$.bundle') AS array(json)), \n" +
+                "        x -> (json_extract_scalar(x, '$.title') = '" + bundleTitle + "')\n" +
+                "    )";
+    }
+
     // 计数所有含有bundle_title，且bundle_title不为NO_BUNDLE_TITLE的pv
     public static String getPvByShopNameAndBundleTitleIsNotNull(String shopName, String eventName) {
         return "* |\n" +
@@ -120,21 +170,17 @@ public class AliyunLogSqlUtils {
                 "    )";
     }
 
-    // 计数所有含有bundle_title，且bundle_title不为NO_BUNDLE_TITLE的uv
-    public static String getUvByShopNameAndBundleTitleIsNotNull(String shopName, String eventName) {
+    public static String getPvByShopNameAndBundleTitleIsNotNull(String shopName, String eventName, String discountTitle) {
         return "* |\n" +
                 "SELECT \n" +
-                "    count(DISTINCT clientId) AS bundle_checkout_uv\n" +
+                "    count(*) AS pv\n" +
                 "FROM log\n" +
                 "WHERE \n" +
                 "    shopName = '" + shopName + "' \n" +
                 "    AND event = '" + eventName + "'\n" +
                 "    AND any_match(\n" +
                 "        cast(json_extract(json_parse(extra), '$.bundle') AS array(json)), \n" +
-                "        x -> (\n" +
-                "            json_extract_scalar(x, '$.title') IS NOT NULL \n" +
-                "            AND json_extract_scalar(x, '$.title') <> 'NO_BUNDLE_TITLE'\n" +
-                "        )\n" +
+                "        x -> (json_extract_scalar(x, '$.title') = '" + discountTitle + "')\n" +
                 "    )";
     }
 
@@ -150,6 +196,26 @@ public class AliyunLogSqlUtils {
                 "    shopName = '" + shopName + "' \n" +
                 "    AND event = '" + eventName + "'\n" +
                 "    AND __time__ >= to_unixtime(now() - interval '" + day + "' day) \n" +
+                "GROUP BY \n" +
+                "    date, currency\n" +
+                "ORDER BY \n" +
+                "    date DESC";
+    }
+    public static String getTotalPriceByShopName(String shopName, String eventName, int day, String discountName) {
+        return "* |\n" +
+                "SELECT \n" +
+                "    date_trunc('day', __time__) AS date,\n" +
+                "    json_extract_scalar(extra, '$.totalPrice.currencyCode') AS currency,\n" +
+                "    sum(cast(json_extract_scalar(extra, '$.totalPrice.amount') AS double)) AS daily_total_amount\n" +
+                "FROM log\n" +
+                "WHERE \n" +
+                "    shopName = '" + shopName + "' \n" +
+                "    AND event = '" + eventName + "'\n" +
+                "    AND __time__ >= to_unixtime(now() - interval '" + day + "' day) \n" +
+                "    AND any_match(\n" +
+                "        cast(json_extract(json_parse(extra), '$.bundle') AS array(json)), \n" +
+                "        x -> (json_extract_scalar(x, '$.title') = '" + discountName + "')\n" +
+                "    )\n" +
                 "GROUP BY \n" +
                 "    date, currency\n" +
                 "ORDER BY \n" +

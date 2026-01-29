@@ -48,12 +48,6 @@ public class BundleDiscountController {
         return bundleDiscountService.updateUserDiscountStatus(shopName, discountGid, status);
     }
 
-    // 获取Active Offers，status为true的数量
-    @PostMapping("/getActiveOffersByUser")
-    public BaseResponse<Object> getActiveOffersByUser(@RequestParam String shopName) {
-        return bundleDiscountService.getActiveOffersByUser(shopName);
-    }
-
     // 获取用户所有数据
     @PostMapping("/getAllUserDiscount")
     public BaseResponse<Object> getAllUserDiscount(@RequestParam String shopName) {

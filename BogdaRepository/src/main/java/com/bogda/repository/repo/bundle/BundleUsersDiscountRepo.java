@@ -23,10 +23,6 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
         return baseMapper.insert(bundleUsersDiscountDO) > 0;
     }
 
-    public int getCountByShopName(String shopName) {
-        return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>().eq(BundleUsersDiscountDO::getShopName, shopName)
-                .eq(BundleUsersDiscountDO::getStatus, true)).size();
-    }
 
     public boolean updateDiscountStatus(String shopName, String discountGid, String status) {
         return baseMapper.update(new LambdaUpdateWrapper<BundleUsersDiscountDO>()
@@ -82,5 +78,15 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
         return map.get("avg_conversion") == null
                 ? 0D
                 : ((Number) map.get("avg_conversion")).doubleValue();
+    }
+
+    public String getDiscountNameByShopNameAndDiscountId(String shopName, String discountId) {
+        List<BundleUsersDiscountDO> bundleUsersDiscountDOS = baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>().eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getDiscountId, discountId));
+        if (bundleUsersDiscountDOS.size() > 0) {
+            return bundleUsersDiscountDOS.get(0).getDiscountName();
+        }
+
+        return null;
     }
 }

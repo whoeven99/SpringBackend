@@ -3,6 +3,8 @@ package com.bogda.service.logic.BundleApp;
 import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.common.controller.response.BaseResponse;
+import com.bogda.common.entity.DTO.BundleAvgConversionDTO;
+import com.bogda.common.entity.DTO.BundleDiscountDTO;
 import com.bogda.common.entity.VO.BundleDisplayDataVO;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
@@ -102,15 +104,9 @@ public class BundleDiscountService {
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount status");
     }
 
-    public BaseResponse<Object> getActiveOffersByUser(String shopName) {
-
-        int countByShopName = bundleUsersDiscountRepo.getCountByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(countByShopName);
-    }
 
     // 获取用户折扣所有数据
     public BaseResponse<Object> getAllUserDiscount(String shopName) {
-
         List<BundleUsersDiscountDO> allByShopName = bundleUsersDiscountRepo.getAllByShopName(shopName);
 
         // 对allByShopName做处理
@@ -139,7 +135,7 @@ public class BundleDiscountService {
 
             discountList.add(bundleDisplayDataVO);
         });
-        return new BaseResponse<>().CreateSuccessResponse(discountList);
+        return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountDTO(discountList));
     }
 
     public BaseResponse<Object> getTotalGMV(String shopName) {
@@ -149,6 +145,6 @@ public class BundleDiscountService {
 
     public BaseResponse<Object> getAvgConversion(String shopName) {
         Double avgConversion = bundleUsersDiscountRepo.getAvgConversionByShopName(shopName);
-        return new BaseResponse<>().CreateSuccessResponse(avgConversion);
+        return new BaseResponse<>().CreateSuccessResponse(new BundleAvgConversionDTO(avgConversion));
     }
 }
