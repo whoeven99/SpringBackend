@@ -53,10 +53,10 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> deleteUserDiscount(String shopName, String discountGid) {
-
-        // 修改db表里面的数据
-        bundleUsersDiscountRepo.updateDiscountDelete(shopName, discountGid, true);
         String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
+        // 修改db表里面的数据
+        bundleUsersDiscountRepo.updateDiscountDelete(shopName, updateDiscountGid, true);
+
         if (shopifyDiscountCosmos.deleteByIdAndShopName(updateDiscountGid, shopName)){
             return new BaseResponse<>().CreateSuccessResponse(discountGid);
         }
@@ -94,9 +94,11 @@ public class BundleDiscountService {
     }
 
     public BaseResponse<Object> updateUserDiscountStatus(String shopName, String discountGid, String status) {
-        // 修改db表里面的数据
-        bundleUsersDiscountRepo.updateDiscountStatus(shopName, discountGid, status);
         String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
+
+        // 修改db表里面的数据
+        bundleUsersDiscountRepo.updateDiscountStatus(shopName, updateDiscountGid, status);
+
         if (shopifyDiscountCosmos.updateDiscountStatus(updateDiscountGid, shopName, status)) {
             return new BaseResponse<>().CreateSuccessResponse(new Pair<String, String>(discountGid, status));
         }
