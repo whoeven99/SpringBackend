@@ -19,6 +19,10 @@ import java.util.*;
 
 @Component
 public class BatchTranslateStrategyService implements ITranslateStrategyService {
+
+    /** 纯 AI 分批翻译时，每批估算 token 上限（字符维度） */
+    private static final int BATCH_CHAR_LIMIT = 600;
+
     @Autowired
     private RedisProcessService redisProcessService;
     @Autowired
@@ -31,6 +35,12 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         return "BATCH";
     }
 
+    /**
+     * 批量 JSON 翻译入口。
+     * <p>流程：去重 → 缓存/词汇表/待译分类 → 带词汇表批次 AI 翻译 → 纯 AI 分批翻译 → 按原文顺序回填译文。
+     *
+     * @param ctx 翻译上下文（原文、目标语、词汇表、模型等），结果写入 ctx 的 translatedTextMap
+     */
     @Override
     public void translate(TranslateContext ctx) {
         ctx.setStrategy("Batch json 翻译");
@@ -38,93 +48,136 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         Map<Integer, String> originalTextMap = ctx.getOriginalTextMap();
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
 
-        // Cache + Glossary
-        originalTextMap.forEach((key, value) -> {
-            // 1. 先检查缓存
-            String cachedValue = redisProcessService.getCacheData(target, value);
-            if (cachedValue != null) {
-                translateTaskMonitorV2RedisService.addCacheCount(value);
-                ctx.getTranslatedTextMap().put(key, cachedValue);
-                ctx.incrementCachedCount();
-            } else {
-                // 2. 再检查词汇表匹配
-                String glossaryed = GlossaryService.match(value, glossaryMap);
-                if (glossaryed != null) {
-                    ctx.incrementGlossaryCount();
-                    ctx.getTranslatedTextMap().put(key, glossaryed);
-                } else if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
-                    ctx.getGlossaryTextMap().put(key, value);
-                    ctx.incrementGlossaryCount();
-                } else {
-                    ctx.getUncachedTextMap().put(key, value);
+        // 1. 去重并建立映射：唯一原文序号(1..n) ↔ 原文，以及 原文位置 → 序号 actuallyTranslateMap(序号1..n -> 唯一原文)、translateMappingMap(originalTextMap.key -> actuallyTranslateMap.key)
+        Map<Integer, String> actuallyTranslateMap = new LinkedHashMap<>();
+        Map<Integer, Integer> translateMappingMap = new HashMap<>();
+        Map<String, Integer> textToSeq = new HashMap<>(); // 原文 → 序号，用于构建 translateMappingMap
+        Map<String, Long> textOccurrences = new HashMap<>(); // 同一文本出现的次数
+
+        List<String> unique = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (String v : originalTextMap.values()) {
+            if (v != null && !v.isEmpty()) {
+                textOccurrences.merge(v, 1L, Long::sum);
+                if (seen.add(v)) {
+                    unique.add(v);
                 }
             }
-        });
-
-        // 翻译 glossary
-        if (!ctx.getGlossaryTextMap().isEmpty()) {
-            // 处理下词汇表的映射关系
-            String glossaryMapping = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(),
-                    String.join(" ", ctx.getGlossaryTextMap().values()));
-            String prompt = PromptUtils.GlossaryJsonPrompt(target, glossaryMapping, ctx.getGlossaryTextMap());
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), ctx.getGlossaryTextMap());
-            if (pair == null) {
-                // fatalException
-                return;
+        }
+        for (int i = 0; i < unique.size(); i++) {
+            int seq = i + 1;
+            String t = unique.get(i);
+            actuallyTranslateMap.put(seq, t);
+            textToSeq.put(t, seq);
+        }
+        for (Map.Entry<Integer, String> e : originalTextMap.entrySet()) {
+            if (e.getValue() != null && !e.getValue().isEmpty()) {
+                translateMappingMap.put(e.getKey(), textToSeq.get(e.getValue()));
             }
-            ctx.incrementUsedTokenCount(pair.getSecond());
-            ctx.getTranslatedTextMap().putAll(pair.getFirst());
-
-            // 将词汇表翻译的结果存入缓存
-            pair.getFirst().forEach((key, value) -> {
-                redisProcessService.setCacheData(target, value, ctx.getGlossaryTextMap().get(key));
-            });
         }
 
-        // 翻译普通json
-        if (ctx.getUncachedTextMap().isEmpty()) {
-            return;
-        }
+        Map<Integer, String> translatedResultMap = new HashMap<>();
+        List<Integer> glossarySeqList = new ArrayList<>();
+        List<Integer> aiSeqList = new ArrayList<>();
 
-        // 防止ctx.getUncachedTextMap()太多，需要拆分几次调用ai
-        Map<Integer, String> subMap = new HashMap<>();
-        int totalChars = 0;
-        for (Map.Entry<Integer, String> entry : ctx.getUncachedTextMap().entrySet()) {
-            subMap.put(entry.getKey(), entry.getValue());
-            totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(entry.getValue());
-            if (totalChars < 600) {
+        // 2. 按序处理：命中缓存直接填结果；命中词汇表填结果；需带词汇表翻译的入 glossarySeqList；其余入 aiSeqList
+        for (Map.Entry<Integer, String> e : actuallyTranslateMap.entrySet()) {
+            int seq = e.getKey();
+            String text = e.getValue();
+            long occ = textOccurrences.getOrDefault(text, 1L);
+
+            String cached = redisProcessService.getCacheData(target, text);
+            if (cached != null) {
+                translatedResultMap.put(seq, cached);
+                for (int i = 0; i < occ; i++) {
+                    translateTaskMonitorV2RedisService.addCacheCount(text);
+                    ctx.incrementCachedCount();
+                }
                 continue;
             }
 
-            // 调用一次翻译
-            String prompt = PromptUtils.JsonPrompt(target, subMap);
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), subMap);
+            String glossaryed = GlossaryService.match(text, glossaryMap);
+            if (glossaryed != null) {
+                translatedResultMap.put(seq, glossaryed);
+                for (int i = 0; i < occ; i++) {
+                    ctx.incrementGlossaryCount();
+                }
+                continue;
+            }
+            if (GlossaryService.hasGlossary(text, glossaryMap, ctx.getUsedGlossaryMap())) {
+                glossarySeqList.add(seq);
+                continue;
+            }
+            aiSeqList.add(seq);
+        }
+
+        // 3. 带词汇表的 AI 批次翻译
+        if (!glossarySeqList.isEmpty()) {
+            Map<Integer, String> glossMap = new HashMap<>();
+            for (Integer seq : glossarySeqList) {
+                glossMap.put(seq, actuallyTranslateMap.get(seq));
+            }
+            String glossaryMapping = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), String.join(" ", glossMap.values()));
+            String prompt = PromptUtils.GlossaryJsonPrompt(target, glossaryMapping, glossMap);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), glossMap);
             if (pair == null) {
-                // fatalException 返回重新调用翻译，后续有更好的处理办法
                 return;
             }
-            ctx.getTranslatedTextMap().putAll(pair.getFirst());
-            ctx.incrementUsedTokenCount(pair.getSecond());
-            pair.getFirst().forEach((key, value) -> {
-                redisProcessService.setCacheData(target, value, ctx.getUncachedTextMap().get(key));
-            });
+            applyBatchResult(ctx, pair, actuallyTranslateMap, translatedResultMap, target);
+            for (Integer seq : glossarySeqList) {
+                long occ = textOccurrences.getOrDefault(actuallyTranslateMap.get(seq), 1L);
+                for (int i = 0; i < occ; i++) {
+                    ctx.incrementGlossaryCount();
+                }
+            }
+        }
+
+        // 4. 纯 AI 分批翻译（按 BATCH_CHAR_LIMIT 估算 token 分批）
+        Map<Integer, String> subMap = new HashMap<>();
+        int totalChars = 0;
+        for (Integer seq : aiSeqList) {
+            String t = actuallyTranslateMap.get(seq);
+            subMap.put(seq, t);
+            totalChars += ALiYunTranslateIntegration.calculateBaiLianToken(t);
+            if (totalChars < BATCH_CHAR_LIMIT) {
+                continue;
+            }
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(PromptUtils.JsonPrompt(target, subMap), target, ctx.getAiModel(), subMap);
+            if (pair == null) {
+                return;
+            }
+            applyBatchResult(ctx, pair, actuallyTranslateMap, translatedResultMap, target);
             totalChars = 0;
             subMap.clear();
         }
-
         if (!subMap.isEmpty()) {
-            String prompt = PromptUtils.JsonPrompt(target, subMap);
-            Pair<Map<Integer, String>, Integer> pair = batchTranslate(prompt, target, ctx.getAiModel(), subMap);
+            Pair<Map<Integer, String>, Integer> pair = batchTranslate(PromptUtils.JsonPrompt(target, subMap), target, ctx.getAiModel(), subMap);
             if (pair == null) {
-                // fatalException 返回重新调用翻译，后续有更好的处理办法
                 return;
             }
-            ctx.getTranslatedTextMap().putAll(pair.getFirst());
-            ctx.incrementUsedTokenCount(pair.getSecond());
-            pair.getFirst().forEach((key, value) -> {
-                redisProcessService.setCacheData(target, value, ctx.getUncachedTextMap().get(key));
-            });
+            applyBatchResult(ctx, pair, actuallyTranslateMap, translatedResultMap, target);
         }
+
+        // 5. 按 originalTextMap 顺序回填译文到 ctx.translatedTextMap
+        originalTextMap.forEach((key, value) -> {
+            if (value == null || value.isEmpty()) {
+                ctx.getTranslatedTextMap().put(key, value);
+            } else {
+                Integer seq = translateMappingMap.get(key);
+                String tr = seq != null ? translatedResultMap.get(seq) : null;
+                ctx.getTranslatedTextMap().put(key, tr != null ? tr : value);
+            }
+        });
+    }
+
+    /** 将单次 AI 批次结果写入 translatedResultMap 并写缓存、累计 token */
+    private void applyBatchResult(TranslateContext ctx, Pair<Map<Integer, String>, Integer> pair,
+                                  Map<Integer, String> actuallyTranslateMap, Map<Integer, String> translatedResultMap, String target) {
+        ctx.incrementUsedTokenCount(pair.getSecond());
+        pair.getFirst().forEach((seq, tr) -> {
+            translatedResultMap.put(seq, tr);
+            redisProcessService.setCacheData(target, tr, actuallyTranslateMap.get(seq));
+        });
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {
