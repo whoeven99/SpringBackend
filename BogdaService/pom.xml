@@ -268,6 +268,13 @@
                     <includeSystemScope>true</includeSystemScope> <!-- 关键配置：包含系统依赖 -->
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Xshare:off</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

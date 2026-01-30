@@ -8,8 +8,6 @@ import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -103,16 +101,6 @@ public class TranslateTask {
 
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
-        // TODO 先注释，看看删除数据都有哪些，后面再删除
-//        process(2,
-//                InitialTaskV2DO::getShopName,
-//                savingShops, "DELETE SHOPIFY",
-//                translateV2Service::deleteToShopify);
-//
-//        process(5,
-//                InitialTaskV2DO::getShopName,
-//                savingShops, "DELETE SHOPIFY",
-//                translateV2Service::deleteToShopify);
 
         process(2,
                 InitialTaskV2DO::getShopName,
@@ -124,6 +112,11 @@ public class TranslateTask {
                 savingShops, "SAVE SHOPIFY",
                 translateV2Service::saveToShopify);
 
+    }
+
+    @Scheduled(fixedDelay = 300 * 1000)
+    public void deleteToShopify() {
+        translateV2Service.deleteToShopify();
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
@@ -216,6 +209,6 @@ public class TranslateTask {
 
         AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
-//        translateV2Service.cleanDeleteTask(cleanTask.get(0));
+        translateV2Service.cleanDeleteTask(cleanTask.get(0));
     }
 }

@@ -183,8 +183,7 @@ public class MonitorController {
                 taskMap.remove("lastUpdatedTime");
             }
             if (initialTaskV2DO.getStatus().equals(5)) {
-                boolean isTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName()) ||
-                        redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
+                boolean isTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
                 if (isTokenLimit) {
                     taskMap.put("status", "6");
                 }

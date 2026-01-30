@@ -4,6 +4,7 @@ import com.bogda.service.integration.AidgeIntegration;
 import com.bogda.common.controller.request.SignRequest;
 import com.bogda.common.controller.response.AidgeResponse;
 import com.bogda.common.controller.response.SignResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,10 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/pc/edit")
 public class PCPictureEditController {
+    @Autowired
+    private AidgeIntegration aidgeIntegration;
 
     @PostMapping("/getSignResponse")
     public AidgeResponse<Object> getSignResponse(@RequestBody SignRequest signRequest) {
-        SignResponse signResponse = AidgeIntegration.getSignResponse(signRequest.getParams(), signRequest.getApi());
+        SignResponse signResponse = aidgeIntegration.getSignResponse(signRequest.getParams(), signRequest.getApi());
         return new AidgeResponse<>().CreateSuccessResponse(signResponse);
     }
 }

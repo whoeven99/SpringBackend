@@ -3,19 +3,21 @@ package com.bogda.service.integration;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.bogda.service.logic.PCApp.PCUserPicturesService;
-import com.bogda.service.logic.token.UserTokenService;
-import com.bogda.common.controller.response.SignResponse;
-import com.bogda.service.PCUsersRepo;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.controller.response.SignResponse;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.JsonUtils;
+import com.bogda.service.PCUsersRepo;
+import com.bogda.service.logic.PCApp.PCUserPicturesService;
+import com.bogda.service.logic.token.UserTokenService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,15 +26,25 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 import static com.global.iop.util.WebUtils.doGet;
 import static com.global.iop.util.WebUtils.doPost;
 
 @Component
 public class AidgeIntegration {
-    static class ApiConfig {
-        public static String ACCESS_KEY_NAME = ConfigUtils.getConfig("AIDGE_ACCESS_KEY_NAME");
-        public static String ACCESS_KEY_SECRET = ConfigUtils.getConfig("AIDGE_ACCESS_KEY_SECRET");
+    @Value("${aidge.name.key.vault}")
+    private String accessKeyName;
 
+    @Value("${aidge.secret.key.vault}")
+    private String accessKeySecret;
+
+    @PostConstruct
+    public void init() {
+        AppInsightsUtils.trackTrace("accessKeyName: " + accessKeyName);
+        AppInsightsUtils.trackTrace("accessKeySecret: " + accessKeySecret);
+    }
+
+    static class ApiConfig {
         /**
          * for api purchased on global site. set apiDomain to "api.aidc-ai.com"
          * 中文站购买的API请使用"cn-api.aidc-ai.com"域名 (for api purchased on chinese site) set apiDomain to "cn-api.aidc-ai.com"
@@ -136,7 +148,7 @@ public class AidgeIntegration {
     }
 
     //prod 调用
-    private static String prodInvokeApi(String apiName, String data, String queryData, boolean isGet) throws IOException {
+    private String prodInvokeApi(String apiName, String data, String queryData, boolean isGet) throws IOException {
         // 计算 sign
         String url = getSign(apiName);
 
@@ -195,16 +207,16 @@ public class AidgeIntegration {
         return result;
     }
 
-    public static SignResponse getSignResponse(Map<String, String> params, String api) {
+    public SignResponse getSignResponse(Map<String, String> params, String api) {
         try {
             Date date = new Date();
             long time = date.getTime();
-            params.put("app_key", ApiConfig.ACCESS_KEY_NAME);
+            params.put("app_key", accessKeyName);
             params.put("sign_method", ApiConfig.SIGN_METHOD_SHA256);
             params.put("timestamp", String.valueOf(time));
-            String signStr = signApiRequest(params, ApiConfig.ACCESS_KEY_SECRET, ApiConfig.SIGN_METHOD_SHA256, api);
+            String signStr = signApiRequest(params, accessKeySecret, ApiConfig.SIGN_METHOD_SHA256, api);
 
-            return SignResponse.builder().signStr(signStr).appKey(ApiConfig.ACCESS_KEY_NAME).targetAppKey(ApiConfig.ACCESS_KEY_NAME).signMethod(ApiConfig.SIGN_METHOD_SHA256).timestamp(time).build();
+            return SignResponse.builder().signStr(signStr).appKey(accessKeyName).targetAppKey(accessKeyName).signMethod(ApiConfig.SIGN_METHOD_SHA256).timestamp(time).build();
         } catch (IOException e) {
             AppInsightsUtils.trackTrace("FatalException getSignResponse error: " + e.getMessage());
         }
@@ -290,16 +302,16 @@ public class AidgeIntegration {
     }
 
     // 计算sign
-    public static String getSign(String apiName) {
+    public String getSign(String apiName) {
         String timestamp = System.currentTimeMillis() + "";
 
         // Calculate sign
         StringBuilder sign = new StringBuilder();
         try {
-            javax.crypto.SecretKey secretKey = new javax.crypto.spec.SecretKeySpec(ApiConfig.ACCESS_KEY_SECRET.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
+            javax.crypto.SecretKey secretKey = new javax.crypto.spec.SecretKeySpec(accessKeySecret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
             javax.crypto.Mac mac = javax.crypto.Mac.getInstance(secretKey.getAlgorithm());
             mac.init(secretKey);
-            byte[] bytes = mac.doFinal((ApiConfig.ACCESS_KEY_SECRET + timestamp).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] bytes = mac.doFinal((accessKeySecret + timestamp).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             for (int i = 0; i < bytes.length; i++) {
                 String hex = Integer.toHexString(bytes[i] & 0xFF);
                 if (hex.length() == 1) {
@@ -311,7 +323,7 @@ public class AidgeIntegration {
             String url = "https://[api domain]/rest[api name]?partner_id=aidge&sign_method=sha256&sign_ver=v2&app_key=[you api key name]&timestamp=[timestamp]&sign=[HmacSHA256 sign]";
             url = url.replace("[api domain]", ApiConfig.API_DOMAIN)
                     .replace("[api name]", apiName)
-                    .replace("[you api key name]", ApiConfig.ACCESS_KEY_NAME)
+                    .replace("[you api key name]", accessKeyName)
                     .replace("[timestamp]", timestamp)
                     .replace("[HmacSHA256 sign]", sign);
 
