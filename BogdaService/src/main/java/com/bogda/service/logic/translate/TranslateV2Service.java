@@ -822,8 +822,7 @@ public class TranslateV2Service {
     /** 手动翻译中断时处理：手动中断仅标记已发邮件；因 token 限制的部分翻译则延迟批量发邮件 */
     private void handleManualStoppedEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
-        boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName()) ||
-                redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
+        boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
 
         if (!stoppedByLimit) {
             initialTaskV2Repo.updateSendEmailById(initialTaskV2DO.getId(), true);
@@ -848,8 +847,7 @@ public class TranslateV2Service {
 
         List<InitialTaskV2DO> partialTranslation = new ArrayList<>();
         for (InitialTaskV2DO task : stoppedTasks) {
-            boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName()) ||
-                    redisStoppedRepository.isStoppedByTokenLimit(task.getShopName(), task.getId());
+            boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName(), task.getId());
             if (stoppedByTokenLimit) {
                 partialTranslation.add(task);
             }
