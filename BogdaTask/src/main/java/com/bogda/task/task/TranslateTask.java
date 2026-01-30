@@ -50,17 +50,20 @@ public class TranslateTask {
             tasks = initialTaskV2Repo.selectByStatus(status);
         }
         if (CollectionUtils.isEmpty(tasks)) {
+            AppInsightsUtils.trackTrace("TranslateTaskV2 tasks: " + tasks);
             return;
         }
 
         // 按 groupByFunc 分组
         Map<T, List<InitialTaskV2DO>> tasksByGroup = tasks.stream()
                 .collect(Collectors.groupingBy(groupByFunc));
+        AppInsightsUtils.trackTrace("TranslateTaskV2 tasks: " + tasks);
 
         // 不同组并发处理，相同组顺序处理
         for (Map.Entry<T, List<InitialTaskV2DO>> entry : tasksByGroup.entrySet()) {
             T groupKey = entry.getKey();
             if (shopsSet.contains(groupKey)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
+                AppInsightsUtils.trackTrace("TranslateTaskV2 skip " + taskName + " group: " + groupKey + " with " + entry.getValue().size() + " tasks.");
                 continue;
             }
             executorService.submit(() -> {

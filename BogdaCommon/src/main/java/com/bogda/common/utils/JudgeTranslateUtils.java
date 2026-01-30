@@ -128,7 +128,12 @@ public class JudgeTranslateUtils {
      */
     public static boolean shouldTranslate(String key, String value) {
         if (value == null || value.trim().isEmpty()) {
-            printTranslateReason("general.&section.  " + key + " is null or empty, value是： " + value);
+            printTranslateReason("key: " + key + " is null or empty, value是： " + value);
+            return false;
+        }
+
+        if (value.startsWith("=")){
+            printTranslateReason("value: " + value + " 是以=开头, key是： " + key);
             return false;
         }
 
