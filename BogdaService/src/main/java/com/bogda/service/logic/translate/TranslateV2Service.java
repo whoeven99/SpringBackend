@@ -795,66 +795,75 @@ public class TranslateV2Service {
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
     public void sendManualEmail(InitialTaskV2DO initialTaskV2DO) {
-        String shopName = initialTaskV2DO.getShopName();
+        if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
+            sendManualSuccessEmail(initialTaskV2DO);
+            return;
+        }
+        if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
+            handleManualStoppedEmail(initialTaskV2DO);
+        }
+    }
 
+    /** 手动翻译正常结束时发送成功邮件并更新状态 */
+    private void sendManualSuccessEmail(InitialTaskV2DO initialTaskV2DO) {
+        String shopName = initialTaskV2DO.getShopName();
         Integer usingTimeMinutes = (int) ((System.currentTimeMillis() - initialTaskV2DO.getCreatedAt().getTime()) / (1000 * 60));
         Integer usedTokenByTask = userTokenService.getUsedTokenByTaskId(shopName, initialTaskV2DO.getId());
 
-        // 手动翻译 正常结束，发送邮件
-        if (InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.status == initialTaskV2DO.getStatus()) {
-            AppInsightsUtils.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
-                    " Total time (minutes): " + usingTimeMinutes +
-                    " Total tokens used: " + usedTokenByTask);
+        AppInsightsUtils.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
+                " Total time (minutes): " + usingTimeMinutes +
+                " Total tokens used: " + usedTokenByTask);
 
-            Integer usedToken = userTokenService.getUsedToken(shopName);
-            Integer totalToken = userTokenService.getMaxToken(shopName);
-            tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
-                    usedToken, totalToken);
+        Integer usedToken = userTokenService.getUsedToken(shopName);
+        Integer totalToken = userTokenService.getMaxToken(shopName);
+        tencentEmailService.sendSuccessEmail(shopName, initialTaskV2DO.getTarget(), usingTimeMinutes, usedTokenByTask,
+                usedToken, totalToken);
 
-            initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.ALL_DONE.status, initialTaskV2DO.getId());
+        initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.ALL_DONE.status, initialTaskV2DO.getId());
+    }
+
+    /** 手动翻译中断时处理：手动中断仅标记已发邮件；因 token 限制的部分翻译则延迟批量发邮件 */
+    private void handleManualStoppedEmail(InitialTaskV2DO initialTaskV2DO) {
+        String shopName = initialTaskV2DO.getShopName();
+        boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName()) ||
+                redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
+
+        if (!stoppedByLimit) {
+            initialTaskV2Repo.updateSendEmailById(initialTaskV2DO.getId(), true);
             return;
         }
 
-        // 中断，部分翻译发送邮件
-        if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
-            // 判断是不是手动中断, 是的话 立即中断, 将邮件设置为已发送
-            boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName()) ||
-                    redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
-            if (!stoppedByLimit) {
-                initialTaskV2Repo.updateSendEmailById(initialTaskV2DO.getId(), true);
-                return;
+        long translateEndTime = Long.parseLong(translateTaskMonitorV2RedisService.getTranslateEndTime(initialTaskV2DO.getId()));
+        if ((System.currentTimeMillis() - translateEndTime) < 60 * 10000) {
+            return;
+        }
+
+        sendPartialTranslationEmailForManual(shopName);
+    }
+
+    /** 获取该用户未发邮件的部分翻译任务，发送批量失败邮件并标记已发邮件 */
+    private void sendPartialTranslationEmailForManual(String shopName) {
+        List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual", 5);
+
+        if (CollectionUtils.isEmpty(stoppedTasks)) {
+            return;
+        }
+
+        List<InitialTaskV2DO> partialTranslation = new ArrayList<>();
+        for (InitialTaskV2DO task : stoppedTasks) {
+            boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName()) ||
+                    redisStoppedRepository.isStoppedByTokenLimit(task.getShopName(), task.getId());
+            if (stoppedByTokenLimit) {
+                partialTranslation.add(task);
             }
+        }
 
-            // 判断现在的时间和db的更新时间是否相差10分钟 (可调整)  如果不相差10分钟,跳过
-            long translateEndTime = Long.parseLong(translateTaskMonitorV2RedisService.getTranslateEndTime(initialTaskV2DO.getId()));
-            if ((System.currentTimeMillis() - translateEndTime) < 60 * 10000) {
-                return;
-            }
+        if (!partialTranslation.isEmpty()) {
+            List<InitialTaskV2DO> initialTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual", 0);
+            partialTranslation.addAll(initialTasks);
 
-            // 相差10分钟, 获取该用户所有状态为5、是部分翻译、未发送邮件、未逻辑删除的手动翻译任务, 发送邮件
-            List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual");
-            if (CollectionUtils.isEmpty(stoppedTasks)) {
-                return;
-            }
-
-            // 判断是否是部分翻译, 然后存到部分翻译的list集合里面; 如果是手动中断,存到手动中断的map集合里面
-            List<InitialTaskV2DO> partialTranslation = new ArrayList<>();
-
-            for (InitialTaskV2DO task : stoppedTasks) {
-                boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName()) ||
-                        redisStoppedRepository.isStoppedByTokenLimit(task.getShopName(), task.getId());
-                if (stoppedByTokenLimit) {
-                    partialTranslation.add(task);
-                }
-            }
-
-            // 根据部分翻译list的集合,发送批量失败的邮件
-            if (!partialTranslation.isEmpty()) {
-                AppInsightsUtils.trackTrace("sendManualEmail 手动翻译批量失败邮件 : " + shopName);
-                tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "manual translation");
-            }
-
-            // 将任务改为已发送
+            AppInsightsUtils.trackTrace("sendManualEmail 手动翻译批量失败邮件 : " + shopName);
+            tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "manual translation");
             for (InitialTaskV2DO task : partialTranslation) {
                 initialTaskV2Repo.updateSendEmailById(task.getId(), true);
             }

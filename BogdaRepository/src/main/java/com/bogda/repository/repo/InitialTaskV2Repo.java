@@ -91,10 +91,10 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
-    public List<InitialTaskV2DO> selectByShopNameStoppedAndNotEmail(String shopName, String taskType) {
+    public List<InitialTaskV2DO> selectByShopNameStoppedAndNotEmail(String shopName, String taskType, Integer status) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
-                .eq(InitialTaskV2DO::getStatus, 5)
+                .eq(InitialTaskV2DO::getStatus, status)
                 .eq(InitialTaskV2DO::isSendEmail, false)
                 .eq(InitialTaskV2DO::getTaskType, taskType)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
