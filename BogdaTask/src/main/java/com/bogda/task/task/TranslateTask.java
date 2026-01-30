@@ -6,6 +6,7 @@ import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.task.annotation.EnableScheduledTask;
 import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,20 +51,17 @@ public class TranslateTask {
             tasks = initialTaskV2Repo.selectByStatus(status);
         }
         if (CollectionUtils.isEmpty(tasks)) {
-            AppInsightsUtils.trackTrace("TranslateTaskV2 tasks: " + tasks);
             return;
         }
 
         // 按 groupByFunc 分组
         Map<T, List<InitialTaskV2DO>> tasksByGroup = tasks.stream()
                 .collect(Collectors.groupingBy(groupByFunc));
-        AppInsightsUtils.trackTrace("TranslateTaskV2 tasks: " + tasks);
 
         // 不同组并发处理，相同组顺序处理
         for (Map.Entry<T, List<InitialTaskV2DO>> entry : tasksByGroup.entrySet()) {
             T groupKey = entry.getKey();
             if (shopsSet.contains(groupKey)) { // 本地内存简单做个加锁，这样后续的task  1.不会重复 2.不会卡住
-                AppInsightsUtils.trackTrace("TranslateTaskV2 skip " + taskName + " group: " + groupKey + " with " + entry.getValue().size() + " tasks.");
                 continue;
             }
             executorService.submit(() -> {
@@ -86,6 +84,7 @@ public class TranslateTask {
         }
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
         process(0,
@@ -94,6 +93,7 @@ public class TranslateTask {
                 translateV2Service::initialToTranslateTask);
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         process(1,
@@ -102,6 +102,7 @@ public class TranslateTask {
                 translateV2Service::translateEachTask);
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
 
@@ -117,11 +118,13 @@ public class TranslateTask {
 
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 300 * 1000)
     public void deleteToShopify() {
         translateV2Service.deleteToShopify();
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void sendEmail() {
         // 自动翻译的邮件
@@ -202,6 +205,7 @@ public class TranslateTask {
         }
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 13 * 1000 * 60)
     public void cleanTask() {
         // 3天前 且 isDeleted 的任务清理掉
