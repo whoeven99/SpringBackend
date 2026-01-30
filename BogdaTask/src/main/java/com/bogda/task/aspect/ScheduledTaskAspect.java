@@ -46,7 +46,6 @@ public class ScheduledTaskAspect {
         
         // 没有注解，根据环境判断
         // 直接获取SPRING_PROFILES_ACTIVE环境变量或配置
-        AppInsightsUtils.trackTrace("SPRING_PROFILES_ACTIVE : " + env);
         if ("test".equalsIgnoreCase(env) || "prod".equalsIgnoreCase(env)) {
             LOG.debug("执行定时任务: {} (云上环境: {})", method.getName(), env);
             return joinPoint.proceed();
