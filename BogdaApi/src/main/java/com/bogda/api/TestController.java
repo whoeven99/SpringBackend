@@ -7,7 +7,6 @@ import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.VO.UserDataReportVO;
-import com.bogda.integration.aimodel.GoogleMachineIntegration;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.service.logic.RedisDataReportService;
 import com.bogda.service.logic.RedisProcessService;
@@ -42,8 +41,6 @@ public class TestController {
     private TranslateV2Service translateV2Service;
     @Autowired
     private ITranslatesService iTranslatesService;
-    @Autowired
-    private GoogleMachineIntegration googleMachineIntegration;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
