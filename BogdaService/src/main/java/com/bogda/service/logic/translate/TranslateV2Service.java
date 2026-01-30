@@ -847,8 +847,7 @@ public class TranslateV2Service {
 
         List<InitialTaskV2DO> partialTranslation = new ArrayList<>();
         for (InitialTaskV2DO task : stoppedTasks) {
-            boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName()) ||
-                    redisStoppedRepository.isStoppedByTokenLimit(task.getShopName(), task.getId());
+            boolean stoppedByTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(task.getShopName(), task.getId());
             if (stoppedByTokenLimit) {
                 partialTranslation.add(task);
             }
