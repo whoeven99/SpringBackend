@@ -1053,12 +1053,22 @@ public class TranslateV2Service {
                     JudgeTranslateUtils.SUSPICIOUS2_PATTERN.matcher(value).matches()) {
                 return false;
             }
+
             if (!JudgeTranslateUtils.metaTranslate(value)) {
                 return false;
             }
 
             // 如果是base64编码的数据，不翻译
             if (JudgeTranslateUtils.BASE64_PATTERN.matcher(value).matches()) {
+                return false;
+            }
+
+            if (value.startsWith("=")){
+                return false;
+            }
+
+            // 原字段如果 包含 class='jdgm-all-reviews__header' 不翻译
+            if (value.contains("class='jdgm-all-reviews__header'")) {
                 return false;
             }
 
