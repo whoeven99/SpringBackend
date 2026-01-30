@@ -42,7 +42,10 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
 
     @Override
     public int updateTranslateStatus(String shopName, int status, String target, String source) {
-        return baseMapper.updateTranslateStatus(status, shopName, target, source);
+        return baseMapper.update(new LambdaUpdateWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName)
+                .eq(TranslatesDO::getTarget, target)
+                .eq(TranslatesDO::getSource, source)
+                .set(TranslatesDO::getStatus, status));
     }
 
     @Override
