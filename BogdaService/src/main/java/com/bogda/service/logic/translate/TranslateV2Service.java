@@ -1113,8 +1113,14 @@ public class TranslateV2Service {
         if (deleteTasksDO == null) {
             return;
         }
-        
+
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.getById(deleteTasksDO.getInitialTaskId());
+        if (initialTaskV2DO == null) {
+            // 将deleted_to_shopify 改为 true
+            deleteTasksRepo.updateDeletedToShopify(deleteTasksDO.getId());
+            return;
+        }
+
         String shopName = initialTaskV2DO.getShopName();
         UsersDO userDO = iUsersService.getUserByName(shopName);
         String token = userDO.getAccessToken();
