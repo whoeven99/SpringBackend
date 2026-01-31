@@ -12,6 +12,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JudgeTranslateUtilsTest {
     @Test
+    @DisplayName("value 以=开头时 不翻译")
+    void testStartWithEqual() {
+        assertFalse(JudgeTranslateUtils.shouldTranslate("k", "=1"));
+        assertFalse(JudgeTranslateUtils.shouldTranslate("k", "=SUM(A1:A2)"));
+        assertFalse(JudgeTranslateUtils.shouldTranslate("k", "=0-0.5-0.75-1-1.25-1.5-1.75-2-2.25-2.5-2.75-3-3.25-3.5-3.75-4-4.25-4." +
+                "5-4.75-5-5.5-6-6.5-7-7.5-8"));
+    }
+
+    @Test
     @DisplayName("value 为 null 或空白时不翻译")
     void testNullOrBlank() {
         assertFalse(translationRuleJudgment("k", null));
