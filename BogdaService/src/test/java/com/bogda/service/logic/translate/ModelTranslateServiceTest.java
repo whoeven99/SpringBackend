@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
 import com.bogda.integration.aimodel.GoogleMachineIntegration;
@@ -85,7 +86,7 @@ class ModelTranslateServiceTest {
     @Test
     void testAiTranslate_WithGpt4_ShouldCallChatGptIntegration() {
         // Given
-        String aiModel = ChatGptIntegration.GPT_5;
+        String aiModel = ModuleCodeUtils.GPT_5;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
         when(chatGptIntegration.chatWithGpt(testPrompt, testTarget)).thenReturn(expectedPair);
 
