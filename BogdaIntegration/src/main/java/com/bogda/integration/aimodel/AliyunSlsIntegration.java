@@ -37,7 +37,6 @@ public class AliyunSlsIntegration {
     @PostConstruct
     public void initClient() {
         try {
-            System.out.println("accessKeyId: " + accessKeyId + " accessKeySecret: " + accessKeySecret + " endpoint: " + endpoint + " project: " + project + " logstore: " + logstore);
             if (accessKeyId == null || accessKeySecret == null ||
                     endpoint == null) {
                 AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 配置缺失，无法初始化SLS客户端");

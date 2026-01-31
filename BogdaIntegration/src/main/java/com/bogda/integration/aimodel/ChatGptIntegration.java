@@ -20,7 +20,7 @@ import java.util.List;
 @Component
 public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
-    public static String GPT_4 = "gpt-4.1";
+    public static String GPT_5 = "gpt-5-mini";
     private final OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
 
@@ -40,16 +40,15 @@ public class ChatGptIntegration {
         List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(userMessage);
 
+        // gpt-5-mini 不支持 max_tokens， Temperature， TopP
+        // 故不设置 maxTokens，由服务端使用默认 max_completion_tokens，避免 400 unsupported_parameter 错误
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
-                .setMaxTokens(16000)
-                .setTemperature(0.7)
-                .setTopP(0.95)
                 .setFrequencyPenalty(0.0)
                 .setPresencePenalty(0.0)
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(GPT_4, options));
+                    client.getChatCompletions(GPT_5, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();
