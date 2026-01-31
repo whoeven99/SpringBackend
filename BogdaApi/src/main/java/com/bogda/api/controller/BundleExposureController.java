@@ -1,7 +1,7 @@
 package com.bogda.api.controller;
 
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.entity.VO.BundleExposureVO;
+import com.bogda.common.entity.DTO.BundleAvgConversionIndicatorDTO;
 import com.bogda.common.entity.VO.BundleQueryVO;
 import com.bogda.service.logic.bundle.BundleExposureService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +75,17 @@ public class BundleExposureController {
     // 获取用户折扣为true 的 Avg. Conversion
     @PostMapping("/getAvgConversion")
     public BaseResponse<Object> getAvgConversion(@RequestParam String shopName) {
-        return bundleExposureService.getAvgConversion(shopName);
+        BaseResponse<Object> response = bundleExposureService.getAvgConversion(shopName);
+        Object data = response.getResponse();
+        if (data instanceof BundleAvgConversionIndicatorDTO) {
+            BundleAvgConversionIndicatorDTO dto = (BundleAvgConversionIndicatorDTO) data;
+            if (dto.getAvgConversionIndicator() == null || Double.isNaN(dto.getAvgConversionIndicator()) || Double.isInfinite(dto.getAvgConversionIndicator())) {
+                dto.setAvgConversionIndicator(0D);
+            }
+            if (dto.getAvgConversion() == null || Double.isNaN(dto.getAvgConversion()) || Double.isInfinite(dto.getAvgConversion())) {
+                dto.setAvgConversion(0D);
+            }
+        }
+        return response;
     }
 }

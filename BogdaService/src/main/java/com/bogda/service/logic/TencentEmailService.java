@@ -1,6 +1,7 @@
 package com.bogda.service.logic;
 
 import com.bogda.common.entity.DO.*;
+import com.bogda.common.utils.StringUtils;
 import com.bogda.service.Service.*;
 import com.bogda.service.utils.CurrencyConfig;
 import com.bogda.service.integration.EmailIntegration;
@@ -322,7 +323,7 @@ public class TencentEmailService {
         templateData.put("name", usersDO.getFirstName());
 
         // 定义要移除的后缀
-        String name = parseShopName(shopName);
+        String name = StringUtils.parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159294L,
                 templateData, MailChimpConstants.USER_THEME_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
@@ -336,7 +337,7 @@ public class TencentEmailService {
         templateData.put("username", usersDO.getFirstName());
 
         // 定义要移除的后缀
-        String name = parseShopName(shopName);
+        String name = StringUtils.parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159295L,
                 templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
@@ -351,7 +352,7 @@ public class TencentEmailService {
         templateData.put("username", usersDO.getFirstName());
 
         // 定义要移除的后缀
-        String name = parseShopName(shopName);
+        String name = StringUtils.parseShopName(shopName);
         templateData.put("admin", name);
         Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159296L,
                 templateData, MailChimpConstants.USER_SWITCH_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
@@ -360,7 +361,7 @@ public class TencentEmailService {
     }
 
     public boolean sendTranslatePartialEmail(String shopName, List<InitialTaskV2DO> partialTasks, String translateType) {
-        String name = parseShopName(shopName);
+        String name = StringUtils.parseShopName(shopName);
 
         UsersDO usersDO = usersService.getUserByName(shopName);
         Map<String, String> templateData = new HashMap<>();
@@ -373,18 +374,15 @@ public class TencentEmailService {
         for (InitialTaskV2DO taskV2DO : partialTasks) {
             // 计算百分比数据
             Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(taskV2DO.getId());
-            String totalCount = taskMap.getOrDefault("totalCount", null);
-            String translatedCount = taskMap.getOrDefault("translatedCount", null);
-            if (totalCount == null || totalCount.isEmpty() || translatedCount == null || translatedCount.isEmpty()) {
-                continue;
-            }
-
-            int total = Integer.parseInt(totalCount);
-            int translated = Integer.parseInt(translatedCount);
+            String totalCountStr = taskMap.getOrDefault("totalCount", null);
+            String translatedCountStr = taskMap.getOrDefault("translatedCount", null);
+            // totalCount或translatedCount为null时，默认为0
+            int total = (totalCountStr == null || totalCountStr.isEmpty()) ? 0 : Integer.parseInt(totalCountStr);
+            int translated = (translatedCountStr == null || translatedCountStr.isEmpty()) ? 0 : Integer.parseInt(translatedCountStr);
 
             DecimalFormat df = new DecimalFormat("0.00");
             double percentage = 0;
-            if (translated != 0) {
+            if (translated != 0 && total != 0) {
                 percentage = translated * 100.0 / total;
             }
 
