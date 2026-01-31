@@ -8,28 +8,33 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.bogda.common.utils.ConfigUtils;
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
-    public static String GPT_4 = "gpt-4.1";
-    private final OpenAIClient client;
+    private OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
 
-    @Autowired
-    public ChatGptIntegration() {
+    @Value("${azure.openai.key.vault}")
+    private String gptKey;
+
+    @PostConstruct
+    public void init() {
+        AppInsightsUtils.trackTrace("gptKey : " + gptKey);
         client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+                .credential(new AzureKeyCredential(gptKey))
                 .buildClient();
+        AppInsightsUtils.trackTrace("ChatGptIntegration init success");
     }
 
     // content - allToken
@@ -40,16 +45,15 @@ public class ChatGptIntegration {
         List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(userMessage);
 
+        // gpt-5-mini 不支持 max_tokens， Temperature， TopP
+        // 故不设置 maxTokens，由服务端使用默认 max_completion_tokens，避免 400 unsupported_parameter 错误
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
-                .setMaxTokens(16000)
-                .setTemperature(0.7)
-                .setTopP(0.95)
                 .setFrequencyPenalty(0.0)
                 .setPresencePenalty(0.0)
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(GPT_4, options));
+                    client.getChatCompletions(ModuleCodeUtils.GPT_5, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();

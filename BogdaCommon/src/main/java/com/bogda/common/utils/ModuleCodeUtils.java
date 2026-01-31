@@ -3,13 +3,14 @@ package com.bogda.common.utils;
 import java.util.*;
 
 public class ModuleCodeUtils {
+    public static String GPT_5 = "gpt-5-mini";
 
     /**
      * 判断翻译调用的模型
      */
     public static String getModuleCode(String code) {
         return switch (code) {
-            case "2" -> "gpt-4.1"; // ChatGptIntegration.GPT_4;
+            case "2" -> GPT_5; // ChatGptIntegration.GPT_4;
             default -> "qwen-max"; // ALiYunTranslateIntegration.QWEN_MAX;
         };
     }
