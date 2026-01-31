@@ -30,7 +30,7 @@ public class ChatGptIntegration {
 
     @Autowired
     public void init() {
-       AppInsightsUtils.trackTrace("gptKey : " + gptKey);
+        AppInsightsUtils.trackTrace("gptKey : " + gptKey);
         client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
                 .credential(new AzureKeyCredential(gptKey))
