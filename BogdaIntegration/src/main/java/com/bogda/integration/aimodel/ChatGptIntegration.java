@@ -8,13 +8,12 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class ChatGptIntegration {
     @Value("${azure.openai.key.vault}")
     private String gptKey;
 
-    @Autowired
+    @PostConstruct
     public void init() {
         AppInsightsUtils.trackTrace("gptKey : " + gptKey);
         client = new OpenAIClientBuilder()
