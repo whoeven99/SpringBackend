@@ -29,7 +29,7 @@ public class ModelTranslateService {
         Pair<String, Integer> pair = null;
         if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
             pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        } else if (ChatGptIntegration.GPT_4.equals(aiModel)) {
+        } else if (ChatGptIntegration.GPT_5.equals(aiModel)) {
             pair = chatGptIntegration.chatWithGpt(prompt, target);
         } else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
             pair = geminiIntegration.generateText(aiModel, prompt);

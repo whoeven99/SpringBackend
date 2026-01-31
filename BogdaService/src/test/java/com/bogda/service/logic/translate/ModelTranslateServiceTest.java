@@ -85,7 +85,7 @@ class ModelTranslateServiceTest {
     @Test
     void testAiTranslate_WithGpt4_ShouldCallChatGptIntegration() {
         // Given
-        String aiModel = ChatGptIntegration.GPT_4;
+        String aiModel = ChatGptIntegration.GPT_5;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
         when(chatGptIntegration.chatWithGpt(testPrompt, testTarget)).thenReturn(expectedPair);
 
