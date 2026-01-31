@@ -36,6 +36,7 @@ public class ChatGptIntegration {
                 .endpoint(endpoint)
                 .credential(new AzureKeyCredential(gptKey))
                 .buildClient();
+        AppInsightsUtils.trackTrace("ChatGptIntegration init success");
     }
 
     // content - allToken
