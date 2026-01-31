@@ -296,7 +296,7 @@ public class TranslateV2Service {
         return BaseResponse.SuccessResponse(request);
     }
 
-    public static List<String> sortTranslateData(List<String> list){
+    public static List<String> sortTranslateData(List<String> list) {
         // 1. 提取 ALL_RESOURCES 中的顺序
         List<String> orderList = TranslateResourceDTO.ALL_RESOURCES.stream()
                 .map(TranslateResourceDTO::getResourceType)
@@ -571,8 +571,8 @@ public class TranslateV2Service {
                             // 将shopifyTranslationsRemoveList里面的数据批量存储数据库中
                             if (!shopifyTranslationsRemoveList.isEmpty()) {
                                 ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
-                                for (String key: remove.getTranslationKeys()
-                                     ) {
+                                for (String key : remove.getTranslationKeys()
+                                ) {
                                     deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
                                 }
                                 shopifyTranslationsRemoveList.clear();
@@ -801,7 +801,9 @@ public class TranslateV2Service {
         }
     }
 
-    /** 手动翻译正常结束时发送成功邮件并更新状态 */
+    /**
+     * 手动翻译正常结束时发送成功邮件并更新状态
+     */
     private void sendManualSuccessEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
         Integer usingTimeMinutes = (int) ((System.currentTimeMillis() - initialTaskV2DO.getCreatedAt().getTime()) / (1000 * 60));
@@ -819,7 +821,9 @@ public class TranslateV2Service {
         initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.ALL_DONE.status, initialTaskV2DO.getId());
     }
 
-    /** 手动翻译中断时处理：手动中断仅标记已发邮件；因 token 限制的部分翻译则延迟批量发邮件 */
+    /**
+     * 手动翻译中断时处理：手动中断仅标记已发邮件；因 token 限制的部分翻译则延迟批量发邮件
+     */
     private void handleManualStoppedEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
         boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
@@ -837,7 +841,9 @@ public class TranslateV2Service {
         sendPartialTranslationEmailForManual(shopName);
     }
 
-    /** 获取该用户未发邮件的部分翻译任务，发送批量失败邮件并标记已发邮件 */
+    /**
+     * 获取该用户未发邮件的部分翻译任务，发送批量失败邮件并标记已发邮件
+     */
     private void sendPartialTranslationEmailForManual(String shopName) {
         List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual", 5);
 
@@ -1072,7 +1078,7 @@ public class TranslateV2Service {
                 return false;
             }
 
-            if (value.startsWith("=")){
+            if (value.startsWith("=")) {
                 return false;
             }
 
@@ -1113,8 +1119,14 @@ public class TranslateV2Service {
         if (deleteTasksDO == null) {
             return;
         }
-        
+
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.getById(deleteTasksDO.getInitialTaskId());
+        if (initialTaskV2DO == null) {
+            // 将deleted_to_shopify 改为 true
+            deleteTasksRepo.updateDeletedToShopify(deleteTasksDO.getId());
+            return;
+        }
+
         String shopName = initialTaskV2DO.getShopName();
         UsersDO userDO = iUsersService.getUserByName(shopName);
         String token = userDO.getAccessToken();
