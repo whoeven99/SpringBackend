@@ -13,6 +13,7 @@ import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -130,7 +131,10 @@ public class BundleExposureService {
         if (productExposurePVData == 0 || checkoutCompletedPVData == 0) {
             return new BaseResponse<>().CreateSuccessResponse(0);
         }
-        double finalData = checkoutCompletedPVData / productExposurePVData * 100;
+        DecimalFormat df = new DecimalFormat("0.00");
+        double finalData = Double.parseDouble(
+                df.format(checkoutCompletedPVData / productExposurePVData * 100)
+        );
         return new BaseResponse<>().CreateSuccessResponse(new BundleConversionDTO(finalData));
     }
 
