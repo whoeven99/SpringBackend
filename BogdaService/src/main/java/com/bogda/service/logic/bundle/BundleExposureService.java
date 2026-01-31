@@ -325,32 +325,26 @@ public class BundleExposureService {
             pvProductViewedCountIndication = Double.parseDouble(pvProductViewed30.get(0).getOrDefault("pv", "0"));
         }
 
-        if (pvProductViewedCount == 0 || pvCheckCompletedCount == 0) {
-            bundleAvgConversion.setAvgConversion(0D);
-        }
-
-        if (pvProductViewedCountIndication == 0 || pvCheckCompletedCountIndication == 0) {
-            bundleAvgConversion.setAvgConversionIndicator(0D);
-        }
-
         double avgConversion = 0D;
-        avgConversion = pvCheckCompletedCount / pvProductViewedCount * 100;
-        bundleAvgConversion.setAvgConversion(avgConversion);
+        if (pvProductViewedCount != 0) {
+            avgConversion = pvCheckCompletedCount / pvProductViewedCount * 100;
+        }
+        bundleAvgConversion.setAvgConversion(sanitizeDouble(avgConversion));
 
         double avgConversionFirst30 = 0D;
-        avgConversionFirst30 = pvCheckCompletedCountIndication / pvProductViewedCountIndication * 100;
+        if (pvProductViewedCountIndication != 0) {
+            avgConversionFirst30 = pvCheckCompletedCountIndication / pvProductViewedCountIndication * 100;
+        }
 
-
-        double avgConversionIndicator = 0;
-        double lastMonthAvgConversion = 0;
-        lastMonthAvgConversion = avgConversion - avgConversionFirst30;
+        double avgConversionIndicator = 0D;
+        double lastMonthAvgConversion = avgConversion - avgConversionFirst30;
         if (lastMonthAvgConversion == 0 || avgConversionFirst30 == 0) {
-            bundleAvgConversion.setAvgConversionIndicator(avgConversionIndicator);
+            bundleAvgConversion.setAvgConversionIndicator(0D);
             return new BaseResponse<>().CreateSuccessResponse(bundleAvgConversion);
         }
 
         avgConversionIndicator = (avgConversionFirst30 - lastMonthAvgConversion) / lastMonthAvgConversion * 100;
-        bundleAvgConversion.setAvgConversionIndicator(avgConversionIndicator);
+        bundleAvgConversion.setAvgConversionIndicator(sanitizeDouble(avgConversionIndicator));
         return new BaseResponse<>().CreateSuccessResponse(bundleAvgConversion);
     }
 
@@ -392,5 +386,12 @@ public class BundleExposureService {
         bundleOrdersIndicator = (pvBundleOrders30Count - bundleOrdersLast30) / bundleOrdersLast30 * 100;
         bundleOrdersDTO.setBundleIndicator(bundleOrdersIndicator);
         return new BaseResponse<>().CreateSuccessResponse(bundleOrdersDTO);
+    }
+
+    /**
+     * 将 NaN、Infinity 等异常值转换为 0D
+     */
+    private static double sanitizeDouble(double value) {
+        return (Double.isNaN(value) || Double.isInfinite(value)) ? 0D : value;
     }
 }
