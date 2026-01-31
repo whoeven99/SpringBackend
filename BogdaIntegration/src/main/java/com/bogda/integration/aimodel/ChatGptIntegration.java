@@ -12,6 +12,7 @@ import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,14 +22,18 @@ import java.util.List;
 public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
     public static String GPT_5 = "gpt-5-mini";
-    private final OpenAIClient client;
+    private OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
 
+    @Value("${azure.openai.key.vault}")
+    private String gptKey;
+
     @Autowired
-    public ChatGptIntegration() {
+    public void init() {
+        AppInsightsUtils.trackTrace("gptKey : " + gptKey);
         client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(ConfigUtils.getConfig("Gpt_ApiKey")))
+                .credential(new AzureKeyCredential(gptKey))
                 .buildClient();
     }
 
