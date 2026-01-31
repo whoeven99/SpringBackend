@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
@@ -29,7 +30,7 @@ public class ModelTranslateService {
         Pair<String, Integer> pair = null;
         if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
             pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        } else if (ChatGptIntegration.GPT_5.equals(aiModel)) {
+        } else if (ModuleCodeUtils.GPT_5.equals(aiModel)) {
             pair = chatGptIntegration.chatWithGpt(prompt, target);
         } else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
             pair = geminiIntegration.generateText(aiModel, prompt);

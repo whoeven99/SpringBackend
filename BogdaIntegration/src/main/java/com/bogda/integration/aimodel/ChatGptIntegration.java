@@ -8,10 +8,9 @@ import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.utils.AppInsightsUtils;
-import com.bogda.common.utils.ConfigUtils;
+import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +21,6 @@ import java.util.List;
 @Component
 public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
-    public static String GPT_5 = "gpt-5-mini";
     private OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
 
@@ -55,7 +53,7 @@ public class ChatGptIntegration {
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(GPT_5, options));
+                    client.getChatCompletions(ModuleCodeUtils.GPT_5, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();
