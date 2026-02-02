@@ -1093,7 +1093,8 @@ public class ShopifyService {
 
         if (latest != null && latest.getCreatedAt() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            subscriptionVO.setCurrentPeriodEnd(latest.getCreatedAt().toLocalDateTime().format(formatter));
+            LocalDateTime periodEnd = latest.getCreatedAt().toLocalDateTime().plusDays(31);
+            subscriptionVO.setCurrentPeriodEnd(periodEnd.format(formatter));
         }
     }
 
