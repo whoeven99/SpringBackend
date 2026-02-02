@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.model.ShopifyGraphRemoveResponse;
 import com.bogda.integration.model.ShopifyTranslationsRemove;
 import com.bogda.repository.entity.DeleteTasksDO;
@@ -152,6 +153,8 @@ public class TranslateV2Service {
                 return handleAliYun(prompt, target);
             } else if (model.contains("gemini")) {
                 return handleGemini(model, prompt, picUrl);
+            } else if (model.contains("gpt")) {
+                return handleGpt(prompt, target);
             }
         } catch (Exception e) {
             AppInsightsUtils.trackException(e);
@@ -159,6 +162,19 @@ public class TranslateV2Service {
         }
 
         return defaultNullMap();
+    }
+
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
+    /**
+     * 处理gpt逻辑
+     */
+    private Map<String, Object> handleGpt(String prompt, String target) {
+        Pair<String, Integer> pair = chatGptIntegration.chatWithGpt(prompt, target);
+        if (pair == null) {
+            return defaultNullMap();
+        }
+        return buildResponse(pair.getFirst(), pair.getSecond(), "text");
     }
 
     /**
