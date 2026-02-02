@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.common.entity.DO.*;
+import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.service.Service.*;
 import com.bogda.service.logic.PCApp.PCEmailService;
@@ -44,7 +45,7 @@ public class TaskService {
     @Autowired
     private OrderService orderService;
     @Autowired
-    private ISubscriptionQuotaRecordService subscriptionQuotaRecordService;
+    private SubscriptionQuotaRecordRepo subscriptionQuotaRecordRepo;
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
@@ -219,13 +220,13 @@ public class TaskService {
 //        AppInsightsUtils.trackTrace("billingCycle = " + billingCycle);
 
         // 如果这一周期还没发放过额度，则发放并记录
-        SubscriptionQuotaRecordDO quotaRecordDO = subscriptionQuotaRecordService.getOne(new QueryWrapper<SubscriptionQuotaRecordDO>().eq("subscription_id", userPriceRequest.getSubscriptionId()).eq("billing_cycle", billingCycle));
+        SubscriptionQuotaRecordDO quotaRecordDO = subscriptionQuotaRecordRepo.getDataByIdAndBillingCycle(userPriceRequest.getSubscriptionId(), billingCycle);
         if (quotaRecordDO == null) {
             // 满足条件，执行添加字符的逻辑
 //            AppInsightsUtils.trackTrace("满足条件，执行添加字符的逻辑");
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
-            subscriptionQuotaRecordService.insertOne(userPriceRequest.getSubscriptionId(), billingCycle);
+            subscriptionQuotaRecordRepo.saveNewRecord(userPriceRequest.getSubscriptionId(), billingCycle);
             Boolean flag = translationCounterService.updateCharsByShopName(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId(), chars);
             AppInsightsUtils.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
 
