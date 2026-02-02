@@ -39,6 +39,9 @@ public class ShopifyDiscountDO {
         @JsonProperty("targeting_settings")
         private TargetingSettings targetingSettings;
         private Metafields metafields;
+        private DiscountRule.Subscription subscription;
+        @JsonProperty("progressive_gift")
+        private DiscountRule.ProgressiveGift progressiveGift;
 
         @Data
         public static class BasicInformation {
@@ -80,9 +83,6 @@ public class ShopifyDiscountDO {
             private String badgeText;
             private Boolean selectedByDefault;
             private List<Reward> reward;
-            private Subscription subscription;
-            @JsonProperty("progressive_gift")
-            private ProgressiveGift progressiveGift;
 
             @Data
             private static class Subscription {
