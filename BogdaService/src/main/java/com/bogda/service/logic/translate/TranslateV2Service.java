@@ -408,7 +408,8 @@ public class TranslateV2Service {
         initialTask.setModuleList(JsonUtils.objectToJson(AUTO_TRANSLATE_MAP));
         initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
         initialTask.setTaskType("auto");
-        initialTask.setAiModel(GeminiIntegration.GEMINI_3_FLASH);
+//        initialTask.setAiModel(GeminiIntegration.GEMINI_3_FLASH);
+        initialTask.setAiModel(ALiYunTranslateIntegration.QWEN_MAX);
         initialTaskV2Repo.insert(initialTask);
 
         translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, GeminiIntegration.GEMINI_3_FLASH);
