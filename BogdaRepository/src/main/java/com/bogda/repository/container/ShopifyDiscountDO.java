@@ -38,6 +38,9 @@ public class ShopifyDiscountDO {
         @JsonProperty("targeting_settings")
         private TargetingSettings targetingSettings;
         private Metafields metafields;
+        private Subscription subscription;
+        @JsonProperty("progressive_gift")
+        private ProgressiveGift progressiveGift;
 
         @Data
         public static class BasicInformation {
@@ -50,6 +53,103 @@ public class ShopifyDiscountDO {
             public static class OfferType {
                 private String category;
                 private String subtype;
+            }
+        }
+
+        @Data
+        private static class Subscription {
+            private Boolean enable;
+            private SubscriptionSettings settings;
+            private SubscriptionStyle style;
+
+            @Data
+            private static class SubscriptionSettings {
+                private String layout;
+                private String position;
+                @JsonProperty("subscription_title")
+                private String subscriptionTitle;
+                @JsonProperty("subscription_subtitle")
+                private String subscriptionSubtitle;
+                @JsonProperty("oneTime_title")
+                private String oneTimeTitle;
+                @JsonProperty("oneTime_subtitle")
+                private String oneTimeSubtitle;
+                private Boolean defaultSelected;
+            }
+
+            @Data
+            private static class SubscriptionStyle {
+                private Colors colors;
+                private Sizes sizes;
+
+                @Data
+                private static class Colors {
+                    private String title;
+                    private String subtitle;
+                }
+
+                @Data
+                private static class Sizes {
+                    private String title;
+                    private String subtitle;
+                }
+            }
+        }
+
+        @Data
+        private static class ProgressiveGift {
+            private Boolean enable;
+            private Settings settings;
+            private Style style;
+
+            @Data
+            private static class Settings {
+                private String layout;
+                private String position;
+                private String title;
+                private String subtitle;
+                private Boolean hideTilUnlocked;
+                private Boolean showLabels;
+                private List<Gift> gifts;
+
+                @Data
+                private static class Gift {
+                    private String type;
+                    private Integer unlockedAt;
+                    private String label;
+                    private String labelCrossOut;
+                    private String title;
+                    private String lockedTitle;
+                    private String imgUrl;
+                    private Product product;
+
+                    @Data
+                    private static class Product {
+                        private String id;
+                        private List<String> variantId;
+                        private String title;
+                        private String imgUrl;
+                        private Integer quantity;
+                    }
+                }
+            }
+
+            @Data
+            private static class Style {
+                private Colors colors;
+                private Sizes sizes;
+                @Data
+                private static class Colors {
+                    private String title;
+                    private String subtitle;
+                }
+
+                @Data
+                private static class Sizes {
+                    private String title;
+                    private String subtitle;
+
+                }
             }
         }
 
@@ -81,6 +181,20 @@ public class ShopifyDiscountDO {
             private List<Reward> reward;
 
             @Data
+            public static class discountRewards {
+                private String id;
+                private Integer quantity;
+                private Discount discount;
+
+                @Data
+                public static class Discount {
+                    private String type;
+                    private Double value;
+                    private Double maxDiscount;
+                }
+            }
+
+            @Data
             public static class Reward {
                 private String type;
                 private List<Products> products;
@@ -99,14 +213,6 @@ public class ShopifyDiscountDO {
                     private String variantId;
                     private Integer quantity;
                 }
-            }
-
-            @Data
-            public static class TriggerScope {
-                @JsonProperty("quantity_scope")
-                private String quantityScope;
-                @JsonProperty("min_quantity")
-                private Integer minQuantity;
             }
 
             @Data
@@ -231,6 +337,8 @@ public class ShopifyDiscountDO {
             public static class Budget {
                 private Double totalBudget;
                 private Double dailyBudget;
+                private Double usedTotalBudget;
+                private Double usedDailyBudget;
             }
 
         }
