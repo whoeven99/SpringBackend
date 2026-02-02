@@ -3,6 +3,8 @@ package com.bogda.api;
 import com.alibaba.fastjson.JSONObject;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
+import com.bogda.integration.aimodel.AliyunSlsIntegration;
+import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -15,6 +17,7 @@ import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
+import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -47,6 +50,8 @@ public class TestController {
     private RateHttpIntegration rateHttpIntegration;
     @Autowired
     private RateRedisService rateRedisService;
+    @Autowired
+    private AliyunSlsIntegration aliyunSlsIntegration;
 
     // 由 spring-cloud-azure-starter-keyvault-secrets 自动创建，使用 bootstrap.yml 中的配置
     @Autowired
@@ -178,4 +183,23 @@ public class TestController {
         var rates = rateHttpIntegration.getFixerRate();
         rateRedisService.refreshRates(rates);
     }
+
+    // 读数据
+    @PostMapping("/testReadData")
+    public List<Map<String, String>> testReadData() {
+        return aliyunSlsIntegration.readLogs(1769409842, 1769415028, "event:product_viewed | select productId, count(*) as pv group by productId");
+    }
+
+
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
+    // 测试gpt翻译失败问题
+    @PostMapping("/testGpt")
+    public BaseResponse<Object> testGpt(@RequestBody Map<String, String> map) {
+        Pair<String, Integer> stringIntegerPair =
+                chatGptIntegration.chatWithGpt(map.get("prompt"), "zh-CN");
+        return new BaseResponse<>().CreateSuccessResponse(stringIntegerPair);
+    }
+
+
 }
