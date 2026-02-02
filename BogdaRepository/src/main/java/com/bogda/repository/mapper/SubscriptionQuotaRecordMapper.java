@@ -1,7 +1,7 @@
-package com.bogda.service.mapper;
+package com.bogda.repository.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogda.common.entity.DO.SubscriptionQuotaRecordDO;
+import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

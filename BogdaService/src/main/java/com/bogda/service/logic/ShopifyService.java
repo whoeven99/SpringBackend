@@ -8,6 +8,8 @@ import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.DO.*;
 import com.bogda.common.entity.VO.SubscriptionVO;
 import com.bogda.integration.model.*;
+import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
+import com.bogda.repository.repo.SubscriptionQuotaRecordRepo;
 import com.bogda.service.Service.*;
 import com.bogda.service.utils.LanguageFlagConfig;
 import com.bogda.common.entity.DTO.TranslateTextDTO;
@@ -72,6 +74,8 @@ public class ShopifyService {
     private IUserTrialsService iUserTrialsService;
     @Autowired
     private ICharsOrdersService iCharsOrdersService;
+    @Autowired
+    private SubscriptionQuotaRecordRepo subscriptionQuotaRecordRepo;
 
     // TODO 所有需要轮询shopify数据的， 挪到这里
     public void rotateAllShopifyGraph(String shopName, String resourceType, String accessToken,
@@ -1008,98 +1012,131 @@ public class ShopifyService {
     }
 
     public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
-        SubscriptionVO subscriptionVO = new SubscriptionVO();
         UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getDataByShopName(shopName);
-
         if (userSubscriptionsDO == null) {
             AppInsightsUtils.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
 
-        // 根据计划id 去查id名称
-        String planType = iSubscriptionPlansService.getDataByPlanId(userSubscriptionsDO.getPlanId()).getPlanName();
-
-        // 判断计划名称
-        String parsePlanType = parsePlanName(planType);
-        if (parsePlanType == null) {
+        SubscriptionVO subscriptionVO = buildBaseSubscriptionVO(userSubscriptionsDO);
+        if (subscriptionVO == null) {
             return new BaseResponse<>().CreateErrorResponse("parsePlanType is null");
         }
-        subscriptionVO.setPlanType(parsePlanType);
 
-        if (userSubscriptionsDO.getFeeType() == null) {
-            userSubscriptionsDO.setFeeType(0);
-        }
-        Integer userSubscriptionPlan = userSubscriptionsDO.getPlanId();
-        subscriptionVO.setUserSubscriptionPlan(userSubscriptionPlan);
+        Integer feeType = userSubscriptionsDO.getFeeType() != null ? userSubscriptionsDO.getFeeType() : 0;
+        subscriptionVO.setFeeType(feeType);
 
-        BaseResponse<Object> objectBaseResponse = checkWhiteList(shopName, subscriptionVO, userSubscriptionsDO.getFeeType());
-        if (objectBaseResponse != null) {
-            return objectBaseResponse;
+        BaseResponse<Object> whiteListResponse = checkWhiteList(shopName, subscriptionVO, feeType);
+        if (whiteListResponse != null) {
+            return whiteListResponse;
         }
 
-        //如果是userSubscriptionPlan是1和2，传null
-        if (userSubscriptionPlan == 1 || userSubscriptionPlan == 2 || userSubscriptionPlan == 8) {
+        Integer planId = userSubscriptionsDO.getPlanId();
+        // 免费计划：1/2/8 不展示周期与额度发放时间
+        if (planId == 1 || planId == 2 || planId == 8) {
             subscriptionVO.setCurrentPeriodEnd(null);
             subscriptionVO.setFeeType(0);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
-        //判断是否是免费计划
-        if (userSubscriptionPlan == 7) {
-            subscriptionVO.setUserSubscriptionPlan(7);
-            //根据shopName获取订阅计划过期的时间
+        // 免费试用计划 7
+        if (planId == 7) {
             UserTrialsDO userTrialsDO = iUserTrialsService.getDataByShopName(shopName);
-
-            subscriptionVO.setCurrentPeriodEnd(String.valueOf(userTrialsDO.getTrialEnd()));
-            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
+            subscriptionVO.setUserSubscriptionPlan(7);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            subscriptionVO.setCurrentPeriodEnd((userTrialsDO.getTrialEnd().toLocalDateTime().format(formatter)));
+            subscriptionVO.setFeeType(feeType);
             return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
         }
 
-        //根据shopName查询用户订阅计划，最新的那个，再根据最新的resourceId，查询是否过期
+        // 付费计划：需 CharsOrders（Shopify 订阅 id）查周期与额度发放时间
         CharsOrdersDO charsOrdersDO = iCharsOrdersService.listDataByShopNameAndStatus(shopName, "ACTIVE")
-                .stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
-                .findFirst().orElse(null);
+                .stream()
+                .filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
+                .findFirst()
+                .orElse(null);
 
         if (charsOrdersDO == null) {
             return new BaseResponse<>().CreateErrorResponse("charsOrdersDO is null");
         }
-        UsersDO usersDO = iUsersService.getUserByName(shopName);
 
-        // 通过charsOrdersDO的id，获取信息
-        // 根据新的集合获取这个订阅计划的信息
+        // 付费计划：从 SubscriptionQuotaRecord 按 subscription_id（对应 plan）取最新额度发放时间
+        setQuotaIssuedAtBySubscriptionId(subscriptionVO, charsOrdersDO.getId());
+
+        ShopifyPeriodResult periodResult = fetchCurrentPeriodEndFromShopify(shopName, charsOrdersDO);
+        if (periodResult.isNodeCancelled()) {
+            subscriptionVO.setFeeType(0);
+            subscriptionVO.setUserSubscriptionPlan(2);
+        } else {
+            subscriptionVO.setFeeType(feeType);
+            subscriptionVO.setUserSubscriptionPlan(planId);
+        }
+        return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+    }
+
+    /** 根据用户订阅构建基础 VO（planType、userSubscriptionPlan） */
+    private SubscriptionVO buildBaseSubscriptionVO(UserSubscriptionsDO userSubscriptionsDO) {
+        String planName = iSubscriptionPlansService.getDataByPlanId(userSubscriptionsDO.getPlanId()).getPlanName();
+        String parsePlanType = parsePlanName(planName);
+        if (parsePlanType == null) {
+            return null;
+        }
+        SubscriptionVO vo = new SubscriptionVO();
+        vo.setPlanType(parsePlanType);
+        vo.setUserSubscriptionPlan(userSubscriptionsDO.getPlanId());
+        return vo;
+    }
+
+    /** 根据 Shopify 订阅 id 从 SubscriptionQuotaRecord 取最新额度发放时间并写入 VO */
+    private void setQuotaIssuedAtBySubscriptionId(SubscriptionVO subscriptionVO, String subscriptionId) {
+        SubscriptionQuotaRecordDO latest = subscriptionQuotaRecordRepo.getLatestBySubscriptionId(subscriptionId);
+
+        if (latest != null && latest.getCreatedAt() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            subscriptionVO.setCurrentPeriodEnd(latest.getCreatedAt().toLocalDateTime().format(formatter));
+        }
+    }
+
+    /** 从 Shopify 拉取当前周期结束时间及 node 是否为空（计划取消） */
+    private ShopifyPeriodResult fetchCurrentPeriodEndFromShopify(String shopName, CharsOrdersDO charsOrdersDO) {
+        UsersDO usersDO = iUsersService.getUserByName(shopName);
         String query = ShopifyRequestUtils.getSubscriptionQuery(charsOrdersDO.getId());
         String infoByShopify = null;
         try {
             infoByShopify = CompletableFuture
                     .supplyAsync(() -> getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, query))
-                    .get(5, TimeUnit.SECONDS); // 5秒超时
+                    .get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
-            // Shopify 请求异常
-            AppInsightsUtils.trackTrace("FatalException task getUserSubscriptionPlan Shopify 请求异常： " + shopName + " "
-                            + e.getMessage());
+            AppInsightsUtils.trackTrace("FatalException task getUserSubscriptionPlan Shopify 请求异常： " + shopName + " " + e.getMessage());
         }
-
         if (infoByShopify == null || infoByShopify.isEmpty()) {
-            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-            subscriptionVO.setUserSubscriptionPlan(userSubscriptionsDO.getPlanId());
-            subscriptionVO.setCurrentPeriodEnd(null);
-            return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+            return new ShopifyPeriodResult(null, false);
         }
-
-        // 根据订阅计划信息，判断是否是第一个月的开始
         JSONObject root = JSON.parseObject(infoByShopify);
         JSONObject node = root.getJSONObject("node");
         if (node == null || node.isEmpty()) {
-            // 用户卸载，计划会被取消，但不确定其他情况
-            subscriptionVO.setFeeType(0);
-            subscriptionVO.setUserSubscriptionPlan(2);
-            subscriptionVO.setCurrentPeriodEnd(null);
-        } else {
-            subscriptionVO.setFeeType(userSubscriptionsDO.getFeeType());
-            String currentPeriodEnd = node.getString("currentPeriodEnd");
-            subscriptionVO.setCurrentPeriodEnd(currentPeriodEnd);
+            return new ShopifyPeriodResult(null, true);
         }
-        return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
+        return new ShopifyPeriodResult(node.getString("currentPeriodEnd"), false);
+    }
+
+    /** 仅用于 getUserSubscriptionPlan 的 Shopify 周期结果 */
+    private static class ShopifyPeriodResult {
+        private final String currentPeriodEnd;
+        private final boolean nodeCancelled;
+
+        ShopifyPeriodResult(String currentPeriodEnd, boolean nodeCancelled) {
+            this.currentPeriodEnd = currentPeriodEnd;
+            this.nodeCancelled = nodeCancelled;
+        }
+
+        String getCurrentPeriodEnd() {
+            return currentPeriodEnd;
+        }
+
+        boolean isNodeCancelled() {
+            return nodeCancelled;
+        }
     }
 
     private static BaseResponse<Object> checkWhiteList(String shopName, SubscriptionVO subscriptionVO, Integer feeType) {
