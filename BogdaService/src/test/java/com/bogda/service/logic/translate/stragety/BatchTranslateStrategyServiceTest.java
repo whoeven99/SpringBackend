@@ -106,7 +106,7 @@ class BatchTranslateStrategyServiceTest {
             mockedGlossary.when(() -> GlossaryService.match("Hello", glossaryMap)).thenReturn("你好");
             mockedGlossary.when(() -> GlossaryService.match("World", glossaryMap)).thenReturn(null);
             mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
-            
+
             // Mock calculateBaiLianToken 方法，避免 tokenizer 为 null 的 NPE
             mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
 
