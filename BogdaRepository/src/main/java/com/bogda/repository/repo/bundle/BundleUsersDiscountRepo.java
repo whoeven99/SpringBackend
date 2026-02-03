@@ -24,7 +24,7 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
     }
 
 
-    public boolean updateDiscountStatus(String shopName, String discountGid, String status) {
+    public boolean updateDiscountStatus(String shopName, String discountGid, Boolean status) {
         return baseMapper.update(new LambdaUpdateWrapper<BundleUsersDiscountDO>()
                 .eq(BundleUsersDiscountDO::getShopName, shopName)
                 .eq(BundleUsersDiscountDO::getDiscountId, discountGid)
