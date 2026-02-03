@@ -7,6 +7,8 @@ import com.azure.ai.openai.models.ChatCompletionsOptions;
 import com.azure.ai.openai.models.ChatMessage;
 import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
+import com.azure.core.exception.HttpResponseException;
+import com.bogda.common.model.AiTranslateResult;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.utils.TimeOutUtils;
@@ -66,5 +68,48 @@ public class ChatGptIntegration {
             AppInsightsUtils.trackException(e);
             return null;
         }
+    }
+
+    /**
+     * 带错误码的翻译，用于链式轮换与 400 直接走 Google 判断。
+     */
+    public AiTranslateResult chatWithGptWithResult(String prompt, String target) {
+        ChatMessage userMessage = new ChatMessage(ChatRole.USER);
+        userMessage.setContent(prompt);
+
+        List<ChatMessage> prompts = new ArrayList<>();
+        prompts.add(userMessage);
+
+        ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
+                .setFrequencyPenalty(0.0)
+                .setPresencePenalty(0.0)
+                .setStream(false);
+        try {
+            ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
+                    client.getChatCompletions(ModuleCodeUtils.GPT_5, options));
+            String content = chatCompletions.getChoices().get(0).getMessage().getContent();
+            int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
+            int input = chatCompletions.getUsage().getPromptTokens();
+            int output = chatCompletions.getUsage().getCompletionTokens();
+            AppInsightsUtils.trackTrace("ChatGptIntegration 翻译提示词： " + prompt + " token openai : " + content + " all: "
+                    + allToken + " input: " + input + " output: " + output + " target: " + target);
+            return AiTranslateResult.success(content, allToken);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " prompt: " + prompt);
+            AppInsightsUtils.trackException(e);
+            int errorCode = isHttp400(e) ? 400 : 0;
+            return AiTranslateResult.fail(errorCode);
+        }
+    }
+
+    private static boolean isHttp400(Throwable e) {
+        if (e instanceof HttpResponseException) {
+            try {
+                return ((HttpResponseException) e).getResponse().getStatusCode() == 400;
+            } catch (Throwable t) {
+                return false;
+            }
+        }
+        return false;
     }
 }
