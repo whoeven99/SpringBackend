@@ -97,19 +97,9 @@ public class ChatGptIntegration {
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " prompt: " + prompt);
             AppInsightsUtils.trackException(e);
-            int errorCode = isHttp400(e) ? 400 : 0;
+            int errorCode = TimeOutUtils.isHttp400(e) ? 400 : 0;
             return AiTranslateResult.fail(errorCode);
         }
     }
 
-    private static boolean isHttp400(Throwable e) {
-        if (e instanceof HttpResponseException) {
-            try {
-                return ((HttpResponseException) e).getResponse().getStatusCode() == 400;
-            } catch (Throwable t) {
-                return false;
-            }
-        }
-        return false;
-    }
 }

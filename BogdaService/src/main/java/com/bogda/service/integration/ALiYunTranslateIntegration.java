@@ -136,6 +136,9 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
+                            if (TimeOutUtils.isHttp400(e)) {
+                                throw new RuntimeException(e);
+                            }
                             AppInsightsUtils.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() + " translateText : " + prompt);
                             AppInsightsUtils.trackException(e);
                             return null;
@@ -156,18 +159,9 @@ public class ALiYunTranslateIntegration {
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             AppInsightsUtils.trackException(e);
-            int errorCode = isHttp400(e) ? 400 : 0;
+            int errorCode = TimeOutUtils.isHttp400(e) ? 400 : 0;
             return AiTranslateResult.fail(errorCode);
         }
-    }
-
-    private static boolean isHttp400(Throwable e) {
-        if (e == null) return false;
-        String msg = e.getMessage();
-        if (msg != null && (msg.contains("400") || msg.contains("InvalidParameter") || msg.contains("Bad Request"))) {
-            return true;
-        }
-        return isHttp400(e.getCause());
     }
 
     /**
