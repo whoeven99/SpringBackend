@@ -86,7 +86,8 @@ public class BundleDiscountService {
         String updateDiscountGid = shopifyDiscountDO.getDiscountGid().replace(DISCOUNT_ID, "");
 
         // 修改db表里面的数据
-        bundleUsersDiscountRepo.updateDiscountStatus(shopName, shopifyDiscountDO.getDiscountGid(), shopifyDiscountDO.getStatus());
+        boolean status = "ACTIVE".equals(shopifyDiscountDO.getStatus());
+        bundleUsersDiscountRepo.updateDiscountStatus(shopName, shopifyDiscountDO.getDiscountGid(), status);
         if (shopifyDiscountCosmos.updateDiscount(updateDiscountGid, shopName, shopifyDiscountDO.getDiscountData())) {
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
@@ -97,7 +98,8 @@ public class BundleDiscountService {
         String updateDiscountGid = discountGid.replace(DISCOUNT_ID, "");
 
         // 修改db表里面的数据
-        bundleUsersDiscountRepo.updateDiscountStatus(shopName, updateDiscountGid, status);
+        boolean statusFlag = "ACTIVE".equals(status);
+        bundleUsersDiscountRepo.updateDiscountStatus(shopName, updateDiscountGid, statusFlag);
 
         if (shopifyDiscountCosmos.updateDiscountStatus(updateDiscountGid, shopName, status)) {
             return new BaseResponse<>().CreateSuccessResponse(new Pair<String, String>(discountGid, status));
