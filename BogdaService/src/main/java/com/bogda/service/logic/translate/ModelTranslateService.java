@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.model.AiTranslateResult;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
@@ -11,7 +12,9 @@ import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -25,39 +28,96 @@ public class ModelTranslateService {
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
 
-    // ai translate
-    public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
-        Pair<String, Integer> pair = null;
-        if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
-            pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        } else if (ModuleCodeUtils.GPT_5.equals(aiModel)) {
-            pair = chatGptIntegration.chatWithGpt(prompt, target);
-        } else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
-            pair = geminiIntegration.generateText(aiModel, prompt);
+    /**
+     * 根据用户选择的模型得到链式顺序：首选用户选的，再轮换另外两个。
+     * GPT -> [GPT, Gemini, Qwen]; Gemini -> [Gemini, GPT, Qwen]; Qwen -> [Qwen, GPT, Gemini]
+     */
+    private List<String> getModelChain(String userSelectedModel) {
+        List<String> chain = new ArrayList<>(3);
+        if (ModuleCodeUtils.GPT_5.equals(userSelectedModel)) {
+            chain.add(ModuleCodeUtils.GPT_5);
+            chain.add(GeminiIntegration.GEMINI_3_FLASH);
+            chain.add(ALiYunTranslateIntegration.QWEN_MAX);
+        } else if (GeminiIntegration.GEMINI_3_FLASH.equals(userSelectedModel)) {
+            chain.add(GeminiIntegration.GEMINI_3_FLASH);
+            chain.add(ModuleCodeUtils.GPT_5);
+            chain.add(ALiYunTranslateIntegration.QWEN_MAX);
+        } else {
+            chain.add(ALiYunTranslateIntegration.QWEN_MAX);
+            chain.add(ModuleCodeUtils.GPT_5);
+            chain.add(GeminiIntegration.GEMINI_3_FLASH);
         }
-        return pair;
+        return chain;
     }
-    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, String sourceText) {
-        Pair<String, Integer> pair = aiTranslate(aiModel, prompt, target);
 
-        if (pair != null) {
-            return pair;
+    /**
+     * 单模型 AI 翻译，带错误码（400 表示直接走 Google）。
+     */
+    private AiTranslateResult aiTranslateWithResult(String aiModel, String prompt, String target) {
+        if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
+            return aLiYunTranslateIntegration.userTranslateWithResult(prompt, target);
         }
+        if (ModuleCodeUtils.GPT_5.equals(aiModel)) {
+            return chatGptIntegration.chatWithGptWithResult(prompt, target);
+        }
+        if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
+            return geminiIntegration.generateTextWithResult(aiModel, prompt);
+        }
+        return AiTranslateResult.fail(0);
+    }
 
-        // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回.
-        AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
+    // ai translate（保留原接口，供未走链式的调用）
+    public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
+        AiTranslateResult result = aiTranslateWithResult(aiModel, prompt, target);
+        return result.isSuccess() ? new Pair<>(result.getContent(), result.getTokenCount()) : null;
+    }
+
+    public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, String sourceText) {
+        List<String> chain = getModelChain(aiModel);
+        for (String model : chain) {
+            AiTranslateResult result = aiTranslateWithResult(model, prompt, target);
+            if (result == null) {
+                result = AiTranslateResult.fail(0);
+            }
+            if (result.isSuccess()) {
+                return new Pair<>(result.getContent(), result.getTokenCount());
+            }
+            if (result.isBadRequest()) {
+                AppInsightsUtils.trackTrace("FatalException " + model + " 返回 400，直接走 Google : " + sourceText);
+                break;
+            }
+            AppInsightsUtils.trackTrace("FatalException " + model + " 翻译失败，尝试下一模型 : " + sourceText);
+        }
         return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
     }
 
     public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, Map<Integer, String> sourceMap) {
-        Pair<String, Integer> pair = aiTranslate(aiModel, prompt, target);
+        List<String> chain = getModelChain(aiModel);
+        Pair<String, Integer> pair = null;
+        boolean skipToGoogle = false;
+        for (String model : chain) {
+            AiTranslateResult result = aiTranslateWithResult(model, prompt, target);
+            if (result == null) {
+                result = AiTranslateResult.fail(0);
+            }
+            if (result.isSuccess()) {
+                pair = new Pair<>(result.getContent(), result.getTokenCount());
+                break;
+            }
+            if (result.isBadRequest()) {
+                AppInsightsUtils.trackTrace("FatalException " + model + " 返回 400，直接走 Google : " + sourceMap);
+                skipToGoogle = true;
+                break;
+            }
+            AppInsightsUtils.trackTrace("FatalException " + model + " 翻译失败，尝试下一模型 : " + sourceMap);
+        }
 
         if (pair != null) {
             return pair;
         }
-
-        // json批量翻译不行，翻译值会少数据，目前只能循环批量翻译
-        AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
+        if (!skipToGoogle) {
+            AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 链式翻译均失败，用google翻译 : " + sourceMap);
+        }
 
         // 将文本转为Map<Integer, String>, 循环翻译
         if (sourceMap == null || sourceMap.isEmpty()) {
