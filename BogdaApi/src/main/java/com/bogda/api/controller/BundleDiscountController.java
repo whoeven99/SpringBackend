@@ -1,6 +1,7 @@
 package com.bogda.api.controller;
 
 import com.bogda.common.controller.response.BaseResponse;
+import com.bogda.common.entity.DTO.BundleDiscountAmountReportDTO;
 import com.bogda.service.logic.BundleApp.BundleDiscountService;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,12 @@ public class BundleDiscountController {
     @PostMapping("/updateUserDiscountStatus")
     public BaseResponse<Object> updateUserDiscountStatus(@RequestParam String shopName, @RequestParam String discountGid, @RequestParam String status) {
         return bundleDiscountService.updateUserDiscountStatus(shopName, discountGid, status);
+    }
+
+    // 下单优惠金额上报
+    @PostMapping("/reportDiscountAmount")
+    public BaseResponse<Object> reportDiscountAmount(@RequestParam String shopName, @RequestBody BundleDiscountAmountReportDTO dto) {
+        return bundleDiscountService.reportDiscountAmount(shopName, dto);
     }
 
     // 获取用户所有数据

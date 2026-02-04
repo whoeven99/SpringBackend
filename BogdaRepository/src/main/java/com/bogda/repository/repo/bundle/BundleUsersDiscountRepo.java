@@ -83,4 +83,10 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
                 .eq(BundleUsersDiscountDO::getDiscountId, discountId)
                 .setSql(sql)) > 0;
     }
+
+    public BundleUsersDiscountDO getAllByShopNameAndDiscountName(String shopName, String discountName) {
+        return baseMapper.selectOne(new LambdaQueryWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getDiscountName, discountName));
+    }
 }
