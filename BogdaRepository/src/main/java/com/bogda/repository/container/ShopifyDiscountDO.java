@@ -46,8 +46,8 @@ public class ShopifyDiscountDO {
         public static class BasicInformation {
             private String offerName;
             private String displayName;
+            private Boolean enable; //用于表示折扣前端是否渲染和生效
             private OfferType offerType;
-
 
             @Data
             public static class OfferType {
@@ -166,10 +166,7 @@ public class ShopifyDiscountDO {
         @Data
         public static class DiscountRule {
             private String id;
-            private Boolean enabled;
-            private Boolean isExpanded;
             private String title;
-
             private Integer quantity;
             private Discount discount;
             @JsonProperty("discount_reward")
@@ -335,8 +332,8 @@ public class ShopifyDiscountDO {
 
             @Data
             public static class Budget {
-                private Double totalBudget;
-                private Double dailyBudget;
+                private Double totalBudget; // 用户设置总预算
+                private Double dailyBudget; // 用户设置日预算
                 private Double usedTotalBudget;
                 private Double usedDailyBudget;
             }

@@ -118,6 +118,52 @@ public class ShopifyDiscountCosmos {
         }
     }
 
+    /**
+     * 仅更新预算使用量与 enable（尽可能减少 RU）
+     *
+     * <p>注意：Cosmos Patch path 使用存储的 JSON 字段名（如 basic_information/targeting_settings）。</p>
+     */
+    public boolean patchBudgetAndEnable(String id,
+                                        String shopName,
+                                        Double usedDailyBudget,
+                                        Double usedTotalBudget,
+                                        Boolean enable) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/targeting_settings/budget/usedDailyBudget", usedDailyBudget)
+                    .replace("/discountData/targeting_settings/budget/usedTotalBudget", usedTotalBudget)
+                    .replace("/discountData/basic_information/enable", enable)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchBudgetAndEnable 更新budget/enable失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
+    /**
+     * 仅更新预算使用量（尽可能减少 RU）
+     */
+    public boolean patchBudgetUsedOnly(String id,
+                                       String shopName,
+                                       Double usedDailyBudget,
+                                       Double usedTotalBudget) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/targeting_settings/budget/usedDailyBudget", usedDailyBudget)
+                    .replace("/discountData/targeting_settings/budget/usedTotalBudget", usedTotalBudget)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchBudgetUsedOnly 更新budget失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
     public boolean updateDiscountStatus(String id, String shopName, String status) {
         try {
             CosmosPatchOperations patchOps = CosmosPatchOperations.create().replace("/status", status)
