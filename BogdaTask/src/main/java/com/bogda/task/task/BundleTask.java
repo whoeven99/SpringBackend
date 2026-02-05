@@ -19,4 +19,12 @@ public class BundleTask {
             bundleTaskService.updateDiscountData();
         });
     }
+
+    /** 每天 UTC 0 点：重置 usedDailyBudget = 0，并恢复因日限额熔断的 enable */
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void resetDailyBudgetAndRecoverEnable() {
+        executorService.execute(() -> {
+            bundleTaskService.resetDailyBudgetAndRecoverEnable();
+        });
+    }
 }

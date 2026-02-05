@@ -43,20 +43,13 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
                 .eq(BundleUsersDiscountDO::getShopName, shopName));
     }
 
-    public Double getAllGmvByShopName(String shopName) {
-        QueryWrapper<BundleUsersDiscountDO> wrapper = new QueryWrapper<>();
-        wrapper.eq("shop_name", shopName)
-                .eq("is_deleted", 0)
-                .select("SUM(gmv) AS total_gmv");
-
-        Map<String, Object> result = baseMapper.selectMaps(wrapper)
-                .stream()
-                .findFirst()
-                .orElse(Collections.emptyMap());
-
-        return result.get("total_gmv") == null
-                ? 0D
-                : ((Number) result.get("total_gmv")).doubleValue();
+    /**
+     * 查询所有状态为活跃且未删除的折扣条目（供 UTC 0 点日预算重置任务使用）
+     */
+    public List<BundleUsersDiscountDO> listActiveAndNotDeleted() {
+        return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getStatus, true)
+                .eq(BundleUsersDiscountDO::getIsDeleted, false));
     }
 
     public String getDiscountNameByShopNameAndDiscountId(String shopName, String discountId) {

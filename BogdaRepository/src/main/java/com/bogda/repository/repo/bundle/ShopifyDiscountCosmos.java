@@ -165,6 +165,24 @@ public class ShopifyDiscountCosmos {
     }
 
     /**
+     * 日预算重置：usedDailyBudget = 0，并可选设置 enable（UTC 0 点定时任务用，一次 patch 减少 RU）
+     */
+    public boolean patchDailyBudgetResetAndEnable(String id, String shopName, Boolean enable) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/targeting_settings/budget/usedDailyBudget", 0d)
+                    .replace("/discountData/basic_information/enable", enable)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchDailyBudgetResetAndEnable 失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
+    /**
      * 仅更新 basic_information.enable（异步熔断/恢复时用，减少 RU）
      */
     public boolean patchEnableOnly(String id, String shopName, Boolean enable) {
