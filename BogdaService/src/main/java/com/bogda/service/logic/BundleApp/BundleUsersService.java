@@ -83,7 +83,7 @@ public class BundleUsersService {
     }
 
     /**
-     * 用户卸载：1）Bundle_Users.uninstall_at 设为当前 UTC；
+     * 用户卸载：1）Bundle_Users.uninstall_at 设为当前 UTC；删除BundleUserDO 里的storefront_access_token 和storefront_id
      * 2）该 shop 下所有活跃未删折扣 status/is_deleted 改为 false；
      * 3）Cosmos 中对应文档删除。
      */
@@ -93,8 +93,9 @@ public class BundleUsersService {
         }
         bundleUsersRepo.updateUninstallAtByShopName(shopName);
         List<BundleUsersDiscountDO> list = bundleUsersDiscountRepo.listActiveAndNotDeletedByShopName(shopName);
+        System.out.println("list : " + list);
         if (list != null && !list.isEmpty()) {
-            bundleUsersDiscountRepo.updateStatusAndIsDeletedForActiveByShopName(shopName, false, false);
+            bundleUsersDiscountRepo.updateStatusAndIsDeletedForActiveByShopName(shopName, false, true);
             for (BundleUsersDiscountDO d : list) {
                 String discountId = d.getDiscountId();
                 if (discountId != null) {

@@ -56,7 +56,6 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
     public List<BundleUsersDiscountDO> listActiveAndNotDeletedByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>()
                 .eq(BundleUsersDiscountDO::getShopName, shopName)
-                .eq(BundleUsersDiscountDO::getStatus, true)
                 .eq(BundleUsersDiscountDO::getIsDeleted, false));
     }
 
@@ -66,7 +65,6 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
     public int updateStatusAndIsDeletedForActiveByShopName(String shopName, Boolean status, Boolean isDeleted) {
         return baseMapper.update(null, new LambdaUpdateWrapper<BundleUsersDiscountDO>()
                 .eq(BundleUsersDiscountDO::getShopName, shopName)
-                .eq(BundleUsersDiscountDO::getStatus, true)
                 .eq(BundleUsersDiscountDO::getIsDeleted, false)
                 .set(BundleUsersDiscountDO::getStatus, status)
                 .set(BundleUsersDiscountDO::getIsDeleted, isDeleted)
