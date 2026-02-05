@@ -164,6 +164,23 @@ public class ShopifyDiscountCosmos {
         }
     }
 
+    /**
+     * 仅更新 basic_information.enable（异步熔断/恢复时用，减少 RU）
+     */
+    public boolean patchEnableOnly(String id, String shopName, Boolean enable) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/basic_information/enable", enable)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchEnableOnly 更新enable失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
     public boolean updateDiscountStatus(String id, String shopName, String status) {
         try {
             CosmosPatchOperations patchOps = CosmosPatchOperations.create().replace("/status", status)
