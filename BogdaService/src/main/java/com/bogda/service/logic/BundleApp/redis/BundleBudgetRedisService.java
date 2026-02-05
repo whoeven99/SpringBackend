@@ -36,8 +36,10 @@ public class BundleBudgetRedisService {
 
         try {
             Double incrementDaily = redisIntegration.incrementValue(dailyKey, amount);
+            System.out.println("incrementDaily: " + incrementDaily);
             redisIntegration.expire(dailyKey, DAILY_TTL_SECONDS);
             Double incrementTotal = redisIntegration.incrementValue(totalKey, amount);
+            System.out.println("incrementTotal: " + incrementTotal);
             if (incrementDaily == 0D || incrementTotal == 0D) {
                 return null;
             }

@@ -170,7 +170,6 @@ public class BundleDiscountService {
 
         // first返回每日使用数据， second返回所有使用数据
         Pair<Double, Double> afterAddData = bundleBudgetRedisService.addUsedAmount(shopName, discountData.getDiscountId(), realAmount);
-
         if (afterAddData == null) {
             return new BaseResponse<>().CreateErrorResponse("Error: add used amount failed");
         }
@@ -196,7 +195,7 @@ public class BundleDiscountService {
 
         if (circuitOpen) {
             // 触发熔断：立即 disable，并把 used 值写回 Cosmos（局部 patch，减少 RU）
-            boolean ok = shopifyDiscountCosmos.patchBudgetAndEnable(discountName, shopName,
+            boolean ok = shopifyDiscountCosmos.patchBudgetAndEnable(discountId, shopName,
                     usedDailyBudget, usedTotalBudget, false);
             Boolean enable = ok ? Boolean.FALSE : null;
             return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountAmountReportVO(true, enable,
@@ -204,7 +203,7 @@ public class BundleDiscountService {
         }
 
         // 未熔断：异步回写 used 值（预算热数据以 Redis 为准）
-        asyncPatchBudgetUsedOnly(discountName, shopName, usedDailyBudget, usedTotalBudget);
+        asyncPatchBudgetUsedOnly(discountId, shopName, usedDailyBudget, usedTotalBudget);
         return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountAmountReportVO(false, true,
                 usedDailyBudget, usedTotalBudget));
     }
