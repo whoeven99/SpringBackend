@@ -41,12 +41,15 @@ public class BundleUsersRepo extends ServiceImpl<BundleUsersMapper, BundleUserDO
 
     /**
      * 用户卸载：将 uninstall_at 更新为当前 UTC 时间
+     * 删除BundleUserDO 里的storefront_access_token 和storefront_id
      */
     public boolean updateUninstallAtByShopName(String shopName) {
         Timestamp now = Timestamp.from(Instant.now());
-        return baseMapper.update(null, new LambdaUpdateWrapper<BundleUserDO>()
+        return baseMapper.update(new LambdaUpdateWrapper<BundleUserDO>()
                 .eq(BundleUserDO::getShopName, shopName)
                 .set(BundleUserDO::getUninstallAt, now)
-                .set(BundleUserDO::getUpdatedAt, now)) > 0;
+                .set(BundleUserDO::getUpdatedAt, now)
+                .set(BundleUserDO::getStorefrontAccessToken, null)
+                .set(BundleUserDO::getStorefrontId, null)) > 0;
     }
 }
