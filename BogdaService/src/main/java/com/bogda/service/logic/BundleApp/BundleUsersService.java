@@ -93,7 +93,6 @@ public class BundleUsersService {
         }
         bundleUsersRepo.updateUninstallAtByShopName(shopName);
         List<BundleUsersDiscountDO> list = bundleUsersDiscountRepo.listActiveAndNotDeletedByShopName(shopName);
-        System.out.println("list : " + list);
         if (list != null && !list.isEmpty()) {
             bundleUsersDiscountRepo.updateStatusAndIsDeletedForActiveByShopName(shopName, false, true);
             for (BundleUsersDiscountDO d : list) {
