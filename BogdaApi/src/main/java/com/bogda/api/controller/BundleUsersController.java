@@ -17,4 +17,10 @@ public class BundleUsersController {
     public BaseResponse<Object> initUser(@RequestParam String shopName, @RequestBody BundleUserDO bundleUserDO) {
         return bundleUsersService.initUser(shopName, bundleUserDO);
     }
+
+    // 用户卸载：uninstall_at 设为 UTC 当前时间，该 shop 下所有优惠 status/is_deleted 改为 false，Cosmos 对应文档删除
+    @PostMapping("/uninstall")
+    public BaseResponse<Object> uninstall(@RequestParam String shopName) {
+        return bundleUsersService.uninstall(shopName);
+    }
 }

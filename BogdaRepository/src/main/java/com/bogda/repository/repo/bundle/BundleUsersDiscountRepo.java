@@ -1,16 +1,14 @@
 package com.bogda.repository.repo.bundle;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.mapper.BundleUsersDiscountMapper;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapper, BundleUsersDiscountDO> {
@@ -50,6 +48,29 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
         return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>()
                 .eq(BundleUsersDiscountDO::getStatus, true)
                 .eq(BundleUsersDiscountDO::getIsDeleted, false));
+    }
+
+    /**
+     * 按 shopName 查询 status=true 且 is_deleted=false 的折扣（供卸载等按店铺处理使用）
+     */
+    public List<BundleUsersDiscountDO> listActiveAndNotDeletedByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getStatus, true)
+                .eq(BundleUsersDiscountDO::getIsDeleted, false));
+    }
+
+    /**
+     * 将该 shop 下所有「status=true 且 is_deleted=false」的折扣批量更新为指定 status 和 is_deleted
+     */
+    public int updateStatusAndIsDeletedForActiveByShopName(String shopName, Boolean status, Boolean isDeleted) {
+        return baseMapper.update(null, new LambdaUpdateWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getStatus, true)
+                .eq(BundleUsersDiscountDO::getIsDeleted, false)
+                .set(BundleUsersDiscountDO::getStatus, status)
+                .set(BundleUsersDiscountDO::getIsDeleted, isDeleted)
+                .set(BundleUsersDiscountDO::getUpdatedAt, Timestamp.from(Instant.now())));
     }
 
     public String getDiscountNameByShopNameAndDiscountId(String shopName, String discountId) {
