@@ -1,4 +1,4 @@
-package com.bogda.service.logic.bundle;
+package com.bogda.service.logic.BundleApp;
 
 import com.bogda.common.utils.AliyunLogSqlUtils;
 import com.bogda.integration.aimodel.AliyunSlsIntegration;

@@ -12,7 +12,7 @@ import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
 import com.bogda.service.logic.RateDataService;
-import com.bogda.service.logic.bundle.redis.BundleBudgetRedisService;
+import com.bogda.service.logic.BundleApp.redis.BundleBudgetRedisService;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;

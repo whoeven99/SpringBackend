@@ -1,4 +1,4 @@
-package com.bogda.service.logic.bundle;
+package com.bogda.service.logic.BundleApp;
 
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.entity.DTO.*;

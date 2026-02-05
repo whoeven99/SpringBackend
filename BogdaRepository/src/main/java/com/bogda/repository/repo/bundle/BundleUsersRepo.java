@@ -35,7 +35,8 @@ public class BundleUsersRepo extends ServiceImpl<BundleUsersMapper, BundleUserDO
     }
 
     public boolean updateUserByShopName(String shopName, BundleUserDO bundleUserDO) {
-        return baseMapper.update(bundleUserDO, new LambdaUpdateWrapper<BundleUserDO>().eq(BundleUserDO::getShopName, shopName)) > 0;
+        return baseMapper.update(bundleUserDO, new LambdaUpdateWrapper<BundleUserDO>()
+                .eq(BundleUserDO::getShopName, shopName)) > 0;
     }
 
     /**

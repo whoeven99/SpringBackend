@@ -1,6 +1,6 @@
 package com.bogda.task.task;
 
-import com.bogda.service.logic.bundle.BundleTaskService;
+import com.bogda.service.logic.BundleApp.BundleTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
