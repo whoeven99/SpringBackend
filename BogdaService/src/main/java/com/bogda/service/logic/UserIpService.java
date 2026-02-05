@@ -54,19 +54,31 @@ public class UserIpService {
     public static final String NO_LANGUAGE_CODE = "NO_LANGUAGE_CODE_"; // 对应语言的ip计数
     public static final String NO_CURRENCY_CODE = "NO_CURRENCY_CODE_"; // 对应货币的ip计数
 
+    private static final int MULTIPLIER = 5; // 暂定的ip 倍数（后面可以存monitor的json中）
+
     /**
      * 检查额度是否足够，足够+1. 到达相关百分比，发邮件
      */
+    /**
+     * 根据用户订阅计划获取免费 IP 额度
+     *
+     * @param userSubscriptionPlan 用户订阅计划
+     * @return 免费 IP 数量
+     */
+    private int getFreeIpBySubscriptionPlan(Integer userSubscriptionPlan) {
+        return switch (userSubscriptionPlan) {
+            case 4 -> 10000 * MULTIPLIER;
+            case 5 -> 25000 * MULTIPLIER;
+            case 6 -> 50000 * MULTIPLIER;
+            default -> 500 * MULTIPLIER;
+        };
+    }
+
     public Boolean checkUserIp(String shopName) {
         // 使用事务确保数据一致性
         // 获取用户计划,加锁查询
         Integer userSubscriptionPlan = iUserSubscriptionsService.getUserSubscriptionPlan(shopName);
-        int freeIp = switch (userSubscriptionPlan) {
-            case 4 -> 10000;
-            case 5 -> 25000;
-            case 6 -> 50000;
-            default -> 500;
-        };
+        int freeIp = getFreeIpBySubscriptionPlan(userSubscriptionPlan);
 
         // 使用行锁获取用户IP数据，防止并发修改
         UserIpDO userIpDO = iUserIpService.selectByShopNameForUpdate(shopName);
@@ -353,12 +365,7 @@ public class UserIpService {
     public BaseResponse<Object> queryUserIpCount(String shopName) {
         // 获取用户计划
         Integer userSubscriptionPlan = iUserSubscriptionsService.getUserSubscriptionPlan(shopName);
-        int freeIp = switch (userSubscriptionPlan) {
-            case 4 -> 10000;
-            case 5 -> 25000;
-            case 6 -> 50000;
-            default -> 500;
-        };
+        int freeIp = getFreeIpBySubscriptionPlan(userSubscriptionPlan);
 
         // 查询已试用额度，
         Long ipCountByShopName = iUserIpService.getIpCountByShopName(shopName);
