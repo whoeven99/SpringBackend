@@ -1,16 +1,14 @@
 package com.bogda.repository.repo.bundle;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.mapper.BundleUsersDiscountMapper;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapper, BundleUsersDiscountDO> {
@@ -43,20 +41,36 @@ public class BundleUsersDiscountRepo extends ServiceImpl<BundleUsersDiscountMapp
                 .eq(BundleUsersDiscountDO::getShopName, shopName));
     }
 
-    public Double getAllGmvByShopName(String shopName) {
-        QueryWrapper<BundleUsersDiscountDO> wrapper = new QueryWrapper<>();
-        wrapper.eq("shop_name", shopName)
-                .eq("is_deleted", 0)
-                .select("SUM(gmv) AS total_gmv");
+    /**
+     * 查询所有状态为活跃且未删除的折扣条目（供 UTC 0 点日预算重置任务使用）
+     */
+    public List<BundleUsersDiscountDO> listActiveAndNotDeleted() {
+        return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getStatus, true)
+                .eq(BundleUsersDiscountDO::getIsDeleted, false));
+    }
 
-        Map<String, Object> result = baseMapper.selectMaps(wrapper)
-                .stream()
-                .findFirst()
-                .orElse(Collections.emptyMap());
+    /**
+     * 按 shopName 查询 status=true 且 is_deleted=false 的折扣（供卸载等按店铺处理使用）
+     */
+    public List<BundleUsersDiscountDO> listActiveAndNotDeletedByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getStatus, true)
+                .eq(BundleUsersDiscountDO::getIsDeleted, false));
+    }
 
-        return result.get("total_gmv") == null
-                ? 0D
-                : ((Number) result.get("total_gmv")).doubleValue();
+    /**
+     * 将该 shop 下所有「status=true 且 is_deleted=false」的折扣批量更新为指定 status 和 is_deleted
+     */
+    public int updateStatusAndIsDeletedForActiveByShopName(String shopName, Boolean status, Boolean isDeleted) {
+        return baseMapper.update(null, new LambdaUpdateWrapper<BundleUsersDiscountDO>()
+                .eq(BundleUsersDiscountDO::getShopName, shopName)
+                .eq(BundleUsersDiscountDO::getStatus, true)
+                .eq(BundleUsersDiscountDO::getIsDeleted, false)
+                .set(BundleUsersDiscountDO::getStatus, status)
+                .set(BundleUsersDiscountDO::getIsDeleted, isDeleted)
+                .set(BundleUsersDiscountDO::getUpdatedAt, Timestamp.from(Instant.now())));
     }
 
     public String getDiscountNameByShopNameAndDiscountId(String shopName, String discountId) {

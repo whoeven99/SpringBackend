@@ -1,10 +1,12 @@
-package com.bogda.service.logic.bundle;
+package com.bogda.service.logic.BundleApp;
 
 import com.bogda.common.utils.AliyunLogSqlUtils;
 import com.bogda.integration.aimodel.AliyunSlsIntegration;
+import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.repository.repo.bundle.BundleUsersRepo;
+import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
 import com.bogda.service.logic.RateDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,9 +25,48 @@ public class BundleTaskService {
     @Autowired
     private BundleUsersDiscountRepo bundleUsersDiscountRepo;
     @Autowired
+    private ShopifyDiscountCosmos shopifyDiscountCosmos;
+    @Autowired
     private AliyunSlsIntegration aliyunSlsIntegration;
     @Autowired
     private RateDataService rateDataService;
+
+    /**
+     * 每天 UTC 0 点执行：遍历所有活跃且未删除的 Bundle_Users_Discount，重置 usedDailyBudget = 0，
+     * 若 enable == false 且 usedTotalBudget < totalBudget 则恢复 enable = true 并同步至 Cosmos。
+     */
+    public void resetDailyBudgetAndRecoverEnable() {
+        List<BundleUsersDiscountDO> list = bundleUsersDiscountRepo.listActiveAndNotDeleted();
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        for (BundleUsersDiscountDO row : list) {
+            String shopName = row.getShopName();
+            String discountId = row.getDiscountId();
+            if (shopName == null || discountId == null) {
+                continue;
+            }
+            ShopifyDiscountDO doc = shopifyDiscountCosmos.getDiscountByIdAndShopName(discountId, shopName);
+            if (doc == null || doc.getDiscountData() == null
+                    || doc.getDiscountData().getBasicInformation() == null
+                    || doc.getDiscountData().getTargetingSettings() == null
+                    || doc.getDiscountData().getTargetingSettings().getBudget() == null) {
+                continue;
+            }
+            ShopifyDiscountDO.DiscountData.TargetingSettings.Budget budget = doc.getDiscountData().getTargetingSettings().getBudget();
+            Boolean currentEnable = doc.getDiscountData().getBasicInformation().getEnable();
+            double usedTotal = budget.getUsedTotalBudget() != null ? budget.getUsedTotalBudget() : 0d;
+            Double totalBudget = budget.getTotalBudget();
+
+            // 恢复条件：当前 enable == false 且 usedTotalBudget < totalBudget（昨日日限额熔断可恢复）
+            boolean shouldRecover = Boolean.FALSE.equals(currentEnable)
+                    && totalBudget != null
+                    && usedTotal < totalBudget;
+            Boolean newEnable = shouldRecover ? true : currentEnable;
+
+            shopifyDiscountCosmos.patchDailyBudgetResetAndEnable(discountId, shopName, newEnable);
+        }
+    }
 
     /**
      * 更新折扣数据：从阿里云 SLS 查询前一天的 exposure_pv、checkout_started_pv、gmv、add_to_cart_pv，累积写入数据库。

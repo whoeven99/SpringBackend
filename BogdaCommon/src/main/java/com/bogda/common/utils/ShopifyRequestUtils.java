@@ -202,4 +202,28 @@ public class ShopifyRequestUtils {
                 }
                 """;
     }
+
+    /**
+     * 创建 storefrontAccessToken
+     */
+    public static String createAccessTokenQuery() {
+        return """
+                mutation storefrontAccessTokenCreate($input: StorefrontAccessTokenInput!) {
+                                    storefrontAccessTokenCreate(input: $input) {
+                                    shop { id }
+                                    storefrontAccessToken { accessToken title }
+                                    userErrors { field message }
+                                        }
+                                    }
+                """;
+    }
+
+    /**
+     * 查询用户名和邮件信息
+     */
+    public static String queryShopOwner() {
+        return """
+                query { shop { shopOwnerName email } }
+                """;
+    }
 }

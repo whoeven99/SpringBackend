@@ -16,6 +16,10 @@ public class BundleUserDO extends BaseDO{
     private String shopName;
     @TableField("access_token")
     private String accessToken;
+    @TableField("storefront_access_token")
+    private String storefrontAccessToken;
+    @TableField("storefront_id")
+    private String storefrontId;
     private String email;
     @TableField("user_tag")
     private String userTag;

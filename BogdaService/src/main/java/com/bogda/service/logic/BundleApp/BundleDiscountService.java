@@ -12,7 +12,7 @@ import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
 import com.bogda.service.logic.RateDataService;
-import com.bogda.service.logic.bundle.redis.BundleBudgetRedisService;
+import com.bogda.service.logic.BundleApp.redis.BundleBudgetRedisService;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -98,9 +98,39 @@ public class BundleDiscountService {
         boolean status = "ACTIVE".equals(shopifyDiscountDO.getStatus());
         bundleUsersDiscountRepo.updateDiscountStatus(shopName, shopifyDiscountDO.getDiscountGid(), status);
         if (shopifyDiscountCosmos.updateDiscount(updateDiscountGid, shopName, shopifyDiscountDO.getDiscountData())) {
+            // 更新成功后立即返回，异步校验 Budget 并设置 basicInformation.enable
+            asyncCheckBudgetAndSetEnable(updateDiscountGid, shopName, shopifyDiscountDO);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount");
+    }
+
+    /**
+     * 异步熔断判定：根据 shopifyDiscountDO 的 Budget 设置 basicInformation.enable。
+     * - usedDailyBudget >= dailyBudget 或 usedTotalBudget >= totalBudget → enable = false
+     * - usedDailyBudget < dailyBudget 且 usedTotalBudget < totalBudget → enable = true
+     */
+    @Async
+    public void asyncCheckBudgetAndSetEnable(String discountId, String shopName, ShopifyDiscountDO shopifyDiscountDO) {
+        if (shopifyDiscountDO == null || shopifyDiscountDO.getDiscountData() == null) {
+            return;
+        }
+        ShopifyDiscountDO.DiscountData data = shopifyDiscountDO.getDiscountData();
+        if (data.getBasicInformation() == null || data.getTargetingSettings() == null
+                || data.getTargetingSettings().getBudget() == null) {
+            return;
+        }
+        ShopifyDiscountDO.DiscountData.TargetingSettings.Budget budget = data.getTargetingSettings().getBudget();
+        double usedDaily = budget.getUsedDailyBudget() != null ? budget.getUsedDailyBudget() : 0d;
+        double usedTotal = budget.getUsedTotalBudget() != null ? budget.getUsedTotalBudget() : 0d;
+        Double dailyBudget = budget.getDailyBudget();
+        Double totalBudget = budget.getTotalBudget();
+
+        // 熔断：任一边达到或超过阈值 → enable = false；两边都未超 → enable = true
+        boolean circuitOpen = (dailyBudget != null && usedDaily >= dailyBudget)
+                || (totalBudget != null && usedTotal >= totalBudget);
+        Boolean newEnable = circuitOpen ? false : true;
+        shopifyDiscountCosmos.patchEnableOnly(discountId, shopName, newEnable);
     }
 
     public BaseResponse<Object> updateUserDiscountStatus(String shopName, String discountGid, String status) {
