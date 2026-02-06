@@ -7,6 +7,8 @@ import com.bogda.repository.entity.BundleUserDO;
 import com.bogda.repository.mapper.BundleUsersMapper;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,14 +31,25 @@ public class BundleUsersRepo extends ServiceImpl<BundleUsersMapper, BundleUserDO
     }
 
     public boolean saveUser(BundleUserDO bundleUserDO) {
-        String appEnv = System.getenv("ApplicationEnv");
-        if ("dev".equals(appEnv)) {
-
-        }
         return baseMapper.insert(bundleUserDO) > 0;
     }
 
     public boolean updateUserByShopName(String shopName, BundleUserDO bundleUserDO) {
-        return baseMapper.update(bundleUserDO, new LambdaUpdateWrapper<BundleUserDO>().eq(BundleUserDO::getShopName, shopName)) > 0;
+        return baseMapper.update(bundleUserDO, new LambdaUpdateWrapper<BundleUserDO>()
+                .eq(BundleUserDO::getShopName, shopName)) > 0;
+    }
+
+    /**
+     * 用户卸载：将 uninstall_at 更新为当前 UTC 时间
+     * 删除BundleUserDO 里的storefront_access_token 和storefront_id
+     */
+    public boolean updateUninstallAtByShopName(String shopName) {
+        Timestamp now = Timestamp.from(Instant.now());
+        return baseMapper.update(new LambdaUpdateWrapper<BundleUserDO>()
+                .eq(BundleUserDO::getShopName, shopName)
+                .set(BundleUserDO::getUninstallAt, now)
+                .set(BundleUserDO::getUpdatedAt, now)
+                .set(BundleUserDO::getStorefrontAccessToken, null)
+                .set(BundleUserDO::getStorefrontId, null)) > 0;
     }
 }

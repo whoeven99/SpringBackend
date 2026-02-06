@@ -4,13 +4,19 @@ import com.azure.cosmos.models.SqlParameter;
 import com.bogda.api.entity.DTO.DiscountBasicDTO;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.entity.DTO.BundleDiscountDTO;
+import com.bogda.common.entity.DTO.BundleDiscountAmountReportDTO;
 import com.bogda.common.entity.VO.BundleDisplayDataVO;
+import com.bogda.common.entity.VO.BundleDiscountAmountReportVO;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
+import com.bogda.service.logic.RateDataService;
+import com.bogda.service.logic.BundleApp.redis.BundleBudgetRedisService;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,12 +28,16 @@ public class BundleDiscountService {
     private ShopifyDiscountCosmos shopifyDiscountCosmos;
     @Autowired
     private BundleUsersDiscountRepo bundleUsersDiscountRepo;
+    @Autowired
+    private BundleBudgetRedisService bundleBudgetRedisService;
+    @Autowired
+    private RateDataService rateDataService;
 
     private static final String DISCOUNT_ID = "gid://shopify/DiscountAutomaticNode/";
 
     public BaseResponse<Object> saveUserDiscount(String shopName, ShopifyDiscountDO shopifyDiscountDO) {
         String offerName = shopifyDiscountDO.getDiscountData().getBasicInformation().getOfferName();
-        if (offerName == null){
+        if (offerName == null) {
             return new BaseResponse<>().CreateErrorResponse("Error: offerName is null");
         }
 
@@ -57,7 +67,7 @@ public class BundleDiscountService {
         // 修改db表里面的数据
         bundleUsersDiscountRepo.updateDiscountDelete(shopName, updateDiscountGid, true);
 
-        if (shopifyDiscountCosmos.deleteByIdAndShopName(updateDiscountGid, shopName)){
+        if (shopifyDiscountCosmos.deleteByIdAndShopName(updateDiscountGid, shopName)) {
             return new BaseResponse<>().CreateSuccessResponse(discountGid);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to delete discount");
@@ -89,9 +99,46 @@ public class BundleDiscountService {
         boolean status = "ACTIVE".equals(shopifyDiscountDO.getStatus());
         bundleUsersDiscountRepo.updateDiscountStatus(shopName, shopifyDiscountDO.getDiscountGid(), status);
         if (shopifyDiscountCosmos.updateDiscount(updateDiscountGid, shopName, shopifyDiscountDO.getDiscountData())) {
+            // 更新成功后立即返回，异步校验 Budget 并设置 basicInformation.enable
+            asyncCheckBudgetAndSetEnable(updateDiscountGid, shopName, shopifyDiscountDO);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount");
+    }
+
+    /**
+     * 异步熔断判定：根据 shopifyDiscountDO 的 Budget 设置 basicInformation.enable。
+     * - usedDailyBudget >= dailyBudget 或 usedTotalBudget >= totalBudget → enable = false
+     * - usedDailyBudget < dailyBudget 且 usedTotalBudget < totalBudget → enable = true
+     */
+    @Async
+    public void asyncCheckBudgetAndSetEnable(String discountId, String shopName, ShopifyDiscountDO shopifyDiscountDO) {
+        if (shopifyDiscountDO == null || shopifyDiscountDO.getDiscountData() == null) {
+            return;
+        }
+        ShopifyDiscountDO.DiscountData data = shopifyDiscountDO.getDiscountData();
+        if (data.getBasicInformation() == null || data.getTargetingSettings() == null
+                || data.getTargetingSettings().getBudget() == null) {
+            return;
+        }
+        ShopifyDiscountDO.DiscountData.TargetingSettings.Budget budget = data.getTargetingSettings().getBudget();
+        Pair<Double, Double> usedAmount = bundleBudgetRedisService.getUsedAmount(shopName, discountId);
+        if (usedAmount == null) {
+            AppInsightsUtils.trackTrace("FatalException BundleBudgetRedisService.getUsedAmount 失败 " + " shopName=" + shopName + " discountId=" + discountId);
+            return;
+        }
+
+        double usedDaily = usedAmount.getFirst() != null ? usedAmount.getFirst() : 0d;
+        double usedTotal = usedAmount.getSecond() != null ? usedAmount.getSecond() : 0d;
+
+        Double dailyBudget = budget.getDailyBudget();
+        Double totalBudget = budget.getTotalBudget();
+
+        // 熔断：任一边达到或超过阈值 → enable = false；两边都未超 → enable = true
+        boolean circuitOpen = (dailyBudget != null && usedDaily >= dailyBudget)
+                || (totalBudget != null && usedTotal >= totalBudget);
+        Boolean newEnable = circuitOpen ? false : true;
+        shopifyDiscountCosmos.patchEnableOnly(discountId, shopName, newEnable);
     }
 
     public BaseResponse<Object> updateUserDiscountStatus(String shopName, String discountGid, String status) {
@@ -107,6 +154,65 @@ public class BundleDiscountService {
         return new BaseResponse<>().CreateErrorResponse("Error: failed to update discount status");
     }
 
+    /**
+     * 下单优惠金额上报：Redis 原子累加 usedDailyBudget/usedTotalBudget，熔断则立即 disable 并写回 Cosmos。
+     * <p>Redis 为准，Cosmos 异步投影（尽量减少 RU）。</p>
+     */
+    public BaseResponse<Object> reportDiscountAmount(String shopName, BundleDiscountAmountReportDTO dto) {
+        if (dto.getDiscountAmount() < 0) {
+            return new BaseResponse<>().CreateErrorResponse("Error: discountAmount must be >= 0");
+        }
+
+        String discountName = dto.getDiscountName();
+
+        // 根据 discountName和shopName获取discountGid数据
+        BundleUsersDiscountDO discountData = bundleUsersDiscountRepo.getAllByShopNameAndDiscountName(shopName, discountName);
+        if (discountData == null) {
+            return new BaseResponse<>().CreateErrorResponse("Error: discountName not exist");
+        }
+
+        // 将amount 根据 currentCode 转为 USD，然后存进redis中
+        double rate = rateDataService.getRateByRateMap(dto.getCurrencyCode(), "USD");
+        double realAmount = dto.getDiscountAmount() * rate;
+        String discountId = discountData.getDiscountId();
+
+        // first返回每日使用数据， second返回所有使用数据
+        Pair<Double, Double> afterAddData = bundleBudgetRedisService.addUsedAmount(shopName, discountData.getDiscountId(), realAmount);
+        if (afterAddData == null) {
+            return new BaseResponse<>().CreateErrorResponse("Error: add used amount failed");
+        }
+
+        // 读取预算阈值（dailyBudget/totalBudget）以 Cosmos 为准
+        ShopifyDiscountDO discount = shopifyDiscountCosmos.getDiscountByIdAndShopName(discountId, shopName);
+        if (discount == null || discount.getDiscountData() == null
+                || discount.getDiscountData().getTargetingSettings() == null
+                || discount.getDiscountData().getTargetingSettings().getBudget() == null
+                || discount.getDiscountData().getBasicInformation() == null) {
+            return new BaseResponse<>().CreateSuccessResponse("Error: discount not exist");
+        }
+
+        ShopifyDiscountDO.DiscountData.TargetingSettings.Budget budget = discount.getDiscountData().getTargetingSettings().getBudget();
+        Double dailyBudget = budget.getDailyBudget();
+        Double totalBudget = budget.getTotalBudget();
+        Double usedDailyBudget = afterAddData.getFirst();
+        Double usedTotalBudget = afterAddData.getSecond();
+
+
+        boolean circuitOpen = (dailyBudget != null && usedDailyBudget >= dailyBudget)
+                || (totalBudget != null && usedTotalBudget >= totalBudget);
+
+        if (circuitOpen) {
+            // 触发熔断：立即 disable，并把 used 值写回 Cosmos（局部 patch，减少 RU）
+            boolean ok = shopifyDiscountCosmos.patchBudgetAndEnable(discountId, shopName, false);
+            Boolean enable = ok ? Boolean.FALSE : null;
+            return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountAmountReportVO(true, enable,
+                    usedDailyBudget, usedTotalBudget));
+        }
+
+        // 未熔断（预算热数据以 Redis 为准）
+        return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountAmountReportVO(false, true,
+                usedDailyBudget, usedTotalBudget));
+    }
 
     // 获取用户折扣所有数据
     public BaseResponse<Object> getAllUserDiscount(String shopName) {

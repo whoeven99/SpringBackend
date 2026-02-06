@@ -17,4 +17,7 @@ go
 
 CREATE UNIQUE INDEX UX_Bundle_Users_Discount_shop_discount
     ON Bundle_Users_Discount (shop_name, discount_id, discount_name);
+
+CREATE UNIQUE INDEX UX_Bundle_Users_Discount_shop_discount_name
+    ON Bundle_Users_Discount (shop_name, discount_name);
 go

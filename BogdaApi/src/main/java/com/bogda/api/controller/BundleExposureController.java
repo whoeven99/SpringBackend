@@ -3,7 +3,7 @@ package com.bogda.api.controller;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.entity.DTO.BundleAvgConversionIndicatorDTO;
 import com.bogda.common.entity.VO.BundleQueryVO;
-import com.bogda.service.logic.bundle.BundleExposureService;
+import com.bogda.service.logic.BundleApp.BundleExposureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

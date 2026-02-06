@@ -103,6 +103,18 @@ public class RedisIntegration {
     }
 
     /**
+     * 对指定 key 的值进行自增 存double类型
+     */
+    public Double incrementValue(String key, double delta) {
+        try {
+            return redisTemplate.opsForValue().increment(key, delta);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException double incrementValue " + key + " " + delta + " " + e.getMessage());
+        }
+        return 0D;
+    }
+
+    /**
      * hash get
      */
     public String getHash(String key, String field) {

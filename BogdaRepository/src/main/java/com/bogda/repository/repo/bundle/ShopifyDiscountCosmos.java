@@ -118,6 +118,61 @@ public class ShopifyDiscountCosmos {
         }
     }
 
+    /**
+     * 仅更新预算使用量与 enable（尽可能减少 RU）
+     *
+     * <p>注意：Cosmos Patch path 使用存储的 JSON 字段名（如 basic_information/targeting_settings）。</p>
+     */
+    public boolean patchBudgetAndEnable(String id,
+                                        String shopName,
+                                        Boolean enable) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/basic_information/enable", enable)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchBudgetAndEnable 更新budget/enable失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
+    /**
+     * 日预算重置：usedDailyBudget = 0，并可选设置 enable（UTC 0 点定时任务用，一次 patch 减少 RU）
+     */
+    public boolean patchDailyBudgetResetAndEnable(String id, String shopName, Boolean enable) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/basic_information/enable", enable)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchDailyBudgetResetAndEnable 失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
+    /**
+     * 仅更新 basic_information.enable（异步熔断/恢复时用，减少 RU）
+     */
+    public boolean patchEnableOnly(String id, String shopName, Boolean enable) {
+        try {
+            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
+                    .replace("/discountData/basic_information/enable", enable)
+                    .replace("/updatedAt", String.valueOf(Instant.now()));
+            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
+            return true;
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException patchEnableOnly 更新enable失败 " +
+                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            return false;
+        }
+    }
+
     public boolean updateDiscountStatus(String id, String shopName, String status) {
         try {
             CosmosPatchOperations patchOps = CosmosPatchOperations.create().replace("/status", status)
