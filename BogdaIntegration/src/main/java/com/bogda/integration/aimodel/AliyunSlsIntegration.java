@@ -54,7 +54,7 @@ public class AliyunSlsIntegration {
         List<LogItem> items = new ArrayList<>();
         items.add(item);
 
-        PutLogsRequest request = new PutLogsRequest(project, logstore, "", "", items);
+        PutLogsRequest request = new PutLogsRequest(project, logstore, "", "azure", items);
         try {
             client.PutLogs(request);
         } catch (LogException e) {
@@ -81,7 +81,7 @@ public class AliyunSlsIntegration {
         List<LogItem> items = new ArrayList<>();
         items.add(item);
 
-        PutLogsRequest request = new PutLogsRequest(project, logstore, "", "", items);
+        PutLogsRequest request = new PutLogsRequest(project, logstore, "", "azure", items);
         try {
             client.PutLogs(request);
         } catch (LogException e) {
