@@ -7,6 +7,7 @@ import com.bogda.common.entity.DTO.BundleDiscountDTO;
 import com.bogda.common.entity.DTO.BundleDiscountAmountReportDTO;
 import com.bogda.common.entity.VO.BundleDisplayDataVO;
 import com.bogda.common.entity.VO.BundleDiscountAmountReportVO;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
@@ -121,8 +122,15 @@ public class BundleDiscountService {
             return;
         }
         ShopifyDiscountDO.DiscountData.TargetingSettings.Budget budget = data.getTargetingSettings().getBudget();
-        double usedDaily = budget.getUsedDailyBudget() != null ? budget.getUsedDailyBudget() : 0d;
-        double usedTotal = budget.getUsedTotalBudget() != null ? budget.getUsedTotalBudget() : 0d;
+        Pair<Double, Double> usedAmount = bundleBudgetRedisService.getUsedAmount(shopName, discountId);
+        if (usedAmount == null) {
+            AppInsightsUtils.trackTrace("FatalException BundleBudgetRedisService.getUsedAmount 失败 " + " shopName=" + shopName + " discountId=" + discountId);
+            return;
+        }
+
+        double usedDaily = usedAmount.getFirst() != null ? usedAmount.getFirst() : 0d;
+        double usedTotal = usedAmount.getSecond() != null ? usedAmount.getSecond() : 0d;
+
         Double dailyBudget = budget.getDailyBudget();
         Double totalBudget = budget.getTotalBudget();
 
@@ -195,24 +203,16 @@ public class BundleDiscountService {
 
         if (circuitOpen) {
             // 触发熔断：立即 disable，并把 used 值写回 Cosmos（局部 patch，减少 RU）
-            boolean ok = shopifyDiscountCosmos.patchBudgetAndEnable(discountId, shopName,
-                    usedDailyBudget, usedTotalBudget, false);
+            boolean ok = shopifyDiscountCosmos.patchBudgetAndEnable(discountId, shopName, false);
             Boolean enable = ok ? Boolean.FALSE : null;
             return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountAmountReportVO(true, enable,
                     usedDailyBudget, usedTotalBudget));
         }
 
-        // 未熔断：异步回写 used 值（预算热数据以 Redis 为准）
-        asyncPatchBudgetUsedOnly(discountId, shopName, usedDailyBudget, usedTotalBudget);
+        // 未熔断（预算热数据以 Redis 为准）
         return new BaseResponse<>().CreateSuccessResponse(new BundleDiscountAmountReportVO(false, true,
                 usedDailyBudget, usedTotalBudget));
     }
-
-    @Async
-    public void asyncPatchBudgetUsedOnly(String discountId, String shopName, double usedDaily, double usedTotal) {
-        shopifyDiscountCosmos.patchBudgetUsedOnly(discountId, shopName, usedDaily, usedTotal);
-    }
-
 
     // 获取用户折扣所有数据
     public BaseResponse<Object> getAllUserDiscount(String shopName) {
