@@ -4,10 +4,10 @@ import com.aliyun.openservices.log.Client;
 import com.aliyun.openservices.log.common.LogItem;
 import com.aliyun.openservices.log.common.LogContent;
 import com.aliyun.openservices.log.common.QueriedLog;
+import com.aliyun.openservices.log.exception.LogException;
 import com.aliyun.openservices.log.request.PutLogsRequest;
 import com.aliyun.openservices.log.request.GetLogsRequest;
 import com.aliyun.openservices.log.response.GetLogsResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,63 +36,56 @@ public class AliyunSlsIntegration {
      */
     @PostConstruct
     public void initClient() {
-        try {
-            if (accessKeyId == null || accessKeySecret == null ||
-                    endpoint == null) {
-                AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 配置缺失，无法初始化SLS客户端");
-                return;
-            }
+        if (accessKeyId == null || accessKeySecret == null ||
+                endpoint == null) {
+            return;
+        }
 
-            client = new Client(endpoint, accessKeyId, accessKeySecret);
-            AppInsightsUtils.trackTrace("AliyunSlsIntegration 客户端初始化成功");
-        } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 初始化失败: " + e.getMessage());
+        client = new Client(endpoint, accessKeyId, accessKeySecret);
+    }
+
+    /** 替代 trackTrace：写一条普通业务 Trace 日志 */
+    public void logTrace(String traceName, String message) {
+        LogItem item = new LogItem((int) (System.currentTimeMillis() / 1000));
+        item.PushBack("type", "trace");
+        item.PushBack("traceName", traceName);
+        item.PushBack("message", message);
+
+        List<LogItem> items = new ArrayList<>();
+        items.add(item);
+
+        PutLogsRequest request = new PutLogsRequest(project, logstore, "", "", items);
+        try {
+            client.PutLogs(request);
+        } catch (LogException e) {
+            // 写 SLS 失败时，你可以打本地日志，不要再死循环写 SLS
+            e.printStackTrace();
         }
     }
 
-    /**
-     * 写入日志数据到SLS
-     *
-     * @param topic  日志主题
-     * @param source 日志来源
-     * @param logs   日志内容，key为字段名，value为字段值
-     * @return 是否写入成功
-     */
-    public boolean writeLogs(String topic, String source, Map<String, String> logs) {
-        if (client == null) {
-            AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 客户端未初始化");
-            return false;
-        }
+    /** 替代 trackException：记录异常信息 + 堆栈 */
+    public void logException(String scene, Throwable ex) {
+        LogItem item = new LogItem((int) (System.currentTimeMillis() / 1000));
+        item.PushBack("type", "exception");
+        item.PushBack("scene", scene);
+        item.PushBack("exceptionType", ex.getClass().getName());
+        item.PushBack("message", ex.getMessage());
 
-        if (project == null || logstore == null) {
-            AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration PROJECT或LOGSTORE未配置");
-            return false;
+        // 简单拼一个堆栈字符串（线上可考虑截断）
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement element : ex.getStackTrace()) {
+            sb.append(element.toString()).append("\n");
         }
+        item.PushBack("stackTrace", sb.toString());
 
+        List<LogItem> items = new ArrayList<>();
+        items.add(item);
+
+        PutLogsRequest request = new PutLogsRequest(project, logstore, "", "", items);
         try {
-            List<LogItem> logItems = new ArrayList<>();
-            LogItem logItem = new LogItem();
-
-            // 设置时间戳
-            logItem.SetTime((int) (System.currentTimeMillis() / 1000));
-
-            // 添加日志内容
-            for (Map.Entry<String, String> entry : logs.entrySet()) {
-                logItem.PushBack(entry.getKey(), entry.getValue());
-            }
-
-            logItems.add(logItem);
-
-            // 写入日志
-            PutLogsRequest request = new PutLogsRequest(project, logstore, topic, source, logItems);
             client.PutLogs(request);
-
-            AppInsightsUtils.trackTrace("AliyunSlsIntegration 写入日志成功，topic: " + topic);
-            return true;
-        } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException AliyunSlsIntegration 写入日志异常: " + e.getMessage());
-            return false;
+        } catch (LogException e) {
+            e.printStackTrace();
         }
     }
 
@@ -119,22 +112,10 @@ public class AliyunSlsIntegration {
                 }
                 result.add(row);
             }
-
-            System.out.println("AliyunSlsIntegration 聚合查询成功，数量: " + result.size());
         } catch (Exception e) {
-            System.out.println("AliyunSlsIntegration 聚合查询失败: " + e.getMessage());
             e.printStackTrace();
         }
 
         return result;
-    }
-
-    /**
-     * 检查客户端连接状态
-     *
-     * @return 是否已连接
-     */
-    public boolean isConnected() {
-        return client != null;
     }
 }

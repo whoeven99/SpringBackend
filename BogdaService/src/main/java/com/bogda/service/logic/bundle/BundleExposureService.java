@@ -2,13 +2,10 @@ package com.bogda.service.logic.bundle;
 
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.entity.DTO.*;
-import com.bogda.common.entity.VO.BundleExposureVO;
 import com.bogda.common.utils.AliyunLogSqlUtils;
-import com.bogda.common.utils.JsonUtils;
 import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.service.logic.RateDataService;
-import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,17 +35,6 @@ public class BundleExposureService {
 
     // 下单
     public static final String CHECKOUT_COMPLETED = "checkout_completed";
-
-    public BaseResponse<Object> productExposure(BundleExposureVO bundleExposureVO) {
-        Map<String, String> logMap = JsonUtils.OBJECT_MAPPER.convertValue(bundleExposureVO, new TypeReference<Map<String, String>>() {
-        });
-
-        boolean flag = aliyunSlsIntegration.writeLogs(bundleExposureVO.getEvent(), bundleExposureVO.getShopName(), logMap);
-        if (flag) {
-            return new BaseResponse<>().CreateSuccessResponse(true);
-        }
-        return new BaseResponse<>().CreateErrorResponse("写入日志失败");
-    }
 
     // 查询visitor 数据
     public BaseResponse<Object> productUvByTimeAndShopName(String shopName, Integer days, String discountId) {
