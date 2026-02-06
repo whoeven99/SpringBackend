@@ -2,6 +2,7 @@ package com.bogda.common.utils;
 
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.RejectRuleEnum;
+import com.bogda.common.reporter.TraceReporterHolder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -268,7 +269,7 @@ public class JudgeTranslateUtils {
      * 打印被白名单和黑名单命中的理由
      * */
     public static void printTranslateReason(String reason) {
-        AppInsightsUtils.trackTrace("命中的理由： " + reason);
+        TraceReporterHolder.report("JudgeTranslateUtils.printTranslateReason", "命中的理由： " + reason);
     }
 
     /**
@@ -279,7 +280,7 @@ public class JudgeTranslateUtils {
         for (String text: WHITELIST_WORDS
              ) {
             if (prefix.endsWith(text)) {
-                AppInsightsUtils.trackTrace("以 " + text + " 结尾");
+                TraceReporterHolder.report("JudgeTranslateUtils.whiteListTranslate", "以 " + text + " 结尾");
                 return true;
             }
         }

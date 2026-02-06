@@ -1,6 +1,8 @@
 package com.bogda.common.utils;
 
 import com.bogda.common.exception.FatalException;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 
 import java.util.concurrent.*;
 import java.util.function.Supplier;
@@ -63,8 +65,9 @@ public class TimeOutUtils {
             } catch (TimeoutException e) {
                 future.cancel(true);
                 lastException = e;
-                AppInsightsUtils.trackTrace("FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
-                AppInsightsUtils.trackException(e);
+                TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
+                        "FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
+                ExceptionReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry", e);
             } catch (Exception e) {
                 future.cancel(true);
                 // 400 不重试，直接抛出（兼容 ExecutionException 包装的异常）
@@ -76,8 +79,9 @@ public class TimeOutUtils {
                     throw new RuntimeException(cause);
                 }
                 lastException = e;
-                AppInsightsUtils.trackTrace("FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
-                AppInsightsUtils.trackException(e);
+                TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
+                        "FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
+                ExceptionReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry", e);
             } finally {
                 executor.shutdownNow(); // 确保线程被回收
             }

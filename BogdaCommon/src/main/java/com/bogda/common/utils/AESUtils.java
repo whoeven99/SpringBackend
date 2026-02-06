@@ -1,5 +1,7 @@
 package com.bogda.common.utils;
 
+import com.bogda.common.reporter.ExceptionReporterHolder;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +35,7 @@ public class AESUtils {
             }
             return hexString.toString();
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
+            ExceptionReporterHolder.report("AESUtils.encryptMD5", e);
             return null;
         }
     }
