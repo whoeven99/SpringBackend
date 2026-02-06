@@ -1,5 +1,8 @@
 package com.bogda.common.utils;
 
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
+
 import java.util.function.Function;
 
 public class RetryUtils {
@@ -29,13 +32,13 @@ public class RetryUtils {
                 }
 
                 if (attempt < maxRetries) {
-                    AppInsightsUtils.trackTrace("FatalException retryWithParam 第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
+                    TraceReporterHolder.report("RetryUtils.retryWithParam", "FatalException retryWithParam 第 " + attempt + " 次失败，等待 " + delay + " 毫秒后重试...");
                     Thread.sleep(delay);
                     delay = Math.min(delay * 2, maxDelayMillis);
                 }
             } catch (Exception e) {
-                AppInsightsUtils.trackException(e);
-                AppInsightsUtils.trackTrace("FatalException retryWithParam 执行出错（第 " + attempt + " 次）：" + e.getMessage());
+                ExceptionReporterHolder.report("RetryUtils.retryWithParam",e);
+                TraceReporterHolder.report("RetryUtils.retryWithParam", "FatalException retryWithParam 执行出错（第 " + attempt + " 次）");
 
                 if (attempt < maxRetries) {
                     try {
@@ -43,6 +46,7 @@ public class RetryUtils {
                         delay = Math.min(delay * 2, maxDelayMillis);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
+                        ExceptionReporterHolder.report("RetryUtils.retryWithParam",ie);
                         return false;
                     }
                 }

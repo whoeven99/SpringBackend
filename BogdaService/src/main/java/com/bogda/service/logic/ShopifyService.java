@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.DO.*;
 import com.bogda.common.entity.VO.SubscriptionVO;
+import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.integration.model.*;
 import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
 import com.bogda.repository.repo.SubscriptionQuotaRecordRepo;
@@ -47,7 +48,6 @@ import static com.bogda.common.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.service.integration.ALiYunTranslateIntegration.calculateBaiLianToken;
 import static com.bogda.common.utils.JsonUtils.isJson;
 import static com.bogda.common.utils.JudgeTranslateUtils.*;
-import static com.bogda.common.utils.StringUtils.isValueBlank;
 
 @Service
 public class ShopifyService {
@@ -345,7 +345,7 @@ public class ShopifyService {
             String value = translateTextDTO.getSourceText();
 
             // 当 value 为空时跳过
-            if (!isValueBlank(value)) {
+            if (!StringUtils.isValueBlank(value)) {
                 continue;
             }
 
@@ -464,6 +464,7 @@ public class ShopifyService {
                 }
             }
         } catch (Exception e) {
+            ExceptionReporterHolder.report("RetryUtils.retryWithParam",e);
             AppInsightsUtils.trackException(e);
             AppInsightsUtils.trackTrace("FatalException clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
         }

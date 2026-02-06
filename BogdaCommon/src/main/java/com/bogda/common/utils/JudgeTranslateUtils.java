@@ -280,7 +280,7 @@ public class JudgeTranslateUtils {
         for (String text: WHITELIST_WORDS
              ) {
             if (prefix.endsWith(text)) {
-                AppInsightsUtils.trackTrace("以 " + text + " 结尾");
+                TraceReporterHolder.report("JudgeTranslateUtils.whiteListTranslate", "以 " + text + " 结尾");
                 return true;
             }
         }

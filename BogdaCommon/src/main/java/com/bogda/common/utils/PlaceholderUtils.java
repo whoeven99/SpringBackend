@@ -30,7 +30,6 @@ public class PlaceholderUtils {
             String brandWord,
             String brandSlogan
     ) {
-//        AppInsightsUtils.trackTrace("productName: " + productName + " productCategory: " + productCategory + " productDescription: " + productDescription + " seoKeywords: " + seoKeywords + " image: " + image + " imageDescription: " + imageDescription + " tone: " + tone + " contentType: " + contentType + " brand: " + brand + " templateStructure: " + templateStructure + " language: " + language);
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional e-commerce ") ;
         prompt.append(templateType);
@@ -52,7 +51,7 @@ public class PlaceholderUtils {
                         {"Reference Brand", brand},
                         {"Structure Template", templateStructure != null ? templateStructure.trim() : ""},
                 }));
-//        prompt.append("Format: HTML");
+
         prompt.append("\n## Must-Follow Rules\n");
         prompt.append("- The entire output must be written in fluent **").append(language).append("**.\n");
         prompt.append("- Titles, slogans, CTAs, and any source content in other languages must be fully translated.\n");
@@ -80,7 +79,9 @@ public class PlaceholderUtils {
         for (Object[] pair : pairs) {
             String key = (String) pair[0];
             String value = (String) pair[1];
-            if (value != null) map.put(key, value);
+            if (value != null) {
+                map.put(key, value);
+            }
         }
         return map;
     }
