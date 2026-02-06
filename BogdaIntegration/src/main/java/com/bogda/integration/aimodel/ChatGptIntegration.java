@@ -25,6 +25,7 @@ public class ChatGptIntegration {
     public static final int OPENAI_MAGNIFICATION = 3;
     private OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
+    public static String GPT_4 = "gpt-4.1";
 
     @Value("${azure.openai.key.vault}")
     private String gptKey;
@@ -55,7 +56,7 @@ public class ChatGptIntegration {
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(ModuleCodeUtils.GPT_5, options));
+                    client.getChatCompletions(GPT_4, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
             int input = chatCompletions.getUsage().getPromptTokens();
