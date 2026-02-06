@@ -1,6 +1,7 @@
 package com.bogda.task.task;
 
 import com.bogda.service.logic.BundleApp.BundleTaskService;
+import com.bogda.task.annotation.EnableScheduledTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ public class BundleTask {
     private BundleTaskService bundleTaskService;
 
     // 定时更新用户折扣的累积数据 目前暂定是每天UTC0点更新
+    @EnableScheduledTask
     @Scheduled(cron = "0 0 0 * * ?")
     public void updateDiscountData() {
         executorService.execute(() -> {
@@ -21,6 +23,7 @@ public class BundleTask {
     }
 
     /** 每天 UTC 0 点：重置 usedDailyBudget = 0，并恢复因日限额熔断的 enable */
+    @EnableScheduledTask
     @Scheduled(cron = "0 0 0 * * ?")
     public void resetDailyBudgetAndRecoverEnable() {
         executorService.execute(() -> {
