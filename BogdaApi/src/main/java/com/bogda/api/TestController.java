@@ -10,6 +10,7 @@ import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.VO.UserDataReportVO;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
+import com.bogda.service.logic.BundleApp.BundleTaskService;
 import com.bogda.service.logic.RedisDataReportService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.RateRedisService;
@@ -201,5 +202,12 @@ public class TestController {
         return new BaseResponse<>().CreateSuccessResponse(stringIntegerPair);
     }
 
+    @Autowired
+    private BundleTaskService bundleTaskService;
+
+    @GetMapping("/testBundleTask")
+    public void testBundleTask() {
+        bundleTaskService.resetDailyBudgetAndRecoverEnable();
+    }
 
 }

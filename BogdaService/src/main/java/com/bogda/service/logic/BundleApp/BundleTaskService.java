@@ -1,13 +1,16 @@
 package com.bogda.service.logic.BundleApp;
 
 import com.bogda.common.utils.AliyunLogSqlUtils;
+import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
 import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
 import com.bogda.repository.repo.bundle.BundleUsersRepo;
 import com.bogda.repository.repo.bundle.ShopifyDiscountCosmos;
+import com.bogda.service.logic.BundleApp.redis.BundleBudgetRedisService;
 import com.bogda.service.logic.RateDataService;
+import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +33,8 @@ public class BundleTaskService {
     private AliyunSlsIntegration aliyunSlsIntegration;
     @Autowired
     private RateDataService rateDataService;
+    @Autowired
+    private BundleBudgetRedisService bundleBudgetRedisService;
 
     /**
      * 每天 UTC 0 点执行：遍历所有活跃且未删除的 Bundle_Users_Discount，重置 usedDailyBudget = 0，
@@ -47,6 +52,7 @@ public class BundleTaskService {
                 continue;
             }
             ShopifyDiscountDO doc = shopifyDiscountCosmos.getDiscountByIdAndShopName(discountId, shopName);
+
             if (doc == null || doc.getDiscountData() == null
                     || doc.getDiscountData().getBasicInformation() == null
                     || doc.getDiscountData().getTargetingSettings() == null
@@ -55,8 +61,15 @@ public class BundleTaskService {
             }
             ShopifyDiscountDO.DiscountData.TargetingSettings.Budget budget = doc.getDiscountData().getTargetingSettings().getBudget();
             Boolean currentEnable = doc.getDiscountData().getBasicInformation().getEnable();
-            double usedTotal = budget.getUsedTotalBudget() != null ? budget.getUsedTotalBudget() : 0d;
             Double totalBudget = budget.getTotalBudget();
+
+            // 从redis中获取使用值
+            Pair<Double, Double> usedAmount = bundleBudgetRedisService.getUsedAmount(shopName, discountId);
+            if (usedAmount == null) {
+                AppInsightsUtils.trackTrace("FatalException BundleBudgetRedisService.getUsedAmount 失败 " + " shopName=" + shopName + " discountId=" + discountId);
+                continue;
+            }
+            double usedTotal = usedAmount.getSecond() != null ? usedAmount.getSecond() : 0d;
 
             // 恢复条件：当前 enable == false 且 usedTotalBudget < totalBudget（昨日日限额熔断可恢复）
             boolean shouldRecover = Boolean.FALSE.equals(currentEnable)

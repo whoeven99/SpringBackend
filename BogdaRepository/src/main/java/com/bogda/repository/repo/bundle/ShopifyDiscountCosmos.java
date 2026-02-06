@@ -125,13 +125,9 @@ public class ShopifyDiscountCosmos {
      */
     public boolean patchBudgetAndEnable(String id,
                                         String shopName,
-                                        Double usedDailyBudget,
-                                        Double usedTotalBudget,
                                         Boolean enable) {
         try {
             CosmosPatchOperations patchOps = CosmosPatchOperations.create()
-                    .replace("/discountData/targeting_settings/budget/usedDailyBudget", usedDailyBudget)
-                    .replace("/discountData/targeting_settings/budget/usedTotalBudget", usedTotalBudget)
                     .replace("/discountData/basic_information/enable", enable)
                     .replace("/updatedAt", String.valueOf(Instant.now()));
             discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
@@ -144,33 +140,11 @@ public class ShopifyDiscountCosmos {
     }
 
     /**
-     * 仅更新预算使用量（尽可能减少 RU）
-     */
-    public boolean patchBudgetUsedOnly(String id,
-                                       String shopName,
-                                       Double usedDailyBudget,
-                                       Double usedTotalBudget) {
-        try {
-            CosmosPatchOperations patchOps = CosmosPatchOperations.create()
-                    .replace("/discountData/targeting_settings/budget/usedDailyBudget", usedDailyBudget)
-                    .replace("/discountData/targeting_settings/budget/usedTotalBudget", usedTotalBudget)
-                    .replace("/updatedAt", String.valueOf(Instant.now()));
-            discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);
-            return true;
-        } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException patchBudgetUsedOnly 更新budget失败 " +
-                    " id: " + id + " shopName: " + shopName + " 原因： " + e);
-            return false;
-        }
-    }
-
-    /**
      * 日预算重置：usedDailyBudget = 0，并可选设置 enable（UTC 0 点定时任务用，一次 patch 减少 RU）
      */
     public boolean patchDailyBudgetResetAndEnable(String id, String shopName, Boolean enable) {
         try {
             CosmosPatchOperations patchOps = CosmosPatchOperations.create()
-                    .replace("/discountData/targeting_settings/budget/usedDailyBudget", 0d)
                     .replace("/discountData/basic_information/enable", enable)
                     .replace("/updatedAt", String.valueOf(Instant.now()));
             discountContainer.patchItem(id, new PartitionKey(shopName), patchOps, Objects.class);

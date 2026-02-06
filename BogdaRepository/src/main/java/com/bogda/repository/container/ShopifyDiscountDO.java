@@ -334,8 +334,6 @@ public class ShopifyDiscountDO {
             public static class Budget {
                 private Double totalBudget; // 用户设置总预算
                 private Double dailyBudget; // 用户设置日预算
-                private Double usedTotalBudget;
-                private Double usedDailyBudget;
             }
 
         }

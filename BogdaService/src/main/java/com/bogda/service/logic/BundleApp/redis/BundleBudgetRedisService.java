@@ -36,10 +36,8 @@ public class BundleBudgetRedisService {
 
         try {
             Double incrementDaily = redisIntegration.incrementValue(dailyKey, amount);
-            System.out.println("incrementDaily: " + incrementDaily);
             redisIntegration.expire(dailyKey, DAILY_TTL_SECONDS);
             Double incrementTotal = redisIntegration.incrementValue(totalKey, amount);
-            System.out.println("incrementTotal: " + incrementTotal);
             if (incrementDaily == 0D || incrementTotal == 0D) {
                 return null;
             }
@@ -51,5 +49,33 @@ public class BundleBudgetRedisService {
             return null;
         }
     }
+
+    // 获取bundle对应的消耗
+    public Pair<Double, Double> getUsedAmount(String shopName, String discountId) {
+        String day = LocalDate.now(ZoneOffset.UTC).format(UTC_DAY);
+        String dailyKey = DAILY_KEY.replace("{shopName}", shopName)
+                .replace("{discountId}", discountId)
+                .replace("{yyyyMMddUTC}", day);
+        String totalKey = TOTAL_KEY.replace("{shopName}", shopName)
+                .replace("{discountId}", discountId);
+
+        try {
+            double dailyData = !redisIntegration.get(dailyKey).equals("null")
+                    ? Double.parseDouble(redisIntegration.get(dailyKey))
+                    : 0D;
+
+            double totalData = !redisIntegration.get(totalKey).equals("null")
+                    ? Double.parseDouble(redisIntegration.get(totalKey))
+                    : 0D;
+
+            return new Pair<>(dailyData, totalData);
+        } catch (Exception e) {
+            AppInsightsUtils.trackException(e);
+            AppInsightsUtils.trackTrace("FatalException BundleBudgetRedisService.addUsedAmount shopName=" + shopName +
+                    " discountId=" + discountId + " err=" + e.getMessage());
+            return null;
+        }
+    }
+
 }
 
