@@ -1,4 +1,4 @@
-package com.bogda.api.config;
+package com.bogda.service;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
