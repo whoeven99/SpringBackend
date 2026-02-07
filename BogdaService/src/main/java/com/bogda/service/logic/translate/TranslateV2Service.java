@@ -664,20 +664,35 @@ public class TranslateV2Service {
 
         // totalCount 确定后立即计算预估积分与翻译消耗时间，供 getProcess 返回前端
         Map<String, String> monitor = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+        String avgTokenPerItem = configRedisRepo.getConfig("AVG_TOKEN_PER_ITEM");
+        String tokenPerSecond = configRedisRepo.getConfig("TOKEN_PER_SECOND");
+
+        // 将String 转为Map<String, Double>
+        Map<String, Double> avgTokenMap = JsonUtils.jsonToObject(avgTokenPerItem, new TypeReference<Map<String, Double>>() {
+        });
+        Map<String, Double> avgSecondMap = JsonUtils.jsonToObject(tokenPerSecond, new TypeReference<Map<String, Double>>() {
+        });
+        TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 avgTokenMap: "
+                + avgTokenMap + " avgSecondMap: " + avgSecondMap);
+
         String estimatedCredits = monitor != null ? monitor.get("estimatedCredits") : null;
         String totalCount = monitor != null ? monitor.get("totalCount") : null;
-        if (estimatedCredits != null && !estimatedCredits.isEmpty()) {
+        String aiModel = initialTaskV2DO.getAiModel();
+        if (estimatedCredits != null && !estimatedCredits.isEmpty() && avgTokenMap != null && avgSecondMap != null) {
             int totalCredits = Integer.parseInt(estimatedCredits);
-            long finalCredits = (long) (totalCredits * AVG_TOKEN_PER_ITEM.get(initialTaskV2DO.getAiModel()));
+            long finalCredits = (long) (totalCredits * avgTokenMap.getOrDefault(aiModel
+                    , AVG_TOKEN_PER_ITEM.get(aiModel)));
             translateTaskMonitorV2RedisService.setEstimatedCredits(initialTaskV2DO.getId(), finalCredits);
 
-            int estimatedTranslateMinutes = (int) (finalCredits * TOKEN_PER_SECOND.get(initialTaskV2DO.getAiModel()));
+            int estimatedTranslateSeconds = (int) (finalCredits * avgSecondMap.getOrDefault(aiModel
+                    , TOKEN_PER_SECOND.get(aiModel)));
+
             // totalCount 确定后立即计算预估存储消耗时间，供 getProcess 返回前端
             if (totalCount != null && !totalCount.isEmpty()) {
                 int finalCount = Integer.parseInt(totalCount);
-                estimatedTranslateMinutes += finalCount;
+                estimatedTranslateSeconds += finalCount;
             }
-            translateTaskMonitorV2RedisService.setEstimatedMinutes(initialTaskV2DO.getId(), estimatedTranslateMinutes);
+            translateTaskMonitorV2RedisService.setEstimatedMinutes(initialTaskV2DO.getId(), estimatedTranslateSeconds);
         }
 
         initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
