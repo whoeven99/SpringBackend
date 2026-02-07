@@ -32,6 +32,8 @@ public class TranslateTaskMonitorV2RedisService {
         redisIntegration.setHash(key, "translatedChars", 0);
         redisIntegration.setHash(key, "initStartTime", String.valueOf(System.currentTimeMillis()));
         redisIntegration.setHash(key, "aiModel", aiModel);
+        redisIntegration.setHash(key, "estimatedCredits", 0);
+        redisIntegration.setHash(key, "estimatedMinutes", 0);
     }
 
     public void incrementTotalCount(Integer initialTaskId) {
