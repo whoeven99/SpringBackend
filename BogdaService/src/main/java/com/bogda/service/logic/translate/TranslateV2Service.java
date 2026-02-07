@@ -99,6 +99,24 @@ public class TranslateV2Service {
 
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选
 
+    /**
+     * 根据模型选择 平均消耗 token 系数
+     */
+    public static final Map<String, Double> AVG_TOKEN_PER_ITEM = new HashMap<String, Double>() {{
+        put(GeminiIntegration.GEMINI_3_FLASH, 1.58);
+        put(ModuleCodeUtils.GPT_5, 0.99);
+        put(ALiYunTranslateIntegration.QWEN_MAX, 0.85);
+    }};
+
+    /**
+     * 根据模型选择 每秒钟约消耗 token 系数
+     */
+    public static Map<String, Double> TOKEN_PER_SECOND = new HashMap<String, Double>() {{
+        put(GeminiIntegration.GEMINI_3_FLASH, 0.31);
+        put(ModuleCodeUtils.GPT_5, 0.17);
+        put(ALiYunTranslateIntegration.QWEN_MAX, 0.31);
+    }};
+
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
         if (request.getContext() == null || request.getTarget() == null
@@ -167,6 +185,7 @@ public class TranslateV2Service {
 
     @Autowired
     private ChatGptIntegration chatGptIntegration;
+
     /**
      * 处理gpt逻辑
      */
@@ -313,7 +332,7 @@ public class TranslateV2Service {
         return BaseResponse.SuccessResponse(request);
     }
 
-    public static List<String> sortTranslateData(List<String> list){
+    public static List<String> sortTranslateData(List<String> list) {
         // 1. 提取 ALL_RESOURCES 中的顺序
         List<String> orderList = TranslateResourceDTO.ALL_RESOURCES.stream()
                 .map(TranslateResourceDTO::getResourceType)
@@ -476,6 +495,7 @@ public class TranslateV2Service {
                 progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
 
                 progress.setProgressData(progressData);
+                setEstimatedFromContext(progress, taskContext);
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.TRANSLATE_DONE_SAVING_SHOPIFY.getStatus()) ||
                     task.getStatus().equals(InitialTaskStatus.SAVE_DONE_SENDING_EMAIL.getStatus())) {
@@ -492,12 +512,14 @@ public class TranslateV2Service {
 
                 progress.setWritingData(progressWriteData);
                 progress.setProgressData(defaultProgressTranslateData);
+                setEstimatedFromContext(progress, taskContext);
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.ALL_DONE.getStatus())) {
                 progress.setTarget(task.getTarget());
                 progress.setStatus(1);
                 progress.setTranslateStatus("translation_process_saved");
                 progress.setProgressData(defaultProgressTranslateData);
+                setEstimatedFromContext(progress, taskContext);
                 list.add(progress);
             } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
                 progress.setTarget(task.getTarget());
@@ -516,11 +538,37 @@ public class TranslateV2Service {
                     progress.setStatus(7);// 中断的状态
                 }
 
+                setEstimatedFromContext(progress, taskContext);
                 list.add(progress);
             }
         }
 
         return new BaseResponse<ProgressResponse>().CreateSuccessResponse(response);
+    }
+
+    /**
+     * 从 Redis taskContext 中解析预估积分、预估耗时并设置到 Progress，供前端轮询展示
+     */
+    private void setEstimatedFromContext(ProgressResponse.Progress progress, Map<String, String> taskContext) {
+        if (taskContext == null) {
+            return;
+        }
+        String ec = taskContext.get("estimatedCredits");
+        if (ec != null && !ec.isEmpty()) {
+            try {
+                progress.setEstimatedCredits(Long.parseLong(ec));
+            } catch (Exception e) {
+                ExceptionReporterHolder.report("TranslateV2Service.setEstimatedFromContext", e);
+            }
+        }
+        String em = taskContext.get("estimatedMinutes");
+        if (em != null && !em.isEmpty()) {
+            try {
+                progress.setEstimatedMinutes(Integer.parseInt(em));
+            } catch (Exception e1) {
+                ExceptionReporterHolder.report("TranslateV2Service.setEstimatedFromContext", e1);
+            }
+        }
     }
 
     private boolean containsModule(String modules, String module) {
@@ -562,7 +610,7 @@ public class TranslateV2Service {
                     (node -> {
                         if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
                             translateTaskV2DO.setResourceId(node.getResourceId());
-                            TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask","TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
+                            TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
                             // 每个node有几个translatableContent
@@ -579,6 +627,7 @@ public class TranslateV2Service {
                                     try {
                                         translateTaskV2Repo.insert(translateTaskV2DO);
                                         translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
+                                        translateTaskMonitorV2RedisService.incrementEstimatedCredits(initialTaskV2DO.getId(), translatableContent.getValue().length());
                                     } catch (Exception e) {
                                         ExceptionReporterHolder.report("TranslateV2Service.initialToTranslateTask", e);
                                     }
@@ -588,8 +637,8 @@ public class TranslateV2Service {
                             // 将shopifyTranslationsRemoveList里面的数据批量存储数据库中
                             if (!shopifyTranslationsRemoveList.isEmpty()) {
                                 ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
-                                for (String key: remove.getTranslationKeys()
-                                     ) {
+                                for (String key : remove.getTranslationKeys()
+                                ) {
                                     deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
                                 }
                                 shopifyTranslationsRemoveList.clear();
@@ -612,6 +661,25 @@ public class TranslateV2Service {
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
         initialTaskV2DO.setInitMinutes((int) initTimeInMinutes);
         translateTaskMonitorV2RedisService.setInitEndTime(initialTaskV2DO.getId());
+
+        // totalCount 确定后立即计算预估积分与翻译消耗时间，供 getProcess 返回前端
+        Map<String, String> monitor = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+        String estimatedCredits = monitor != null ? monitor.get("estimatedCredits") : null;
+        String totalCount = monitor != null ? monitor.get("totalCount") : null;
+        if (estimatedCredits != null && !estimatedCredits.isEmpty()) {
+            int totalCredits = Integer.parseInt(estimatedCredits);
+            long finalCredits = (long) (totalCredits * AVG_TOKEN_PER_ITEM.get(initialTaskV2DO.getAiModel()));
+            translateTaskMonitorV2RedisService.setEstimatedCredits(initialTaskV2DO.getId(), finalCredits);
+
+            int estimatedTranslateMinutes = (int) (finalCredits * TOKEN_PER_SECOND.get(initialTaskV2DO.getAiModel()));
+            // totalCount 确定后立即计算预估存储消耗时间，供 getProcess 返回前端
+            if (totalCount != null && !totalCount.isEmpty()) {
+                int finalCount = Integer.parseInt(totalCount);
+                estimatedTranslateMinutes += finalCount;
+            }
+            translateTaskMonitorV2RedisService.setEstimatedMinutes(initialTaskV2DO.getId(), estimatedTranslateMinutes);
+        }
+
         initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
                 , initialTaskV2DO.getId());
     }
@@ -818,7 +886,9 @@ public class TranslateV2Service {
         }
     }
 
-    /** 手动翻译正常结束时发送成功邮件并更新状态 */
+    /**
+     * 手动翻译正常结束时发送成功邮件并更新状态
+     */
     private void sendManualSuccessEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
         Integer usingTimeMinutes = (int) ((System.currentTimeMillis() - initialTaskV2DO.getCreatedAt().getTime()) / (1000 * 60));
@@ -836,7 +906,9 @@ public class TranslateV2Service {
         initialTaskV2Repo.updateSendEmailAndStatusById(true, InitialTaskStatus.ALL_DONE.status, initialTaskV2DO.getId());
     }
 
-    /** 手动翻译中断时处理：手动中断仅标记已发邮件；因 token 限制的部分翻译则延迟批量发邮件 */
+    /**
+     * 手动翻译中断时处理：手动中断仅标记已发邮件；因 token 限制的部分翻译则延迟批量发邮件
+     */
     private void handleManualStoppedEmail(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
         boolean stoppedByLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
@@ -854,7 +926,9 @@ public class TranslateV2Service {
         sendPartialTranslationEmailForManual(shopName);
     }
 
-    /** 获取该用户未发邮件的部分翻译任务，发送批量失败邮件并标记已发邮件 */
+    /**
+     * 获取该用户未发邮件的部分翻译任务，发送批量失败邮件并标记已发邮件
+     */
     private void sendPartialTranslationEmailForManual(String shopName) {
         List<InitialTaskV2DO> stoppedTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual", 5);
 
@@ -1089,7 +1163,7 @@ public class TranslateV2Service {
                 return false;
             }
 
-            if (value.startsWith("=")){
+            if (value.startsWith("=")) {
                 return false;
             }
 
@@ -1223,4 +1297,5 @@ public class TranslateV2Service {
             this.desc = desc;
         }
     }
+
 }

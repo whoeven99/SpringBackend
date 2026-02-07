@@ -70,6 +70,24 @@ public class TranslateTaskMonitorV2RedisService {
         redisIntegration.setHash(key, "initEndTime", String.valueOf(System.currentTimeMillis()));
     }
 
+    /** init 增加预计字符，供 getProcess 返回前端 */
+    public void incrementEstimatedCredits(Integer initialTaskId, long estimatedCredits) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        redisIntegration.incrementHash(key, "estimatedCredits", estimatedCredits);
+    }
+
+    /** init 增加预计字符，供 getProcess 返回前端 */
+    public void setEstimatedCredits(Integer initialTaskId, long estimatedCredits) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        redisIntegration.setHash(key, "estimatedCredits", estimatedCredits);
+    }
+
+    /** init 完成后写入预估耗时（分钟），供 getProcess 返回前端 */
+    public void setEstimatedMinutes(Integer initialTaskId, int estimatedMinutes) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        redisIntegration.setHash(key, "estimatedMinutes", estimatedMinutes);
+    }
+
     public void trackTranslateDetail(Integer initialTaskId, int count, Integer usedToken, Integer translatedChars) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.incrementHash(key, "translatedCount", count);
