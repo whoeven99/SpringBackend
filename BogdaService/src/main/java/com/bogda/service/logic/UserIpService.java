@@ -1,6 +1,7 @@
 package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.*;
 import com.bogda.common.entity.DO.CurrenciesDO;
 import com.bogda.common.entity.DO.TranslationCounterDO;
@@ -16,7 +17,6 @@ import com.bogda.repository.entity.UserIPCountDO;
 import com.bogda.repository.entity.UserIPRedirectionDO;
 import com.bogda.repository.repo.UserIPCountRepo;
 import com.bogda.repository.repo.UserIPRedirectionRepo;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -85,7 +85,7 @@ public class UserIpService {
         if (userIpDO == null) {
             return false;
         }
-        AppInsightsUtils.trackTrace("checkUserIp userIpDO = " + userIpDO);
+        TraceReporterHolder.report("UserIpService.checkUserIp", "checkUserIp userIpDO = " + userIpDO);
 
         long currentTimes = userIpDO.getTimes();
 
@@ -139,7 +139,7 @@ public class UserIpService {
     }
 
     public BaseResponse<Object> noCrawlerPrintLog(String shopName, NoCrawlerVO noCrawlerVO) {
-        AppInsightsUtils.trackTrace("状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
+        TraceReporterHolder.report("UserIpService.noCrawlerPrintLog", "状态码：" + noCrawlerVO.getStatus() + " , " + shopName + " 客户ip定位： " + noCrawlerVO.getUserIp()
                 + " , 语言代码： " + noCrawlerVO.getLanguageCode() + " , 是否包含该语言： " + noCrawlerVO.getLanguageCodeStatus()
                 + " , 货币代码： " + noCrawlerVO.getCurrencyCode() + " , 国家代码： " + noCrawlerVO.getCountryCode() + " , 是否包含该市场： "
                 + noCrawlerVO.getCurrencyCodeStatus() + " , checkUserIp接口花费时间： " + noCrawlerVO.getCostTime() + " , ipApi接口花费时间： " + noCrawlerVO.getIpApiCostTime()
@@ -214,7 +214,8 @@ public class UserIpService {
     }
 
     public BaseResponse<Object> includeCrawlerPrintLog(String shopName, IncludeCrawlerVO includeCrawlerVO) {
-        AppInsightsUtils.trackTrace(shopName + " " + includeCrawlerVO.getUaInformation() + " 原因 " + includeCrawlerVO.getUaReason());
+        TraceReporterHolder.report("UserIpService.includeCrawlerPrintLog",shopName + " " +
+                includeCrawlerVO.getUaInformation() + " 原因 " + includeCrawlerVO.getUaReason());
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 

@@ -83,6 +83,9 @@ public class AidgeIntegration {
 
             // 解析数据
             JsonNode jsonNode = JsonUtils.stringToJson(apiResponse);
+            if (jsonNode == null || jsonNode.isEmpty()){
+                return null;
+            }
             JsonNode imageUrlNode = jsonNode.path("data").path("imageUrl");
             return imageUrlNode.asText(null);
         } catch (Exception e) {

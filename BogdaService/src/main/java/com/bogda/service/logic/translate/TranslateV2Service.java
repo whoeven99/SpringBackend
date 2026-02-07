@@ -1,5 +1,7 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.model.ShopifyGraphRemoveResponse;
 import com.bogda.integration.model.ShopifyTranslationsRemove;
@@ -143,7 +145,7 @@ public class TranslateV2Service {
             prompt = prompt.replace("{{SOURCE_LANGUAGE_LIST}}", languageMap.toString())
                     .replace("{{TARGET_LANGUAGE}}", target);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException testTranslate JSON parsing failed: " + e.getMessage());
+            ExceptionReporterHolder.report("TranslateV2Service.testTranslate", e);
             return defaultNullMap();
         }
 
@@ -157,8 +159,7 @@ public class TranslateV2Service {
                 return handleGpt(prompt, target);
             }
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException in testTranslate: " + e.getMessage());
+            ExceptionReporterHolder.report("TranslateV2Service.testTranslate", e);
         }
 
         return defaultNullMap();
@@ -242,7 +243,7 @@ public class TranslateV2Service {
     // 翻译 step 1, 用户 -> initial任务创建
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
-        AppInsightsUtils.trackTrace("createInitialTask : " + " shopName : " + shopName + " " + request);
+        TraceReporterHolder.report("TranslateV2Service.createInitialTask", "createInitialTask : " + " shopName : " + shopName + " " + request);
         String[] targets = request.getTarget();
         List<String> moduleList = request.getTranslateSettings3();
         String translateSettings1 = request.getTranslateSettings1();
@@ -293,7 +294,7 @@ public class TranslateV2Service {
                 .flatMap(module -> {
                     List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
                     if (list == null) {
-                        AppInsightsUtils.trackTrace("FatalException createInitialTask Warning: Unknown module: " + module);
+                        TraceReporterHolder.report("TranslateV2Service.createInitialTask", "FatalException createInitialTask Warning: Unknown module: " + module);
                         return Stream.empty();
                     }
                     return list.stream();
@@ -359,7 +360,7 @@ public class TranslateV2Service {
 
         JsonNode shopLocales = root.path("shopLocales");
         if (!shopLocales.isArray()) {
-            AppInsightsUtils.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
+            TraceReporterHolder.report("TranslateV2Service.isExistInDatabase", "syncShopifyAndDatabase: shopLocales is not an array.");
             return;
         }
 
@@ -561,7 +562,7 @@ public class TranslateV2Service {
                     (node -> {
                         if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
                             translateTaskV2DO.setResourceId(node.getResourceId());
-                            AppInsightsUtils.trackTrace("TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
+                            TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask","TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
                                     " resourceId: " + node.getResourceId());
 
                             // 每个node有几个translatableContent
@@ -579,8 +580,7 @@ public class TranslateV2Service {
                                         translateTaskV2Repo.insert(translateTaskV2DO);
                                         translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
                                     } catch (Exception e) {
-                                        AppInsightsUtils.trackException(e);
-                                        AppInsightsUtils.trackTrace("FatalException initialToTranslateTask insert error " + e.getMessage());
+                                        ExceptionReporterHolder.report("TranslateV2Service.initialToTranslateTask", e);
                                     }
                                 }
                             });
@@ -602,11 +602,11 @@ public class TranslateV2Service {
             translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
             // 清空afterEndCursor
             translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), "");
-            AppInsightsUtils.trackTrace("TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
+            TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 
         // 更新数据库并记录初始化时间
-        AppInsightsUtils.trackTrace("TranslateTaskV2 initialToTranslateTask done: " + shopName);
+        TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 initialToTranslateTask done: " + shopName);
 
         long initTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
@@ -631,7 +631,7 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         while (randomDo != null) {
-            AppInsightsUtils.trackTrace("TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
+            TraceReporterHolder.report("TranslateV2Service.translateEachTask", "TranslateTaskV2 translating shop: " + shopName + " randomDo: " + randomDo.getId());
 
             // 用于中断之后的邮件描述
             initialTaskV2DO.setTransModelType(randomDo.getModule());
@@ -701,7 +701,7 @@ public class TranslateV2Service {
 
                     // 3.3 回写数据库 todo 批量
                     if (targetValue == null) {
-                        AppInsightsUtils.trackTrace("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        TraceReporterHolder.report("TranslateV2Service.translateEachTask", "FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
@@ -714,7 +714,7 @@ public class TranslateV2Service {
             maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
         }
-        AppInsightsUtils.trackTrace("TranslateTaskV2 translating done: " + shopName);
+        TraceReporterHolder.report("TranslateV2Service.translateEachTask", "TranslateTaskV2 translating done: " + shopName);
 
         // 判断是手动中断 还是limit中断，切换不同的状态
         if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
@@ -757,7 +757,7 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
         while (randomDo != null) {
-            AppInsightsUtils.trackTrace("TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
+            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
             List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
 
@@ -777,7 +777,7 @@ public class TranslateV2Service {
             node.setResourceId(resourceId);
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
             if (strResponse != null) {
-                AppInsightsUtils.trackTrace("TranslateTaskV2 saving success: " + shopName +
+                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
@@ -787,11 +787,11 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             } else {
                 // 写入失败 fatalException
-                AppInsightsUtils.trackTrace("FatalException TranslateTaskV2 saving failed: " + shopName +
+                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
-            AppInsightsUtils.trackTrace("TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
+            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
 
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -824,7 +824,7 @@ public class TranslateV2Service {
         Integer usingTimeMinutes = (int) ((System.currentTimeMillis() - initialTaskV2DO.getCreatedAt().getTime()) / (1000 * 60));
         Integer usedTokenByTask = userTokenService.getUsedTokenByTaskId(shopName, initialTaskV2DO.getId());
 
-        AppInsightsUtils.trackTrace("TranslateTaskV2 Completed Email sent to user: " + shopName +
+        TraceReporterHolder.report("TranslateV2Service.sendManualSuccessEmail", "TranslateTaskV2 Completed Email sent to user: " + shopName +
                 " Total time (minutes): " + usingTimeMinutes +
                 " Total tokens used: " + usedTokenByTask);
 
@@ -874,7 +874,7 @@ public class TranslateV2Service {
             List<InitialTaskV2DO> initialTasks = initialTaskV2Repo.selectByShopNameStoppedAndNotEmail(shopName, "manual", 0);
             partialTranslation.addAll(initialTasks);
 
-            AppInsightsUtils.trackTrace("sendManualEmail 手动翻译批量失败邮件 : " + shopName);
+            TraceReporterHolder.report("TranslateV2Service.sendPartialTranslationEmailForManual", "sendManualEmail 手动翻译批量失败邮件 : " + shopName);
             tencentEmailService.sendTranslatePartialEmail(shopName, partialTranslation, "manual translation");
             for (InitialTaskV2DO task : partialTranslation) {
                 initialTaskV2Repo.updateSendEmailById(task.getId(), true);
@@ -891,7 +891,7 @@ public class TranslateV2Service {
                 iTranslatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
                 initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
                 boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false, false);
-                AppInsightsUtils.trackTrace("continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
+                TraceReporterHolder.report("TranslateV2Service.continueTranslatingByShopName", "continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
             }
         }
     }
@@ -900,52 +900,52 @@ public class TranslateV2Service {
     public boolean autoTranslateV2(String shopName, String source, String target) {
         UsersDO usersDO = usersService.getUserByName(shopName);
         if (usersDO == null) {
-            AppInsightsUtils.trackTrace("autoTranslateV2 已卸载 用户: " + shopName);
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 已卸载 用户: " + shopName);
             return false;
         }
 
         if (usersDO.getUninstallTime() != null) {
             if (usersDO.getLoginTime() == null) {
-                AppInsightsUtils.trackTrace("autoTranslateV2 卸载了未登陆 用户: " + shopName);
+                TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 卸载了未登陆 用户: " + shopName);
                 return false;
             } else if (usersDO.getUninstallTime().after(usersDO.getLoginTime())) {
-                AppInsightsUtils.trackTrace("autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
+                TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 卸载了时间在登陆时间后 用户: " + shopName);
                 return false;
             }
         }
 
         // 判断注册时间
         if (usersDO.getLoginTime() == null) {
-            AppInsightsUtils.trackTrace("autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 用户未登录 或 登录时间为空: " + shopName);
             return false;
         }
 
         // 将登录时间与当前时间都按 UTC 时区比较小时
         int loginHour = usersDO.getCreateAt().toInstant().atZone(ZoneOffset.UTC).getHour();
         int currentHour = Instant.now().atZone(ZoneOffset.UTC).getHour();
-        AppInsightsUtils.trackTrace("autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
+        TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 loginHour: " + loginHour + " currentHour: " + currentHour + " shop: " + shopName);
 
         // 只有当登录小时与当前小时一致时才继续执行，其他情况按分片逻辑跳过
         if (loginHour != currentHour) {
-            AppInsightsUtils.trackTrace("autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 非当前小时，不执行自动翻译 shop: " + shopName);
             return false;
         }
 
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
-        AppInsightsUtils.trackTrace("autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
+        TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 maxToken: " + maxToken + " usedToken: " + usedToken + " shop: " + shopName);
         // 如果字符超限，则直接返回字符超限
         if (usedToken >= maxToken) {
-            AppInsightsUtils.trackTrace("autoTranslateV2 字符超限 用户: " + shopName);
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 字符超限 用户: " + shopName);
             return false;
         }
 
         // 判断这条语言是否在用户本地存在
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
-        AppInsightsUtils.trackTrace("autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
+        TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
         if (shopifyByQuery == null) {
-            AppInsightsUtils.trackTrace("autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
             return false;
         }
 
@@ -953,21 +953,21 @@ public class TranslateV2Service {
         if (!shopifyByQuery.contains(userCode)) {
             // 将用户的自动翻译标识改为false
             translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
-            AppInsightsUtils.trackTrace("autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
             return false;
         }
 
-        AppInsightsUtils.trackTrace("autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
+        TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
         createAutoTask(shopName, source, target);
-        AppInsightsUtils.trackTrace("autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
+        TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 任务创建成功 " + shopName + " target: " + target);
         return true;
     }
 
     public void cleanTask(InitialTaskV2DO initialTaskV2DO) {
-        AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
+        TraceReporterHolder.report("TranslateV2Service.cleanTask", "TranslateTaskV2 cleanTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
             int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
-            AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask delete: " + deleted);
+            TraceReporterHolder.report("TranslateV2Service.cleanTask", "TranslateTaskV2 cleanTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
             }
@@ -1145,7 +1145,7 @@ public class TranslateV2Service {
 
         DeleteTasksDO randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
         while (randomDo != null) {
-            AppInsightsUtils.trackTrace("DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
+            TraceReporterHolder.report("TranslateV2Service.deleteToShopify", "DeleteTasks deleted shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
             List<DeleteTasksDO> taskList = deleteTasksRepo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskV2DO.getId(), resourceId);
 
@@ -1163,7 +1163,7 @@ public class TranslateV2Service {
             ShopifyGraphRemoveResponse shopifyGraphRemoveResponse = shopifyService.deleteShopifyDataWithRateLimit(
                     shopName, token, remove);
             if (shopifyGraphRemoveResponse != null) {
-                AppInsightsUtils.trackTrace("DeleteTasks deleting success: " + shopName +
+                TraceReporterHolder.report("TranslateV2Service.deleteToShopify", "DeleteTasks deleting success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + shopifyGraphRemoveResponse);
                 // 回写数据库，标记已删除
                 for (DeleteTasksDO taskDO : taskList) {
@@ -1171,21 +1171,21 @@ public class TranslateV2Service {
                 }
             } else {
                 // 删除失败 fatalException
-                AppInsightsUtils.trackTrace("FatalException DeleteTasks deleting failed: " + shopName +
+                TraceReporterHolder.report("TranslateV2Service.deleteToShopify", "FatalException DeleteTasks deleting failed: " + shopName +
                         " randomDo: " + randomDo.getId());
             }
 
 
             randomDo = deleteTasksRepo.selectOneByInitialTaskIdAndNotDeleted(initialTaskV2DO.getId());
-            AppInsightsUtils.trackTrace("TranslateTaskV2 delete SHOPIFY: " + shopName + " size: " + taskList.size());
+            TraceReporterHolder.report("TranslateV2Service.deleteToShopify", "TranslateTaskV2 delete SHOPIFY: " + shopName + " size: " + taskList.size());
         }
     }
 
     public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
-        AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
+        TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
             int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
-            AppInsightsUtils.trackTrace("TranslateTaskV2 cleanDeleteTask delete: " + deleted);
+            TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
             }

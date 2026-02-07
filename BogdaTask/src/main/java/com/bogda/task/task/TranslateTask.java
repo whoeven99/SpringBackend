@@ -1,5 +1,7 @@
 package com.bogda.task.task;
 
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.service.logic.TencentEmailService;
@@ -36,8 +38,6 @@ public class TranslateTask {
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();
 
-    public static TelemetryClient AppInsightsUtils = new TelemetryClient();
-
     private <T> void process(int status,
                              Function<InitialTaskV2DO, T> groupByFunc,
                              Set<T> shopsSet,
@@ -67,16 +67,16 @@ public class TranslateTask {
             executorService.submit(() -> {
                 shopsSet.add(groupKey);
                 List<InitialTaskV2DO> groupTasks = entry.getValue();
-                AppInsightsUtils.trackTrace("TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
+                TraceReporterHolder.report("TranslateTask.process","TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
                 try {
                     for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
                         taskConsumer.accept(initialTaskV2DO);
-                        AppInsightsUtils.trackTrace("TranslateTaskV2 " + taskName + " success for group: " + groupKey + " , initialTaskId: " + initialTaskV2DO.getId());
+                        TraceReporterHolder.report("TranslateTask.process","TranslateTaskV2 " + taskName + " success for group: " + groupKey + " , initialTaskId: " + initialTaskV2DO.getId());
                     }
                 } catch (Exception e) {
-                    AppInsightsUtils.trackTrace("FatalException TaskRunFailed " + taskName + " " + e.getMessage());
-                    AppInsightsUtils.trackException(e);
+                    TraceReporterHolder.report("TranslateTask.process","FatalException TaskRunFailed " + taskName + " " + e.getMessage());
+                    ExceptionReporterHolder.report("TranslateTask.process", e);
                 } finally {
                     shopsSet.remove(groupKey);
                 }
@@ -208,7 +208,7 @@ public class TranslateTask {
             return;
         }
 
-        AppInsightsUtils.trackTrace("TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
+        TraceReporterHolder.report("TranslateTask.cleanTask","TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
         translateV2Service.cleanDeleteTask(cleanTask.get(0));
     }
