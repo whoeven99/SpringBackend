@@ -26,5 +26,9 @@ public class ProgressResponse {
         private Map<String, Integer> writingData;
         private Integer taskId; // initial_task_v2 id
         private String initialCount; // 初始化的计数
+        /** 预估积分（token），init 完成后按 totalCount 计算 */
+        private Long estimatedCredits;
+        /** 预估耗时（分钟），init 完成后计算 */
+        private Integer estimatedMinutes;
     }
 }
