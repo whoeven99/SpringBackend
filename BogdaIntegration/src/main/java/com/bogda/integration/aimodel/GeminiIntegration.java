@@ -1,5 +1,6 @@
 package com.bogda.integration.aimodel;
 
+import com.bogda.common.model.AiTranslateResult;
 import com.bogda.common.utils.TimeOutUtils;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.google.genai.Client;
@@ -59,6 +60,45 @@ public class GeminiIntegration {
             AppInsightsUtils.trackTrace("FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);
             AppInsightsUtils.trackException(e);
             return null;
+        }
+    }
+
+    /**
+     * 带错误码的文本生成，用于链式轮换与 400 直接走 Google 判断。
+     */
+    public AiTranslateResult generateTextWithResult(String model, String prompt) {
+        try {
+            GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
+                        try {
+                            return client.models.generateContent(model, prompt, null);
+                        } catch (Exception e) {
+                            if (TimeOutUtils.isHttp400(e)) {
+                                throw new RuntimeException(e);
+                            }
+                            AppInsightsUtils.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() + " translateText : " + prompt);
+                            AppInsightsUtils.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,
+                    DEFAULT_MAX_RETRIES);
+
+            if (response == null) {
+                return AiTranslateResult.fail(0);
+            }
+            String text = response.text();
+            var usage = response.usageMetadata().orElse(null);
+            int inputToken = (usage != null) ? usage.promptTokenCount().orElse(0) : 0;
+            int outputToken = (usage != null) ? usage.candidatesTokenCount().orElse(0) : 0;
+            int allToken = (usage != null) ? usage.totalTokenCount().orElse(0) * GEMINI_COEFFICIENT : 0;
+
+            AppInsightsUtils.trackTrace("Gemini  model : " + model + " 提示词：" + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
+            return AiTranslateResult.success(text, allToken);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);
+            AppInsightsUtils.trackException(e);
+            int errorCode = TimeOutUtils.isHttp400(e) ? 400 : 0;
+            return AiTranslateResult.fail(errorCode);
         }
     }
 

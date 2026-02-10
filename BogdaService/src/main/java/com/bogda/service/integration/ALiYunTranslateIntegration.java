@@ -16,6 +16,7 @@ import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.model.AiTranslateResult;
 import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.ConfigUtils;
@@ -109,6 +110,57 @@ public class ALiYunTranslateIntegration {
             AppInsightsUtils.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             AppInsightsUtils.trackException(e);
             return null;
+        }
+    }
+
+    /**
+     * 带错误码的翻译，用于链式轮换与 400 直接走 Google 判断。
+     */
+    public AiTranslateResult userTranslateWithResult(String prompt, String target) {
+        String model = switchModel(target);
+        Generation gen = new Generation();
+        Message userMsg = Message.builder()
+                .role(Role.USER.getValue())
+                .content(prompt)
+                .build();
+
+        GenerationParam param = GenerationParam.builder()
+                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
+                .model(model)
+                .messages(Collections.singletonList(userMsg))
+                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                .build();
+
+        try {
+            GenerationResult call = TimeOutUtils.callWithTimeoutAndRetry(() -> {
+                        try {
+                            return gen.call(param);
+                        } catch (Exception e) {
+                            if (TimeOutUtils.isHttp400(e)) {
+                                throw new RuntimeException(e);
+                            }
+                            AppInsightsUtils.trackTrace("FatalException userTranslate call errors ： " + e.getMessage() + " translateText : " + prompt);
+                            AppInsightsUtils.trackException(e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,
+                    DEFAULT_MAX_RETRIES);
+            if (call == null) {
+                return AiTranslateResult.fail(0);
+            }
+            String content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            int totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
+            Integer inputTokens = call.getUsage().getInputTokens();
+            Integer outputTokens = call.getUsage().getOutputTokens();
+            AppInsightsUtils.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
+                    " token ali  all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            return AiTranslateResult.success(content, totalToken);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
+            AppInsightsUtils.trackException(e);
+            int errorCode = TimeOutUtils.isHttp400(e) ? 400 : 0;
+            return AiTranslateResult.fail(errorCode);
         }
     }
 
