@@ -1,7 +1,7 @@
 package com.bogda.service.logic.BundleApp;
 
 import com.azure.cosmos.models.SqlParameter;
-import com.bogda.api.entity.DTO.DiscountBasicDTO;
+import com.bogda.common.entity.DTO.DiscountBasicDTO;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.entity.DTO.BundleDiscountDTO;
 import com.bogda.common.entity.VO.BundleDisplayDataVO;

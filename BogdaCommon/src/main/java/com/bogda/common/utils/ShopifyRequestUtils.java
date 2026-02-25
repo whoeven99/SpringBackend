@@ -10,10 +10,10 @@ public class ShopifyRequestUtils {
                 ? ""
                 : ", after: \"%s\"".formatted(after);
 
-        return query.formatted(resourceType, first, afterClause, target);
+        return QUERY.formatted(resourceType, first, afterClause, target);
     }
 
-    public static final String query = """
+    public static final String QUERY = """
                 query MyQuery {
                   translatableResources(resourceType: %s, first: %s%s) {
                     nodes {
@@ -182,6 +182,74 @@ public class ShopifyRequestUtils {
                 "  }\n" +
                 "}";
     }
+
+    /** 获取 Product ID 列表（用于 translatableResourcesByIds），支持 query 筛选如 status:active、updated_at:>xxx */
+    public static final String PRODUCTS_IDS_QUERY = """
+            query GetProducts($query: String, $first: Int, $after: String) {
+              products(first: $first, after: $after, query: $query) {
+                nodes { id }
+                pageInfo { endCursor hasNextPage }
+              }
+            }
+            """;
+
+    /** 获取 Article ID 列表，支持 query 筛选如 published_status:published、updated_at:>xxx */
+    public static final String ARTICLES_IDS_QUERY = """
+            query GetArticles($query: String, $first: Int, $after: String) {
+              articles(first: $first, after: $after, query: $query) {
+                nodes { id }
+                pageInfo { endCursor hasNextPage }
+              }
+            }
+            """;
+
+    /** 获取 Page ID 列表，支持 query 筛选如 published_status:published、updated_at:>xxx */
+    public static final String PAGES_IDS_QUERY = """
+            query GetPages($query: String, $first: Int, $after: String) {
+              pages(first: $first, after: $after, query: $query) {
+                nodes { id }
+                pageInfo { endCursor hasNextPage }
+              }
+            }
+            """;
+
+    /** 获取 Collection ID 列表，支持 query 筛选如 published_status:published、updated_at:>xxx */
+    public static final String COLLECTIONS_IDS_QUERY = """
+            query GetCollections($query: String, $first: Int, $after: String) {
+              collections(first: $first, after: $after, query: $query) {
+                nodes { id }
+                pageInfo { endCursor hasNextPage }
+              }
+            }
+            """;
+
+    /** translatableResourcesByIds：根据资源 ID 列表查询可翻译内容，仅返回 outdated 由调用方在 needTranslate 中过滤 */
+    public static final String TRANSLATABLE_RESOURCES_BY_IDS_QUERY = """
+            query GetTranslatableResourcesByIds($resourceIds: [ID!]!, $first: Int, $after: String, $locale: String!) {
+              translatableResourcesByIds(resourceIds: $resourceIds, first: $first, after: $after) {
+                nodes {
+                  resourceId
+                  translations(locale: $locale) {
+                    locale
+                    value
+                    key
+                    outdated
+                  }
+                  translatableContent {
+                    type
+                    locale
+                    key
+                    value
+                    digest
+                  }
+                }
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                }
+              }
+            }
+            """;
 
     /**
      * 删除用户shopify数据

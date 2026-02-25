@@ -198,4 +198,22 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
+
+    /**
+     * 查询该店铺/源语言/目标语言下，在当前任务之前最近一次自动翻译任务的创建时间（用于自动翻译时筛选 updated_at 大于该时间的数据）。
+     */
+    public InitialTaskV2DO selectLatestAutoTaskBeforeCreatedAt(String shopName, String source, String target, java.sql.Timestamp currentTaskCreatedAt) {
+        if (currentTaskCreatedAt == null) {
+            return null;
+        }
+        List<InitialTaskV2DO> list = baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getSource, source)
+                .eq(InitialTaskV2DO::getTarget, target)
+                .eq(InitialTaskV2DO::getTaskType, "auto")
+                .eq(InitialTaskV2DO::getIsDeleted, false)
+                .lt(InitialTaskV2DO::getCreatedAt, currentTaskCreatedAt)
+                .orderByDesc(InitialTaskV2DO::getCreatedAt));
+        return list.isEmpty() ? null : list.get(0);
+    }
 }

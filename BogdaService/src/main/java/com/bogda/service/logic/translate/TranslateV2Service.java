@@ -55,6 +55,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -584,7 +585,8 @@ public class TranslateV2Service {
         return false;
     }
 
-    // 翻译 step 2, initial -> 查询shopify，翻译任务创建
+    // 翻译 step 2, initial -> 查询 Shopify translatableResources，创建翻译任务（支持按模块分页游标断点续传）
+    // 参考 Shopify Admin API: translatableResources(resourceType, first, after) 与 pageInfo.endCursor
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
         String target = initialTaskV2DO.getTarget();
@@ -596,61 +598,76 @@ public class TranslateV2Service {
         UsersDO userDO = iUsersService.getUserByName(initialTaskV2DO.getShopName());
 
         String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskV2DO.getId());
-        String afterEndCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId());
         List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList = new ArrayList<>();
+
+        // 自动翻译：上次翻译任务创建时间，用于筛选 updated_at 大于该时间的数据（仅 PRODUCT/ARTICLE/PAGE/COLLECTION）
+        java.time.Instant updatedAtAfter = null;
+        if ("auto".equals(initialTaskV2DO.getTaskType()) && initialTaskV2DO.getCreatedAt() != null) {
+            InitialTaskV2DO lastAuto = initialTaskV2Repo.selectLatestAutoTaskBeforeCreatedAt(shopName, initialTaskV2DO.getSource(), target, initialTaskV2DO.getCreatedAt());
+            if (lastAuto != null && lastAuto.getCreatedAt() != null) {
+                updatedAtAfter = lastAuto.getCreatedAt().toInstant();
+            }
+        }
+
         for (String module : moduleList) {
             if (containsModule(finishedModules, module)) {
                 continue;
             }
-            TranslateTaskV2DO translateTaskV2DO = new TranslateTaskV2DO();
-            translateTaskV2DO.setModule(module);
-            translateTaskV2DO.setInitialTaskId(initialTaskV2DO.getId());
+            String moduleCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId(), module);
+            final String currentModule = module;
 
-            shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target, afterEndCursor,
-                    (node -> {
-                        if (node != null && !CollectionUtils.isEmpty(node.getTranslatableContent())) {
-                            translateTaskV2DO.setResourceId(node.getResourceId());
-                            TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotating Shopify: " + shopName + " module: " + module +
-                                    " resourceId: " + node.getResourceId());
-
-                            // 每个node有几个translatableContent
-                            node.getTranslatableContent().forEach(translatableContent -> {
-                                if (needTranslate(translatableContent, node.getTranslations(), module, initialTaskV2DO.isCover()
-                                        , initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId()
-                                        , shopifyTranslationsRemoveList)) {
-                                    translateTaskV2DO.setSourceValue(translatableContent.getValue());
-                                    translateTaskV2DO.setNodeKey(translatableContent.getKey());
-                                    translateTaskV2DO.setType(translatableContent.getType());
-                                    translateTaskV2DO.setDigest(translatableContent.getDigest());
-                                    translateTaskV2DO.setSingleHtml(JsoupUtils.isHtml(translatableContent.getValue()));
-                                    translateTaskV2DO.setId(null);
-                                    try {
-                                        translateTaskV2Repo.insert(translateTaskV2DO);
-                                        translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
-                                        translateTaskMonitorV2RedisService.incrementEstimatedCredits(initialTaskV2DO.getId(), translatableContent.getValue().length());
-                                    } catch (Exception e) {
-                                        ExceptionReporterHolder.report("TranslateV2Service.initialToTranslateTask", e);
-                                    }
-                                }
-                            });
-
-                            // 将shopifyTranslationsRemoveList里面的数据批量存储数据库中
-                            if (!shopifyTranslationsRemoveList.isEmpty()) {
-                                ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
-                                for (String key : remove.getTranslationKeys()
-                                ) {
-                                    deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
-                                }
-                                shopifyTranslationsRemoveList.clear();
-                            }
-
+            Consumer<ShopifyGraphResponse.TranslatableResources.Node> nodeConsumer = (node) -> {
+                if (node == null || CollectionUtils.isEmpty(node.getTranslatableContent())) {
+                    return;
+                }
+                TranslateTaskV2DO taskDo = new TranslateTaskV2DO();
+                taskDo.setModule(currentModule);
+                taskDo.setInitialTaskId(initialTaskV2DO.getId());
+                taskDo.setResourceId(node.getResourceId());
+                TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotating Shopify: " + shopName + " module: " + currentModule + " resourceId: " + node.getResourceId());
+                node.getTranslatableContent().forEach(translatableContent -> {
+                    if (needTranslate(translatableContent, node.getTranslations(), currentModule, initialTaskV2DO.isCover(), initialTaskV2DO.isHandle(), shopName, userDO.getAccessToken(), node.getResourceId(), shopifyTranslationsRemoveList)) {
+                        taskDo.setSourceValue(translatableContent.getValue());
+                        taskDo.setNodeKey(translatableContent.getKey());
+                        taskDo.setType(translatableContent.getType());
+                        taskDo.setDigest(translatableContent.getDigest());
+                        taskDo.setSingleHtml(JsoupUtils.isHtml(translatableContent.getValue()));
+                        taskDo.setId(null);
+                        try {
+                            translateTaskV2Repo.insert(taskDo);
+                            translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
+                            translateTaskMonitorV2RedisService.incrementEstimatedCredits(initialTaskV2DO.getId(), translatableContent.getValue().length());
+                        } catch (Exception e) {
+                            ExceptionReporterHolder.report("TranslateV2Service.initialToTranslateTask", e);
                         }
-                    }),
-                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), after)));
-            // 断电后 跳过这个module
+                    }
+                });
+                if (!shopifyTranslationsRemoveList.isEmpty()) {
+                    ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
+                    for (String key : remove.getTranslationKeys()) {
+                        deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
+                    }
+                    shopifyTranslationsRemoveList.clear();
+                }
+            };
+
+            if (TranslateConstants.PRODUCT.equals(module) || TranslateConstants.ARTICLE.equals(module)
+                    || TranslateConstants.PAGE.equals(module) || TranslateConstants.COLLECTION.equals(module)) {
+                // PRODUCT/ARTICLE/PAGE/COLLECTION：先按 status=active（及自动翻译时 updated_at>上次任务创建时间）拉取 ID，再按 ID 查 translatableResourcesByIds，仅存储 outdated=true 的项
+                String queryFilter = TranslateConstants.PRODUCT.equals(module) ? "status:active" : "published_status:published";
+                List<String> resourceIds = shopifyService.fetchResourceIdsByQuery(shopName, userDO.getAccessToken(), module, queryFilter, updatedAtAfter);
+                shopifyService.rotateTranslatableResourcesByIds(shopName, userDO.getAccessToken(), resourceIds, target,
+                        nodeConsumer,
+                        (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), currentModule, after)));
+            } else {
+                // 其他模块：沿用原逻辑 translatableResources(resourceType, first, after)
+                shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target, moduleCursor,
+                        nodeConsumer,
+                        (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), currentModule, after)));
+            }
+
             translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
-            // 清空afterEndCursor
-            translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), "");
+            translateTaskMonitorV2RedisService.clearAfterEndCursor(initialTaskV2DO.getId(), module);
             TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 

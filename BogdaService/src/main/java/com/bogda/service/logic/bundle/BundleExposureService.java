@@ -50,10 +50,8 @@ public class BundleExposureService {
 
         // 计算时间范围
         Pair<Integer, Integer> timestamps = getTimestamps(days);
-        System.out.println("query: " + productExposureUvByShopName);
         List<Map<String, String>> maps = aliyunSlsIntegration.readLogs(timestamps.getFirst(), timestamps.getSecond(), productExposureUvByShopName);
         if (maps != null && !maps.isEmpty()) {
-            System.out.println("maps: " + maps);
             String map = maps.get(0).getOrDefault("uv", "0");
             return new BaseResponse<>().CreateSuccessResponse(new BundleVisitorDTO(Integer.parseInt(map)));
         }
