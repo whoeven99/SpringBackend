@@ -295,6 +295,28 @@ public class ShopifyService {
         if (rawResponse == null || rawResponse.isEmpty()) {
             return null;
         }
+        String connectionKey = getConnectionKeyByResourceType(resourceType);
+        if (connectionKey == null) {
+            return null;
+        }
+        ShopifyModuleConnection connection = parseModuleConnectionByType(resourceType, rawResponse);
+        if (connection != null) {
+            return connection;
+        }
+        return parseModuleConnectionFromJsonNodeFallback(rawResponse, connectionKey);
+    }
+
+    private static String getConnectionKeyByResourceType(String resourceType) {
+        switch (resourceType) {
+            case TranslateConstants.PRODUCT: return "products";
+            case TranslateConstants.ARTICLE: return "articles";
+            case TranslateConstants.PAGE: return "pages";
+            case TranslateConstants.COLLECTION: return "collections";
+            default: return null;
+        }
+    }
+
+    private ShopifyModuleConnection parseModuleConnectionByType(String resourceType, String rawResponse) {
         switch (resourceType) {
             case TranslateConstants.PRODUCT: {
                 ShopifyProductsResponse resp = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyProductsResponse.class);
@@ -315,6 +337,23 @@ public class ShopifyService {
             default:
                 return null;
         }
+    }
+
+    /** 当 typed 解析为 null 时，从完整 JSON 中取出 data.{connectionKey} 再反序列化为 ShopifyModuleConnection */
+    private ShopifyModuleConnection parseModuleConnectionFromJsonNodeFallback(String rawResponse, String connectionKey) {
+        JsonNode root = JsonUtils.readTree(rawResponse);
+        if (root == null || !root.has("data")) {
+            return null;
+        }
+        JsonNode data = root.get("data");
+        if (data == null || !data.has(connectionKey)) {
+            return null;
+        }
+        JsonNode connectionNode = data.get(connectionKey);
+        if (connectionNode == null) {
+            return null;
+        }
+        return JsonUtils.jsonToObjectWithNull(connectionNode.toString(), ShopifyModuleConnection.class);
     }
 
     // 保存 Shopify 数据（带速率限制，返回完整响应包括 extensions）
