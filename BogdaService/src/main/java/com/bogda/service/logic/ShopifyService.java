@@ -77,37 +77,92 @@ public class ShopifyService {
     @Autowired
     private SubscriptionQuotaRecordRepo subscriptionQuotaRecordRepo;
 
+    private static final int TRANSLATABLE_RESOURCES_BY_IDS_BATCH = 250;
+
+    /**
+     * 统一轮询 Shopify 可翻译资源并对每个 node 调用 consumer。
+     * <ul>
+     *   <li>resourceIds 为 null 或空：使用 translatableResources(resourceType, first, after) 分页拉取；</li>
+     *   <li>resourceIds 非空：使用 translatableResourcesByIds(resourceIds, ...) 按 ID 分批拉取，响应通过 {@link ShopifyTranslatableResourcesByIdsResponse} 接收。</li>
+     * </ul>
+     */
     // TODO 所有需要轮询shopify数据的， 挪到这里
     public void rotateAllShopifyGraph(String shopName, String resourceType, String accessToken,
                                       Integer first, String target, String afterEndCursor,
-                                      Consumer<ShopifyGraphResponse.TranslatableResources.Node> consumer,
+                                      List<String> resourceIds,
+                                      Consumer<ShopifyTranslationsResponse.Node> consumer,
                                       Consumer<String> setAfterEndCursorConsumer) {
+        if (!CollectionUtils.isEmpty(resourceIds)) {
+            rotateTranslatableResourcesByIds(shopName, accessToken, resourceIds, target, consumer, setAfterEndCursorConsumer);
+            return;
+        }
         String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, afterEndCursor);
-
-        // 在第一次请求前，获取速率限制器并等待许可
         ShopifyGraphResponse data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
         while (data != null) {
-            // 一个shopify data有250个nodes
-            if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getNodes())) {
-                for (ShopifyGraphResponse.TranslatableResources.Node node : data.getTranslatableResources().getNodes()) {
-                    // 外面自己处理node数据
+            if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getTranslatableResources().getNodes())) {
+                for (ShopifyTranslationsResponse.Node node : data.getTranslatableResources().getTranslatableResources().getNodes()) {
                     consumer.accept(node);
                 }
             }
-
-            // 还有下一页，就轮询
             if (data.getTranslatableResources() != null
-                    && data.getTranslatableResources().getPageInfo() != null
-                    && data.getTranslatableResources().getPageInfo().isHasNextPage()) {
-                String endCursor = data.getTranslatableResources().getPageInfo().getEndCursor();
+                    && data.getTranslatableResources().getTranslatableResources().getPageInfo() != null
+                    && data.getTranslatableResources().getTranslatableResources().getPageInfo().isHasNextPage()) {
+                String endCursor = data.getTranslatableResources().getTranslatableResources().getPageInfo().getEndCursor();
                 setAfterEndCursorConsumer.accept(endCursor);
-
                 graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, endCursor);
-
-                // 在请求下一页前，重新获取速率限制器（可能已被更新）并等待许可
                 data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
             } else {
                 data = null;
+            }
+        }
+    }
+
+    /** 按资源 ID 列表分页拉取 translatableResourcesByIds，供 {@link #rotateAllShopifyGraph} 在 resourceIds 非空时调用 */
+    private void rotateTranslatableResourcesByIds(String shopName, String accessToken, List<String> resourceIds,
+                                                  String target, Consumer<ShopifyTranslationsResponse.Node> consumer,
+                                                  Consumer<String> setAfterEndCursorConsumer) {
+        String query = ShopifyRequestUtils.TRANSLATABLE_RESOURCES_BY_IDS_QUERY;
+        for (int offset = 0; offset < resourceIds.size(); offset += TRANSLATABLE_RESOURCES_BY_IDS_BATCH) {
+            int end = Math.min(offset + TRANSLATABLE_RESOURCES_BY_IDS_BATCH, resourceIds.size());
+            List<String> batch = resourceIds.subList(offset, end);
+            String after = null;
+            while (true) {
+                Map<String, Object> variables = new HashMap<>();
+                variables.put("resourceIds", batch);
+                variables.put("first", TRANSLATABLE_RESOURCES_BY_IDS_BATCH);
+                variables.put("after", after);
+                variables.put("locale", target);
+                String rawResponse = getShopifyFullResponseWithRateLimitAndVariables(shopName, accessToken, query, variables);
+                if (rawResponse == null || rawResponse.isEmpty()) {
+                    break;
+                }
+                ShopifyTranslatableResourcesByIdsResponse response = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyTranslatableResourcesByIdsResponse.class);
+                if (response == null || response.getData() == null) {
+                    break;
+                }
+                ShopifyTranslationsResponse connection = response.getData().getTranslatableResourcesByIds();
+                if (connection == null) {
+                    break;
+                }
+                List<ShopifyTranslationsResponse.Node> nodes = connection.getNodes();
+                if (nodes != null && !nodes.isEmpty()) {
+                    for (ShopifyTranslationsResponse.Node node : nodes) {
+                        if (node != null) {
+                            consumer.accept(node);
+                        }
+                    }
+                }
+                ShopifyTranslationsResponse.PageInfo pageInfo = connection.getPageInfo();
+                if (pageInfo == null || !pageInfo.isHasNextPage()) {
+                    break;
+                }
+                after = pageInfo.getEndCursor();
+                if (after != null) {
+                    setAfterEndCursorConsumer.accept(after);
+                }
+                if (after == null || after.isEmpty()) {
+                    break;
+                }
             }
         }
     }
@@ -145,8 +200,8 @@ public class ShopifyService {
         return shopifyResponse.getData();
     }
 
-    /** 带变量请求 GraphQL 并更新速率限制，返回响应中的 data 节点（JSONObject） */
-    private JSONObject getShopifyDataWithRateLimitAndVariables(String shopName, String accessToken, String query, Map<String, Object> variables) {
+    /** 带变量请求 GraphQL 并更新速率限制，返回完整响应 JSON 字符串（用于解析为 Module Response 等） */
+    private String getShopifyFullResponseWithRateLimitAndVariables(String shopName, String accessToken, String query, Map<String, Object> variables) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
 
@@ -161,33 +216,38 @@ public class ShopifyService {
                 shopifyRateLimitService.updateRateLimit(shopName, extensions);
             }
         }
+        return response;
+    }
+
+    /** 带变量请求 GraphQL 并更新速率限制，返回响应中的 data 节点（JSONObject） */
+    private JSONObject getShopifyDataWithRateLimitAndVariables(String shopName, String accessToken, String query, Map<String, Object> variables) {
+        String response = getShopifyFullResponseWithRateLimitAndVariables(shopName, accessToken, query, variables);
+        if (response == null) {
+            return null;
+        }
+        JSONObject root = JSONObject.parseObject(response);
         return root != null ? root.getJSONObject("data") : null;
     }
 
     /**
      * 根据 resourceType 与 query 分页拉取资源 ID 列表（GID）。
-     * 用于 PRODUCT/ARTICLE/PAGE/COLLECTION 的 status=active（及可选 updated_at）筛选。
+     * 使用 4 个 Module Response（ShopifyProductsResponse / ShopifyArticlesResponse / ShopifyPagesResponse / ShopifyCollectionsResponse）接收 Shopify 返回数据。
      */
     public List<String> fetchResourceIdsByQuery(String shopName, String accessToken, String resourceType,
                                                   String queryFilter, java.time.Instant updatedAtAfter) {
         String queryConst;
-        String dataKey;
         switch (resourceType) {
             case TranslateConstants.PRODUCT:
                 queryConst = ShopifyRequestUtils.PRODUCTS_IDS_QUERY;
-                dataKey = "products";
                 break;
             case TranslateConstants.ARTICLE:
                 queryConst = ShopifyRequestUtils.ARTICLES_IDS_QUERY;
-                dataKey = "articles";
                 break;
             case TranslateConstants.PAGE:
                 queryConst = ShopifyRequestUtils.PAGES_IDS_QUERY;
-                dataKey = "pages";
                 break;
             case TranslateConstants.COLLECTION:
                 queryConst = ShopifyRequestUtils.COLLECTIONS_IDS_QUERY;
-                dataKey = "collections";
                 break;
             default:
                 return Collections.emptyList();
@@ -205,25 +265,24 @@ public class ShopifyService {
             variables.put("query", query);
             variables.put("first", pageSize);
             variables.put("after", after);
-            JSONObject data = getShopifyDataWithRateLimitAndVariables(shopName, accessToken, queryConst, variables);
-            if (data == null) {
+            String rawResponse = getShopifyFullResponseWithRateLimitAndVariables(shopName, accessToken, queryConst, variables);
+            if (rawResponse == null || rawResponse.isEmpty()) {
                 break;
             }
-            com.alibaba.fastjson.JSONArray nodes = data.getJSONObject(dataKey) != null ? data.getJSONObject(dataKey).getJSONArray("nodes") : null;
-            if (nodes == null || nodes.isEmpty()) {
+            ShopifyModuleConnection connection = parseModuleConnectionFromResponse(resourceType, rawResponse);
+            if (connection == null || connection.getEdges() == null || connection.getEdges().isEmpty()) {
                 break;
             }
-            for (int i = 0; i < nodes.size(); i++) {
-                String id = nodes.getJSONObject(i).getString("id");
-                if (id != null && !id.isEmpty()) {
-                    ids.add(id);
+            for (ShopifyModuleConnection.Edge edge : connection.getEdges()) {
+                if (edge.getNode() != null && edge.getNode().getId() != null && !edge.getNode().getId().isEmpty()) {
+                    ids.add(edge.getNode().getId());
                 }
             }
-            com.alibaba.fastjson.JSONObject pageInfo = data.getJSONObject(dataKey).getJSONObject("pageInfo");
-            if (pageInfo == null || !Boolean.TRUE.equals(pageInfo.getBoolean("hasNextPage"))) {
+            ShopifyModuleConnection.PageInfo pageInfo = connection.getPageInfo();
+            if (pageInfo == null || !Boolean.TRUE.equals(pageInfo.getHasNextPage())) {
                 break;
             }
-            after = pageInfo.getString("endCursor");
+            after = pageInfo.getEndCursor();
             if (after == null || after.isEmpty()) {
                 break;
             }
@@ -231,64 +290,35 @@ public class ShopifyService {
         return ids;
     }
 
-    private static final int TRANSLATABLE_RESOURCES_BY_IDS_BATCH = 250;
-
-    /**
-     * 根据资源 ID 列表分页拉取 translatableResourcesByIds，并对每个 node 调用 consumer。
-     * 游标通过 setAfterEndCursorConsumer 回写（用于断点续传）。
-     */
-    public void rotateTranslatableResourcesByIds(String shopName, String accessToken, List<String> resourceIds,
-                                                  String target, Consumer<ShopifyGraphResponse.TranslatableResources.Node> consumer,
-                                                  Consumer<String> setAfterEndCursorConsumer) {
-        if (CollectionUtils.isEmpty(resourceIds)) {
-            return;
+    /** 根据 resourceType 将完整响应解析为对应 Module Response，并返回 data 下的 connection（edges + pageInfo） */
+    private ShopifyModuleConnection parseModuleConnectionFromResponse(String resourceType, String rawResponse) {
+        if (rawResponse == null || rawResponse.isEmpty()) {
+            return null;
         }
-        String query = ShopifyRequestUtils.TRANSLATABLE_RESOURCES_BY_IDS_QUERY;
-        for (int offset = 0; offset < resourceIds.size(); offset += TRANSLATABLE_RESOURCES_BY_IDS_BATCH) {
-            int end = Math.min(offset + TRANSLATABLE_RESOURCES_BY_IDS_BATCH, resourceIds.size());
-            List<String> batch = resourceIds.subList(offset, end);
-            String after = null;
-            while (true) {
-                Map<String, Object> variables = new HashMap<>();
-                variables.put("resourceIds", batch);
-                variables.put("first", TRANSLATABLE_RESOURCES_BY_IDS_BATCH);
-                variables.put("after", after);
-                variables.put("locale", target);
-                JSONObject data = getShopifyDataWithRateLimitAndVariables(shopName, accessToken, query, variables);
-                if (data == null) {
-                    break;
-                }
-                com.alibaba.fastjson.JSONObject byIds = data.getJSONObject("translatableResourcesByIds");
-                if (byIds == null) {
-                    break;
-                }
-                com.alibaba.fastjson.JSONArray nodes = byIds.getJSONArray("nodes");
-                if (nodes != null && !nodes.isEmpty()) {
-                    for (int i = 0; i < nodes.size(); i++) {
-                        ShopifyGraphResponse.TranslatableResources.Node node = JsonUtils.jsonToObjectWithNull(
-                                nodes.getJSONObject(i).toJSONString(), ShopifyGraphResponse.TranslatableResources.Node.class);
-                        if (node != null) {
-                            consumer.accept(node);
-                        }
-                    }
-                }
-                com.alibaba.fastjson.JSONObject pageInfo = byIds.getJSONObject("pageInfo");
-                if (pageInfo == null || !Boolean.TRUE.equals(pageInfo.getBoolean("hasNextPage"))) {
-                    break;
-                }
-                after = pageInfo.getString("endCursor");
-                if (after != null) {
-                    setAfterEndCursorConsumer.accept(after);
-                }
-                if (after == null || after.isEmpty()) {
-                    break;
-                }
+        switch (resourceType) {
+            case TranslateConstants.PRODUCT: {
+                ShopifyProductsResponse resp = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyProductsResponse.class);
+                return resp != null && resp.getData() != null ? resp.getData().getProducts() : null;
             }
+            case TranslateConstants.ARTICLE: {
+                ShopifyArticlesResponse resp = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyArticlesResponse.class);
+                return resp != null && resp.getData() != null ? resp.getData().getArticles() : null;
+            }
+            case TranslateConstants.PAGE: {
+                ShopifyPagesResponse resp = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyPagesResponse.class);
+                return resp != null && resp.getData() != null ? resp.getData().getPages() : null;
+            }
+            case TranslateConstants.COLLECTION: {
+                ShopifyCollectionsResponse resp = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyCollectionsResponse.class);
+                return resp != null && resp.getData() != null ? resp.getData().getCollections() : null;
+            }
+            default:
+                return null;
         }
     }
 
     // 保存 Shopify 数据（带速率限制，返回完整响应包括 extensions）
-    public String saveDataWithRateLimit(String shopName, String token, ShopifyGraphResponse.TranslatableResources.Node node) {
+    public String saveDataWithRateLimit(String shopName, String token, ShopifyTranslationsResponse.Node node) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
 

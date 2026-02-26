@@ -4,17 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShopifyGraphResponse {
-    private TranslatableResources translatableResources;
+public class ShopifyPagesResponse {
+    private PagesData data;
     private ShopifyExtensions extensions;
 
     @Data
-    public static class TranslatableResources {
-        private ShopifyTranslationsResponse translatableResources;
+    public static class PagesData {
+        private ShopifyModuleConnection pages;
     }
 }

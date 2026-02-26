@@ -183,42 +183,42 @@ public class ShopifyRequestUtils {
                 "}";
     }
 
-    /** 获取 Product ID 列表（用于 translatableResourcesByIds），支持 query 筛选如 status:active、updated_at:>xxx */
+    /** 获取 Product ID 列表（用于 translatableResourcesByIds），支持 query 筛选如 status:active、updated_at:>xxx；返回 edges 以匹配 ShopifyProductsResponse */
     public static final String PRODUCTS_IDS_QUERY = """
             query GetProducts($query: String, $first: Int, $after: String) {
               products(first: $first, after: $after, query: $query) {
-                nodes { id }
-                pageInfo { endCursor hasNextPage }
+                edges { node { id } }
+                pageInfo { endCursor hasNextPage hasPreviousPage startCursor }
               }
             }
             """;
 
-    /** 获取 Article ID 列表，支持 query 筛选如 published_status:published、updated_at:>xxx */
+    /** 获取 Article ID 列表，支持 query 筛选；返回 edges 以匹配 ShopifyArticlesResponse */
     public static final String ARTICLES_IDS_QUERY = """
             query GetArticles($query: String, $first: Int, $after: String) {
               articles(first: $first, after: $after, query: $query) {
-                nodes { id }
-                pageInfo { endCursor hasNextPage }
+                edges { node { id } }
+                pageInfo { endCursor hasNextPage hasPreviousPage startCursor }
               }
             }
             """;
 
-    /** 获取 Page ID 列表，支持 query 筛选如 published_status:published、updated_at:>xxx */
+    /** 获取 Page ID 列表，支持 query 筛选；返回 edges 以匹配 ShopifyPagesResponse */
     public static final String PAGES_IDS_QUERY = """
             query GetPages($query: String, $first: Int, $after: String) {
               pages(first: $first, after: $after, query: $query) {
-                nodes { id }
-                pageInfo { endCursor hasNextPage }
+                edges { node { id } }
+                pageInfo { endCursor hasNextPage hasPreviousPage startCursor }
               }
             }
             """;
 
-    /** 获取 Collection ID 列表，支持 query 筛选如 published_status:published、updated_at:>xxx */
+    /** 获取 Collection ID 列表，支持 query 筛选；返回 edges 以匹配 ShopifyCollectionsResponse */
     public static final String COLLECTIONS_IDS_QUERY = """
             query GetCollections($query: String, $first: Int, $after: String) {
               collections(first: $first, after: $after, query: $query) {
-                nodes { id }
-                pageInfo { endCursor hasNextPage }
+                edges { node { id } }
+                pageInfo { endCursor hasNextPage hasPreviousPage startCursor }
               }
             }
             """;

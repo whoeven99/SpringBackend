@@ -3,8 +3,7 @@ package com.bogda.service.logic.translate;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.ChatGptIntegration;
-import com.bogda.integration.model.ShopifyGraphRemoveResponse;
-import com.bogda.integration.model.ShopifyTranslationsRemove;
+import com.bogda.integration.model.*;
 import com.bogda.repository.entity.DeleteTasksDO;
 import com.bogda.repository.repo.DeleteTasksRepo;
 import com.bogda.service.Service.ITranslatesService;
@@ -21,8 +20,6 @@ import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.enums.ErrorEnum;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
-import com.bogda.integration.model.ShopifyCheckMetafieldResponse;
-import com.bogda.integration.model.ShopifyGraphResponse;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.TaskService;
@@ -97,6 +94,8 @@ public class TranslateV2Service {
     private GeminiIntegration geminiIntegration;
     @Autowired
     private DeleteTasksRepo deleteTasksRepo;
+    @Autowired
+    private ChatGptIntegration chatGptIntegration;
 
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选
 
@@ -183,9 +182,6 @@ public class TranslateV2Service {
 
         return defaultNullMap();
     }
-
-    @Autowired
-    private ChatGptIntegration chatGptIntegration;
 
     /**
      * 处理gpt逻辑
@@ -616,7 +612,7 @@ public class TranslateV2Service {
             String moduleCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId(), module);
             final String currentModule = module;
 
-            Consumer<ShopifyGraphResponse.TranslatableResources.Node> nodeConsumer = (node) -> {
+            Consumer<ShopifyTranslationsResponse.Node> nodeConsumer = (node) -> {
                 if (node == null || CollectionUtils.isEmpty(node.getTranslatableContent())) {
                     return;
                 }
@@ -651,20 +647,20 @@ public class TranslateV2Service {
                 }
             };
 
+            // PRODUCT/ARTICLE/PAGE/COLLECTION：先按 config/updated_at 拉取 ID，传 resourceIds 走 translatableResourcesByIds；其他模块传 null 走 translatableResources(resourceType, first, after)
+            List<String> resourceIds = null;
             if (TranslateConstants.PRODUCT.equals(module) || TranslateConstants.ARTICLE.equals(module)
                     || TranslateConstants.PAGE.equals(module) || TranslateConstants.COLLECTION.equals(module)) {
-                // PRODUCT/ARTICLE/PAGE/COLLECTION：先按 status=active（及自动翻译时 updated_at>上次任务创建时间）拉取 ID，再按 ID 查 translatableResourcesByIds，仅存储 outdated=true 的项
-                String queryFilter = TranslateConstants.PRODUCT.equals(module) ? "status:active" : "published_status:published";
-                List<String> resourceIds = shopifyService.fetchResourceIdsByQuery(shopName, userDO.getAccessToken(), module, queryFilter, updatedAtAfter);
-                shopifyService.rotateTranslatableResourcesByIds(shopName, userDO.getAccessToken(), resourceIds, target,
-                        nodeConsumer,
-                        (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), currentModule, after)));
-            } else {
-                // 其他模块：沿用原逻辑 translatableResources(resourceType, first, after)
-                shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target, moduleCursor,
-                        nodeConsumer,
-                        (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), currentModule, after)));
+                String queryFilter = configRedisRepo.getConfig(module);
+                if (queryFilter == null || queryFilter.isEmpty()) {
+                    queryFilter = "";
+                }
+                resourceIds = shopifyService.fetchResourceIdsByQuery(shopName, userDO.getAccessToken(), module, queryFilter, updatedAtAfter);
             }
+            shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target, moduleCursor,
+                    resourceIds,
+                    nodeConsumer,
+                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), currentModule, after)));
 
             translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
             translateTaskMonitorV2RedisService.clearAfterEndCursor(initialTaskV2DO.getId(), module);
@@ -862,11 +858,11 @@ public class TranslateV2Service {
             List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
 
             // 填回shopify
-            ShopifyGraphResponse.TranslatableResources.Node node = new ShopifyGraphResponse.TranslatableResources.Node();
+            ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
             node.setTranslations(taskList.stream()
                     .map(taskDO -> {
-                        ShopifyGraphResponse.TranslatableResources.Node.Translation translation =
-                                new ShopifyGraphResponse.TranslatableResources.Node.Translation();
+                        ShopifyTranslationsResponse.Node.Translation translation =
+                                new ShopifyTranslationsResponse.Node.Translation();
                         translation.setLocale(target);
                         translation.setKey(taskDO.getNodeKey());
                         translation.setTranslatableContentDigest(taskDO.getDigest());
@@ -1082,15 +1078,15 @@ public class TranslateV2Service {
     }
 
     // 根据翻译规则，不翻译的直接不用存
-    private boolean needTranslate(ShopifyGraphResponse.TranslatableResources.Node.TranslatableContent translatableContent,
-                                  List<ShopifyGraphResponse.TranslatableResources.Node.Translation> translations,
+    private boolean needTranslate(ShopifyTranslationsResponse.Node.TranslatableContent translatableContent,
+                                  List<ShopifyTranslationsResponse.Node.Translation> translations,
                                   String module, boolean isCover, boolean isHandle, String shopName, String accessToken
             , String resourceId, List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList) {
         String value = translatableContent.getValue();
         String type = translatableContent.getType();
         String key = translatableContent.getKey();
 
-        ShopifyGraphResponse.TranslatableResources.Node.Translation keyTranslation =
+        ShopifyTranslationsResponse.Node.Translation keyTranslation =
                 translations.stream()
                         .filter(t -> key.equals(t.getKey()))
                         .findFirst()
