@@ -984,17 +984,30 @@ public class TranslateV2Service {
         }
     }
 
-    public void continueTranslatingByShopName(String shopName) {
+    /**
+     * 付费后继续翻译：只恢复“自动停止”（额度/字符上限触发暂停）的任务。
+     */
+    public void continueAutoStoppedTranslatingByShopName(String shopName) {
         List<InitialTaskV2DO> list = initialTaskV2Repo.selectStoppedByShopName(shopName);
-        if (!list.isEmpty()) {
-            for (InitialTaskV2DO initialTaskV2DO : list) {
-                redisStoppedRepository.removeStoppedFlag(shopName, initialTaskV2DO.getId());
-                // 将Translates表的status也改为2
-                iTranslatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
-                initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
-                boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false, false);
-                TraceReporterHolder.report("TranslateV2Service.continueTranslatingByShopName", "continueTranslating updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId());
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+
+        for (InitialTaskV2DO initialTaskV2DO : list) {
+            boolean resumeByTokenLimitFlag = redisStoppedRepository.isStoppedByTokenLimit(shopName, initialTaskV2DO.getId());
+            if (!resumeByTokenLimitFlag) {
+                // 非“自动停止”（tokenLimit）任务，不在付费后自动恢复范围内
+                continue;
             }
+
+            redisStoppedRepository.removeStoppedFlag(shopName, initialTaskV2DO.getId());
+            iTranslatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
+            initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
+            boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(
+                    initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false, false);
+            TraceReporterHolder.report("TranslateV2Service.continueAutoStoppedTranslatingByShopName",
+                    "continueAutoStopped updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId()
+                            + " resumeByTokenLimit: " + resumeByTokenLimitFlag);
         }
     }
 
