@@ -81,7 +81,8 @@ public class TranslateController {
     @PostMapping("/updateStatusV2")
     public BaseResponse<Object> updateStatus3To6V2(@RequestParam String shopName) {
         if (translatesService.updateStatus3To6(shopName)) {
-            translateV2Service.continueTranslatingByShopName(shopName);
+            // 付费后继续翻译：仅恢复自动停止（token limit）任务
+            translateV2Service.continueAutoStoppedTranslatingByShopName(shopName);
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
