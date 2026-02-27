@@ -1002,9 +1002,8 @@ public class TranslateV2Service {
 
             redisStoppedRepository.removeStoppedFlag(shopName, initialTaskV2DO.getId());
             iTranslatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
-            initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus());
             boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(
-                    initialTaskV2DO.getStatus(), initialTaskV2DO.getId(), false, false);
+                    InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
             TraceReporterHolder.report("TranslateV2Service.continueAutoStoppedTranslatingByShopName",
                     "continueAutoStopped updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId()
                             + " resumeByTokenLimit: " + resumeByTokenLimitFlag);
