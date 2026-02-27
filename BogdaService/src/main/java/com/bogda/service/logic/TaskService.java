@@ -240,7 +240,8 @@ public class TaskService {
             translatesService.updateStatus3To6(userPriceRequest.getShopName());
 
             // 继续翻译，将获取用户部分翻译的task去翻译
-            translateV2Service.continueTranslatingByShopName(userPriceRequest.getShopName());
+            // 付费后继续翻译：仅恢复自动停止（token limit）任务
+            translateV2Service.continueAutoStoppedTranslatingByShopName(userPriceRequest.getShopName());
 
             if ("Starter".equals(name)) {
                 return;

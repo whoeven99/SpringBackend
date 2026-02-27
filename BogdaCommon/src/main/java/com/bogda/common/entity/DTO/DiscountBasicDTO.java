@@ -1,4 +1,4 @@
-package com.bogda.api.entity.DTO;
+package com.bogda.common.entity.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

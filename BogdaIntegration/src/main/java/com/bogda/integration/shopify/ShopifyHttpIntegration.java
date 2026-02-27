@@ -2,13 +2,10 @@ package com.bogda.integration.shopify;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.integration.http.BaseHttpIntegration;
-import com.bogda.integration.model.ShopifyGraphResponse;
-import com.bogda.integration.model.ShopifyRemoveResponse;
-import com.bogda.integration.model.ShopifyResponse;
+import com.bogda.integration.model.*;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
-import com.bogda.integration.model.ShopifyTranslationsRemove;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +30,7 @@ public class ShopifyHttpIntegration {
     }
 
     public String saveShopifyData(String shopName, String accessToken,
-                                  ShopifyGraphResponse.TranslatableResources.Node node) {
+                                  ShopifyTranslationsResponse.Node node) {
         String url = "https://" + shopName + "/admin/api/" + TranslateConstants.API_VERSION_LAST + "/graphql.json";
 
         JSONObject queryMap = new JSONObject();

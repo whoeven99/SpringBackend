@@ -57,14 +57,31 @@ public class TranslateTaskMonitorV2RedisService {
         return redisIntegration.getHash(key, "finishedModules");
     }
 
-    public void setAfterEndCursor(Integer initialTaskId, String afterEndCursor) {
+    /**
+     * 按任务+模块存储 Shopify translatableResources 分页游标，用于初始化阶段断点续传。
+     * 参考 Shopify Admin API: translatableResources 的 pageInfo.endCursor。
+     */
+    public void setAfterEndCursor(Integer initialTaskId, String module, String afterEndCursor) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
-        redisIntegration.setHash(key, "afterEndCursor", afterEndCursor);
+        String field = "afterEndCursor:" + module;
+        redisIntegration.setHash(key, field, afterEndCursor == null ? "" : afterEndCursor);
     }
 
-    public String getAfterEndCursor(Integer initialTaskId) {
+    /**
+     * 按任务+模块获取 Shopify translatableResources 分页游标，无则返回空字符串。
+     */
+    public String getAfterEndCursor(Integer initialTaskId, String module) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
-        return redisIntegration.getHash(key, "afterEndCursor");
+        String field = "afterEndCursor:" + module;
+        String cursor = redisIntegration.getHash(key, field);
+        return cursor != null ? cursor : "";
+    }
+
+    /**
+     * 某模块初始化完成后清除该模块的游标，避免影响其他模块或后续任务。
+     */
+    public void clearAfterEndCursor(Integer initialTaskId, String module) {
+        setAfterEndCursor(initialTaskId, module, "");
     }
 
     public void setInitEndTime(Integer initialTaskId) {
