@@ -518,18 +518,25 @@ public class TranslateV2Service {
                 progress.setProgressData(defaultProgressTranslateData);
                 setEstimatedFromContext(progress, taskContext);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus()) || task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus())) {
                 progress.setTarget(task.getTarget());
+                String totalCountStr = taskContext != null ? taskContext.get("totalCount") : null;
+                String translatedCountStr = taskContext != null ? taskContext.get("translatedCount") : null;
+                long count = (totalCountStr != null && !totalCountStr.isEmpty()) ? Long.parseLong(totalCountStr) : 0L;
+                long translatedCount = (translatedCountStr != null && !translatedCountStr.isEmpty()) ? Long.parseLong(translatedCountStr) : 0L;
+                if (count > 0) {
+                    defaultProgressTranslateData.put("TotalQuantity", (int) count);
+                }
+                if (count > translatedCount) {
+                    defaultProgressTranslateData.put("RemainingQuantity", (int) (count - translatedCount));
+                }
 
-                Long count = Long.valueOf(taskContext.get("totalCount"));
-                Long translatedCount = Long.valueOf(taskContext.get("translatedCount"));
-                Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("TotalQuantity", count.intValue());
-                progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
-                progress.setProgressData(progressData);
+                progress.setProgressData(defaultProgressTranslateData);
 
-                // 判断是手动中断，还是limit中断
-                if (redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
+                // 判断是手动中断，还是limit中断（INIT_STOPPED 复用 STOPPED 的展示逻辑，status=7 表示可继续）
+                if (task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus())) {
+                    progress.setStatus(7); // 初始化阶段停止，前端按「可继续」展示
+                } else if (redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
                     progress.setStatus(3); // limit中断
                 } else {
                     progress.setStatus(7);// 中断的状态
@@ -581,6 +588,14 @@ public class TranslateV2Service {
         return false;
     }
 
+    /**
+     * 初始化阶段中止时的收尾：将任务状态更新为「初始化阶段已停止」并持久化，不执行初始化完成后的逻辑。
+     */
+    private void doInitStoppedCleanup(InitialTaskV2DO initialTaskV2DO) {
+        initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), false, false);
+        TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 init stopped cleanup: shop=" + initialTaskV2DO.getShopName() + " taskId=" + initialTaskV2DO.getId());
+    }
+
     // 翻译 step 2, initial -> 查询 Shopify translatableResources，创建翻译任务（支持按模块分页游标断点续传）
     // 参考 Shopify Admin API: translatableResources(resourceType, first, after) 与 pageInfo.endCursor
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
@@ -605,9 +620,21 @@ public class TranslateV2Service {
             }
         }
 
+        // 方法入口：进入 for 之前检查是否已停止，若已停止则执行初始化中止收尾并 return
+        Integer initialTaskId = initialTaskV2DO.getId();
+        if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
+            doInitStoppedCleanup(initialTaskV2DO);
+            return;
+        }
+
         for (String module : moduleList) {
             if (containsModule(finishedModules, module)) {
                 continue;
+            }
+            // 每个 module 开始前：在处理当前 module 之前再检查一次，若已停止则执行初始化中止收尾并 return
+            if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
+                doInitStoppedCleanup(initialTaskV2DO);
+                return;
             }
             String moduleCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId(), module);
             final String currentModule = module;
@@ -1298,25 +1325,52 @@ public class TranslateV2Service {
     public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
         TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
+            int deleted = deleteTasksRepo.deleteByInitialTaskId(initialTaskV2DO.getId());
             TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
             }
         }
-        initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
 
     public BaseResponse<Object> continueTranslatingV2(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
-        if (initialTaskV2DO != null) {
+        if (initialTaskV2DO == null) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        int status = initialTaskV2DO.getStatus();
+        redisStoppedRepository.removeStoppedFlag(shopName, taskId);
+
+        if (status == InitialTaskStatus.INIT_STOPPED.getStatus()) {
+            // 初始化阶段停止：按「从头重新初始化」处理
+            List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+            if (moduleList != null) {
+                translateTaskMonitorV2RedisService.clearInitProgress(initialTaskV2DO.getId(), moduleList);
+            }
+            translateTaskMonitorV2RedisService.resetMonitorForReinit(initialTaskV2DO.getId());
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus(), initialTaskV2DO.getId(), false, false);
+            translateTaskV2Repo.logicalDeletionById(initialTaskV2DO.getId());
+            translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
+        } else if (status == InitialTaskStatus.STOPPED.getStatus()) {
+            // 翻译阶段停止：保持现有逻辑，仅继续翻译，不重新初始化
             initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
-            redisStoppedRepository.removeStoppedFlag(shopName, taskId);
             translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
 
-        // 删除用户停止标识
         return new BaseResponse<>().CreateSuccessResponse(true);
+    }
+
+    /**
+     * 按店铺继续：查询 status=5 与 status=6 的可继续任务，对每条执行对应的继续逻辑。
+     */
+    public void continueTranslatingByShopName(String shopName) {
+        List<InitialTaskV2DO> list = initialTaskV2Repo.selectResumableByShopName(shopName);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (InitialTaskV2DO initialTaskV2DO : list) {
+            continueTranslatingV2(shopName, initialTaskV2DO.getId());
+        }
     }
 
     @Getter
@@ -1327,6 +1381,7 @@ public class TranslateV2Service {
         SAVE_DONE_SENDING_EMAIL(3, "写入shopify结束，待发送邮件，完成任务"),
         ALL_DONE(4, "全部完成"),
         STOPPED(5, "手动中断 or tokenLimit中断"),
+        INIT_STOPPED(6, "初始化阶段已停止"),
         ;
 
         private final int status;

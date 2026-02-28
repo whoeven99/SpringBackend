@@ -43,4 +43,11 @@ public class DeleteTasksRepo extends ServiceImpl<DeleteTasksMapper, DeleteTasksD
         List<DeleteTasksDO> list = baseMapper.selectList(wrapper);
         return list.isEmpty() ? null : list.get(0);
     }
+
+    public int deleteByInitialTaskId(Integer initialTaskId) {
+        QueryWrapper<DeleteTasksDO> wrapper = new QueryWrapper<>();
+        wrapper.select("TOP " + 20 + " *")
+                .eq("initial_task_id", initialTaskId);
+        return baseMapper.delete(wrapper);
+    }
 }
