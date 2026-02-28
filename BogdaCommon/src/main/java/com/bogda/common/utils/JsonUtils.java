@@ -1,7 +1,6 @@
 package com.bogda.common.utils;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
-import com.bogda.common.reporter.TraceReporterHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
