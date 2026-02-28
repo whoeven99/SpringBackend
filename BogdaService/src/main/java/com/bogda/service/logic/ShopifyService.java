@@ -99,15 +99,15 @@ public class ShopifyService {
         String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, afterEndCursor);
         ShopifyGraphResponse data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
         while (data != null) {
-            if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getTranslatableResources().getNodes())) {
-                for (ShopifyTranslationsResponse.Node node : data.getTranslatableResources().getTranslatableResources().getNodes()) {
+            if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getNodes())) {
+                for (ShopifyTranslationsResponse.Node node : data.getTranslatableResources().getNodes()) {
                     consumer.accept(node);
                 }
             }
             if (data.getTranslatableResources() != null
-                    && data.getTranslatableResources().getTranslatableResources().getPageInfo() != null
-                    && data.getTranslatableResources().getTranslatableResources().getPageInfo().isHasNextPage()) {
-                String endCursor = data.getTranslatableResources().getTranslatableResources().getPageInfo().getEndCursor();
+                    && data.getTranslatableResources().getPageInfo() != null
+                    && data.getTranslatableResources().getPageInfo().isHasNextPage()) {
+                String endCursor = data.getTranslatableResources().getPageInfo().getEndCursor();
                 setAfterEndCursorConsumer.accept(endCursor);
                 graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, endCursor);
                 data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
