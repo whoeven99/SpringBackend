@@ -47,6 +47,14 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    /** 可继续的任务：翻译阶段停止(5) + 初始化阶段停止(6) */
+    public List<InitialTaskV2DO> selectResumableByShopName(String shopName) {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .in(InitialTaskV2DO::getStatus, 5, 6)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
     public List<InitialTaskV2DO> selectByShopNameAndType(String shopName, String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
