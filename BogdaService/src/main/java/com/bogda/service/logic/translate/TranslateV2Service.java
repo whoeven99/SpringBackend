@@ -522,22 +522,25 @@ public class TranslateV2Service {
                 String translatedCountStr = taskContext != null ? taskContext.get("translatedCount") : null;
                 long count = (totalCountStr != null && !totalCountStr.isEmpty()) ? Long.parseLong(totalCountStr) : 0L;
                 long translatedCount = (translatedCountStr != null && !translatedCountStr.isEmpty()) ? Long.parseLong(translatedCountStr) : 0L;
+
+                Map<String, Integer> progressData = new HashMap<>();
+                progressData.put("TotalQuantity", 1);
+                progressData.put("RemainingQuantity", 1);
                 if (count > 0) {
-                    defaultProgressTranslateData.put("TotalQuantity", (int) count);
+                    progressData.put("TotalQuantity", (int) count);
                 }
                 if (count > translatedCount) {
-                    defaultProgressTranslateData.put("RemainingQuantity", (int) (count - translatedCount));
+                    progressData.put("RemainingQuantity", (int) (count - translatedCount));
                 }
 
-                progress.setProgressData(defaultProgressTranslateData);
+                progress.setProgressData(progressData);
 
                 // 判断是手动中断，还是limit中断（INIT_STOPPED 复用 STOPPED 的展示逻辑，status=7 表示可继续）
-                if (task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus())) {
-                    progress.setStatus(7); // 初始化阶段停止，前端按「可继续」展示
-                } else if (redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
-                    progress.setStatus(3); // limit中断
-                } else {
-                    progress.setStatus(7);// 中断的状态
+                if (task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus()) ||
+                        redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
+                    progress.setStatus(3);
+                }  else {
+                    progress.setStatus(7);
                 }
 
                 setEstimatedFromContext(progress, taskContext);
