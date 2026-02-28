@@ -102,9 +102,9 @@ public class TranslateTaskMonitorV2RedisService {
      */
     public void resetMonitorForReinit(Integer initialTaskId) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
-        redisIntegration.setHash(key, "totalCount", "0");
-        redisIntegration.setHash(key, "estimatedCredits", "0");
-        redisIntegration.setHash(key, "estimatedMinutes", "0");
+        redisIntegration.setHash(key, "totalCount", 0);
+        redisIntegration.setHash(key, "estimatedCredits", 0);
+        redisIntegration.setHash(key, "estimatedMinutes", 0);
         redisIntegration.setHash(key, "initStartTime", String.valueOf(System.currentTimeMillis()));
     }
 
