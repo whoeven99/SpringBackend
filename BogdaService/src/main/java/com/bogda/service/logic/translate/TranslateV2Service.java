@@ -1298,13 +1298,12 @@ public class TranslateV2Service {
     public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
         TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
+            int deleted = deleteTasksRepo.deleteByInitialTaskId(initialTaskV2DO.getId());
             TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
             }
         }
-        initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
 
     public BaseResponse<Object> continueTranslatingV2(String shopName, Integer taskId) {
