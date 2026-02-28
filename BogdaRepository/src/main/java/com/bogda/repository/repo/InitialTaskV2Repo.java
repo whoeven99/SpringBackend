@@ -134,7 +134,9 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getTaskType, type)
                 .and(w -> w.eq(InitialTaskV2DO::getStatus, 4)
                         .or()
-                        .eq(InitialTaskV2DO::getStatus, 5))
+                        .eq(InitialTaskV2DO::getStatus, 5)
+                        .or()
+                        .eq(InitialTaskV2DO::getStatus, 6))
                 .set(InitialTaskV2DO::getIsDeleted, true)
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
         ) > 0;
