@@ -758,6 +758,13 @@ public class TranslateV2Service {
             initialTaskV2DO.setTransModelType(randomDo.getModule());
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
+                // 获取没有翻译的任务，修改该用户任务的停止标识
+                List<InitialTaskV2DO> initialTaskV2DOS = initialTaskV2Repo.selectByShopNameAndNotDeleted(shopName);
+                if (!initialTaskV2DOS.isEmpty()){
+                    for (InitialTaskV2DO task : initialTaskV2DOS) {
+                        redisStoppedRepository.tokenLimitStopped(shopName, task.getId());
+                    }
+                }
                 redisStoppedRepository.tokenLimitStopped(shopName, initialTaskId);
             }
 
@@ -1338,13 +1345,14 @@ public class TranslateV2Service {
         translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         if (status == InitialTaskStatus.INIT_STOPPED.getStatus()) {
             // 初始化阶段停止：按「从头重新初始化」处理
-            List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {});
+            List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
+            });
             if (moduleList != null) {
                 translateTaskMonitorV2RedisService.clearInitProgress(initialTaskV2DO.getId(), moduleList);
             }
             translateTaskMonitorV2RedisService.resetMonitorForReinit(initialTaskV2DO.getId());
-            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus(), initialTaskV2DO.getId(), false, false);
             translateTaskV2Repo.logicalDeletionById(initialTaskV2DO.getId());
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus(), initialTaskV2DO.getId(), false, false);
         } else if (status == InitialTaskStatus.STOPPED.getStatus()) {
             // 翻译阶段停止：保持现有逻辑，仅继续翻译，不重新初始化
             initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
