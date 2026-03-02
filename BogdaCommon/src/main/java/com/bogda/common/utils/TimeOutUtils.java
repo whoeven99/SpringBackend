@@ -12,6 +12,43 @@ public class TimeOutUtils {
     public static final TimeUnit DEFAULT_UNIT = TimeUnit.MINUTES;
     public static final int DEFAULT_MAX_RETRIES = 3;
 
+    /**
+     * 判断是否为 400 类错误（不重试，直接抛出给上层处理）。
+     * 不依赖 Azure SDK，通过异常消息或反射识别 HttpResponseException(status=400)。
+     */
+    public static boolean isBadRequest(Throwable t) {
+        while (t != null) {
+            if (isHttpResponse400(t)) {
+                return true;
+            }
+            String msg = t.getMessage();
+            if (msg != null && (msg.contains("400") || msg.contains("Bad Request")
+                    || msg.contains("INVALID_ARGUMENT") || msg.contains("InvalidParameter"))) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isHttpResponse400(Throwable t) {
+        if (t == null || !"com.azure.core.exception.HttpResponseException".equals(t.getClass().getName())) {
+            return false;
+        }
+        try {
+            Object response = t.getClass().getMethod("getResponse").invoke(t);
+            if (response != null) {
+                Object code = response.getClass().getMethod("getStatusCode").invoke(response);
+                if (Integer.valueOf(400).equals(code)) {
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {
+            // ignore
+        }
+        return false;
+    }
+
     public static <T> T callWithTimeoutAndRetry(Supplier<T> task,
                                                 long timeout,
                                                 TimeUnit unit,
@@ -33,6 +70,14 @@ public class TimeOutUtils {
                 ExceptionReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry", e);
             } catch (Exception e) {
                 future.cancel(true);
+                // 400 不重试，直接抛出（兼容 ExecutionException 包装的异常）
+                Throwable cause = (e instanceof ExecutionException && e.getCause() != null) ? e.getCause() : e;
+                if (isBadRequest(cause)) {
+                    if (cause instanceof Exception) {
+                        throw (Exception) cause;
+                    }
+                    throw new RuntimeException(cause);
+                }
                 lastException = e;
                 TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
                         "FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
@@ -47,5 +92,16 @@ public class TimeOutUtils {
 
     public static <T> T callWithTimeoutAndRetry(Supplier<T> task) throws Exception {
         return callWithTimeoutAndRetry(task, DEFAULT_TIMEOUT, DEFAULT_UNIT, DEFAULT_MAX_RETRIES);
+    }
+
+    public static boolean isHttp400(Throwable e) {
+        if (e == null) {
+            return false;
+        }
+        String msg = e.getMessage();
+        if (msg != null && (msg.contains("400") || msg.contains("InvalidParameter") || msg.contains("Bad Request"))) {
+            return true;
+        }
+        return isHttp400(e.getCause()); // 支持 RuntimeException(cause) 包装
     }
 }
