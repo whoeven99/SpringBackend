@@ -96,4 +96,9 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
                 .eq("initial_task_id", initialTaskId);
         return baseMapper.delete(wrapper);
     }
+
+    public boolean logicalDeletionById(Integer initialTaskId) {
+        return baseMapper.update(new LambdaUpdateWrapper<TranslateTaskV2DO>().set(TranslateTaskV2DO::getIsDeleted, true)
+                .eq(TranslateTaskV2DO::getInitialTaskId, initialTaskId)) > 0;
+    }
 }

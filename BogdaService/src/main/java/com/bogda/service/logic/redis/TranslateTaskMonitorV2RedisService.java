@@ -84,6 +84,30 @@ public class TranslateTaskMonitorV2RedisService {
         setAfterEndCursor(initialTaskId, module, "");
     }
 
+    /**
+     * 清空该任务的初始化进度（finishedModules、各模块 afterEndCursor），用于「继续翻译」时从头重新初始化。
+     */
+    public void clearInitProgress(Integer initialTaskId, java.util.List<String> moduleList) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        redisIntegration.setHash(key, "finishedModules", "");
+        if (moduleList != null) {
+            for (String module : moduleList) {
+                clearAfterEndCursor(initialTaskId, module);
+            }
+        }
+    }
+
+    /**
+     * 重置监控中的计数与预估，用于从头重新初始化时与新一轮初始化一致。
+     */
+    public void resetMonitorForReinit(Integer initialTaskId) {
+        String key = MONITOR_KEY_PREFIX + initialTaskId;
+        redisIntegration.setHash(key, "totalCount", 0);
+        redisIntegration.setHash(key, "estimatedCredits", 0);
+        redisIntegration.setHash(key, "estimatedMinutes", 0);
+        redisIntegration.setHash(key, "initStartTime", String.valueOf(System.currentTimeMillis()));
+    }
+
     public void setInitEndTime(Integer initialTaskId) {
         String key = MONITOR_KEY_PREFIX + initialTaskId;
         redisIntegration.setHash(key, "initEndTime", String.valueOf(System.currentTimeMillis()));

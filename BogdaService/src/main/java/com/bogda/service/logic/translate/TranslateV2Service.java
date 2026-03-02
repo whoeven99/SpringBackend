@@ -79,8 +79,6 @@ public class TranslateV2Service {
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
-    private ITranslatesService iTranslatesService;
-    @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
     private ConfigRedisRepo configRedisRepo;
@@ -407,7 +405,7 @@ public class TranslateV2Service {
             initialTaskV2Repo.insert(initialTask);
 
             translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, aiModel);
-            iTranslatesService.updateTranslateStatus(shopName, 2, target, source);
+            translatesService.updateTranslateStatus(shopName, 2, target, source);
         }
     }
 
@@ -518,21 +516,31 @@ public class TranslateV2Service {
                 progress.setProgressData(defaultProgressTranslateData);
                 setEstimatedFromContext(progress, taskContext);
                 list.add(progress);
-            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus())) {
+            } else if (task.getStatus().equals(InitialTaskStatus.STOPPED.getStatus()) || task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus())) {
                 progress.setTarget(task.getTarget());
+                String totalCountStr = taskContext != null ? taskContext.get("totalCount") : null;
+                String translatedCountStr = taskContext != null ? taskContext.get("translatedCount") : null;
+                long count = (totalCountStr != null && !totalCountStr.isEmpty()) ? Long.parseLong(totalCountStr) : 0L;
+                long translatedCount = (translatedCountStr != null && !translatedCountStr.isEmpty()) ? Long.parseLong(translatedCountStr) : 0L;
 
-                Long count = Long.valueOf(taskContext.get("totalCount"));
-                Long translatedCount = Long.valueOf(taskContext.get("translatedCount"));
                 Map<String, Integer> progressData = new HashMap<>();
-                progressData.put("TotalQuantity", count.intValue());
-                progressData.put("RemainingQuantity", count.intValue() - translatedCount.intValue());
+                progressData.put("TotalQuantity", 1);
+                progressData.put("RemainingQuantity", 1);
+                if (count > 0) {
+                    progressData.put("TotalQuantity", (int) count);
+                }
+                if (count > translatedCount) {
+                    progressData.put("RemainingQuantity", (int) (count - translatedCount));
+                }
+
                 progress.setProgressData(progressData);
 
-                // 判断是手动中断，还是limit中断
-                if (redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
-                    progress.setStatus(3); // limit中断
-                } else {
-                    progress.setStatus(7);// 中断的状态
+                // 判断是手动中断，还是limit中断（INIT_STOPPED 复用 STOPPED 的展示逻辑，status=7 表示可继续）
+                if (task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus()) ||
+                        redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
+                    progress.setStatus(3);
+                }  else {
+                    progress.setStatus(7);
                 }
 
                 setEstimatedFromContext(progress, taskContext);
@@ -581,6 +589,14 @@ public class TranslateV2Service {
         return false;
     }
 
+    /**
+     * 初始化阶段中止时的收尾：将任务状态更新为「初始化阶段已停止」并持久化，不执行初始化完成后的逻辑。
+     */
+    private void doInitStoppedCleanup(InitialTaskV2DO initialTaskV2DO) {
+        initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), false, false);
+        TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 init stopped cleanup: shop=" + initialTaskV2DO.getShopName() + " taskId=" + initialTaskV2DO.getId());
+    }
+
     // 翻译 step 2, initial -> 查询 Shopify translatableResources，创建翻译任务（支持按模块分页游标断点续传）
     // 参考 Shopify Admin API: translatableResources(resourceType, first, after) 与 pageInfo.endCursor
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
@@ -605,9 +621,21 @@ public class TranslateV2Service {
             }
         }
 
+        // 方法入口：进入 for 之前检查是否已停止，若已停止则执行初始化中止收尾并 return
+        Integer initialTaskId = initialTaskV2DO.getId();
+        if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
+            doInitStoppedCleanup(initialTaskV2DO);
+            return;
+        }
+
         for (String module : moduleList) {
             if (containsModule(finishedModules, module)) {
                 continue;
+            }
+            // 每个 module 开始前：在处理当前 module 之前再检查一次，若已停止则执行初始化中止收尾并 return
+            if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
+                doInitStoppedCleanup(initialTaskV2DO);
+                return;
             }
             String moduleCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId(), module);
             final String currentModule = module;
@@ -733,6 +761,13 @@ public class TranslateV2Service {
             initialTaskV2DO.setTransModelType(randomDo.getModule());
             if (usedToken >= maxToken) {
                 // 记录是因为token limit中断的
+                // 获取没有翻译的任务，修改该用户任务的停止标识
+                List<InitialTaskV2DO> initialTaskV2DOS = initialTaskV2Repo.selectByShopNameAndNotDeleted(shopName);
+                if (!initialTaskV2DOS.isEmpty()){
+                    for (InitialTaskV2DO task : initialTaskV2DOS) {
+                        redisStoppedRepository.tokenLimitStopped(shopName, task.getId());
+                    }
+                }
                 redisStoppedRepository.tokenLimitStopped(shopName, initialTaskId);
             }
 
@@ -815,7 +850,7 @@ public class TranslateV2Service {
         // 判断是手动中断 还是limit中断，切换不同的状态
         if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
             int status = redisStoppedRepository.isStoppedByTokenLimit(shopName, initialTaskId) ? 3 : 7;
-            iTranslatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
+            translatesService.updateTranslateStatus(shopName, status, target, initialTaskV2DO.getSource());
 
             // 更新数据库状态为 5，翻译中断
             long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -830,7 +865,7 @@ public class TranslateV2Service {
             return;
         }
 
-        iTranslatesService.updateTranslateStatus(shopName, 1, target, initialTaskV2DO.getSource());
+        translatesService.updateTranslateStatus(shopName, 1, target, initialTaskV2DO.getSource());
 
         // 这个计算方式有问题， 暂定这样
         long translationTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
@@ -988,7 +1023,7 @@ public class TranslateV2Service {
      * 付费后继续翻译：只恢复“自动停止”（额度/字符上限触发暂停）的任务。
      */
     public void continueAutoStoppedTranslatingByShopName(String shopName) {
-        List<InitialTaskV2DO> list = initialTaskV2Repo.selectStoppedByShopName(shopName);
+        List<InitialTaskV2DO> list = initialTaskV2Repo.selectResumableByShopName(shopName);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -1000,12 +1035,9 @@ public class TranslateV2Service {
                 continue;
             }
 
-            redisStoppedRepository.removeStoppedFlag(shopName, initialTaskV2DO.getId());
-            iTranslatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
-            boolean updateFlag = initialTaskV2Repo.updateStatusAndSendEmailById(
-                    InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
+            continueTranslatingV2(shopName, initialTaskV2DO.getId());
             TraceReporterHolder.report("TranslateV2Service.continueAutoStoppedTranslatingByShopName",
-                    "continueAutoStopped updateFlag: " + updateFlag + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId()
+                    "continueAutoStopped : " + " shop: " + shopName + " taskId: " + initialTaskV2DO.getId()
                             + " resumeByTokenLimit: " + resumeByTokenLimitFlag);
         }
     }
@@ -1298,24 +1330,37 @@ public class TranslateV2Service {
     public void cleanDeleteTask(InitialTaskV2DO initialTaskV2DO) {
         TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask start clean task: " + initialTaskV2DO.getId());
         while (true) {
-            int deleted = translateTaskV2Repo.deleteByInitialTaskId(initialTaskV2DO.getId());
+            int deleted = deleteTasksRepo.deleteByInitialTaskId(initialTaskV2DO.getId());
             TraceReporterHolder.report("TranslateV2Service.cleanDeleteTask", "TranslateTaskV2 cleanDeleteTask delete: " + deleted);
             if (deleted <= 0) {
                 break;
             }
         }
-        initialTaskV2Repo.deleteById(initialTaskV2DO.getId());
     }
 
     public BaseResponse<Object> continueTranslatingV2(String shopName, Integer taskId) {
         InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.selectById(taskId);
-        if (initialTaskV2DO != null) {
+        if (initialTaskV2DO == null) {
+            return new BaseResponse<>().CreateSuccessResponse(true);
+        }
+        int status = initialTaskV2DO.getStatus();
+        redisStoppedRepository.removeStoppedFlag(shopName, taskId);
+        translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
+        if (status == InitialTaskStatus.INIT_STOPPED.getStatus()) {
+            // 初始化阶段停止：按「从头重新初始化」处理
+            List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
+            });
+            if (moduleList != null) {
+                translateTaskMonitorV2RedisService.clearInitProgress(initialTaskV2DO.getId(), moduleList);
+            }
+            translateTaskMonitorV2RedisService.resetMonitorForReinit(initialTaskV2DO.getId());
+            translateTaskV2Repo.logicalDeletionById(initialTaskV2DO.getId());
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus(), initialTaskV2DO.getId(), false, false);
+        } else if (status == InitialTaskStatus.STOPPED.getStatus()) {
+            // 翻译阶段停止：保持现有逻辑，仅继续翻译，不重新初始化
             initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.READ_DONE_TRANSLATING.getStatus(), initialTaskV2DO.getId(), false, false);
-            redisStoppedRepository.removeStoppedFlag(shopName, taskId);
-            translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
         }
 
-        // 删除用户停止标识
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
@@ -1327,6 +1372,7 @@ public class TranslateV2Service {
         SAVE_DONE_SENDING_EMAIL(3, "写入shopify结束，待发送邮件，完成任务"),
         ALL_DONE(4, "全部完成"),
         STOPPED(5, "手动中断 or tokenLimit中断"),
+        INIT_STOPPED(6, "初始化阶段已停止"),
         ;
 
         private final int status;
