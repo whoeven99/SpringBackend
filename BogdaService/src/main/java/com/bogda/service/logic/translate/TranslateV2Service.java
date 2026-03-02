@@ -115,6 +115,33 @@ public class TranslateV2Service {
         put(ALiYunTranslateIntegration.QWEN_MAX, 0.31);
     }};
 
+    private static int parseIntSafe(String s, int defaultValue) {
+        if (s == null || s.isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private static double getDoubleSafe(Map<String, Double> map, String key, Map<String, Double> fallbackMap, double defaultVal) {
+        if (key != null && map != null && map.containsKey(key)) {
+            Double v = map.get(key);
+            if (v != null) {
+                return v;
+            }
+        }
+        if (key != null && fallbackMap != null && fallbackMap.containsKey(key)) {
+            Double v = fallbackMap.get(key);
+            if (v != null) {
+                return v;
+            }
+        }
+        return defaultVal;
+    }
+
     // 单条翻译入口
     public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
         if (request.getContext() == null || request.getTarget() == null
@@ -708,34 +735,43 @@ public class TranslateV2Service {
         String avgTokenPerItem = configRedisRepo.getConfig("AVG_TOKEN_PER_ITEM");
         String tokenPerSecond = configRedisRepo.getConfig("TOKEN_PER_SECOND");
 
-        // 将String 转为Map<String, Double>
+        // 将String 转为Map<String, Double>，配置缺失时用静态默认值，避免分支不执行导致 Redis 不更新
         Map<String, Double> avgTokenMap = JsonUtils.jsonToObject(avgTokenPerItem, new TypeReference<Map<String, Double>>() {
         });
         Map<String, Double> avgSecondMap = JsonUtils.jsonToObject(tokenPerSecond, new TypeReference<Map<String, Double>>() {
         });
+        if (avgTokenMap == null) {
+            avgTokenMap = AVG_TOKEN_PER_ITEM;
+        }
+        if (avgSecondMap == null) {
+            avgSecondMap = TOKEN_PER_SECOND;
+        }
         TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 avgTokenMap: "
-                + avgTokenMap + " avgSecondMap: " + avgSecondMap);
+                + avgTokenMap + " avgSecondMap: " + avgSecondMap + " shopName: " + shopName + " initialTaskId: " + initialTaskV2DO.getId());
 
-        String estimatedCredits = monitor != null ? monitor.get("estimatedCredits") : null;
-        String totalCount = monitor != null ? monitor.get("totalCount") : null;
+        String estimatedCreditsStr = monitor != null ? monitor.get("estimatedCredits") : null;
+        String totalCountStr = monitor != null ? monitor.get("totalCount") : null;
         String aiModel = initialTaskV2DO.getAiModel();
-        if (estimatedCredits != null && !estimatedCredits.isEmpty() && avgTokenMap != null && avgSecondMap != null) {
-            int totalCredits = Integer.parseInt(estimatedCredits);
-            long finalCredits = (long) (totalCredits * avgTokenMap.getOrDefault(aiModel
-                    , AVG_TOKEN_PER_ITEM.get(aiModel)));
+        if (estimatedCreditsStr != null && !estimatedCreditsStr.isEmpty()) {
+            int totalCredits = parseIntSafe(estimatedCreditsStr, 0);
+            // 避免 aiModel 为 null 或不在 Map 中时 get(aiModel) 返回 null 导致 NPE
+            double tokenPerItem = getDoubleSafe(avgTokenMap, aiModel, AVG_TOKEN_PER_ITEM, 1.0);
+            long finalCredits = (long) (totalCredits * tokenPerItem);
             translateTaskMonitorV2RedisService.setEstimatedCredits(initialTaskV2DO.getId(), finalCredits);
 
-            int estimatedTranslateSeconds = (int) (finalCredits * avgSecondMap.getOrDefault(aiModel
-                    , TOKEN_PER_SECOND.get(aiModel)));
+            double tokenPerSecondVal = getDoubleSafe(avgSecondMap, aiModel, TOKEN_PER_SECOND, 0.2);
+            int estimatedTranslateSeconds = (int) (finalCredits * tokenPerSecondVal);
 
             // totalCount 确定后立即计算预估存储消耗时间，供 getProcess 返回前端
-            if (totalCount != null && !totalCount.isEmpty()) {
-                int finalCount = Integer.parseInt(totalCount);
+            if (totalCountStr != null && !totalCountStr.isEmpty()) {
+                int finalCount = parseIntSafe(totalCountStr, 0);
                 estimatedTranslateSeconds += finalCount;
             }
             translateTaskMonitorV2RedisService.setEstimatedMinutes(initialTaskV2DO.getId(), estimatedTranslateSeconds);
         }
 
+        TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask",
+                "TranslateTaskV2 初始化数据计算完成，修改任务状态 " + " shopName: " + shopName + " initialTaskId: " + initialTaskV2DO.getId());
         initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
                 , initialTaskV2DO.getId());
     }
