@@ -1,6 +1,7 @@
 package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
+import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.utils.StringUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -219,7 +220,6 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
         }
 
         JsonNode nextNode = currentNode.get(segment);
-        System.out.println("nextNode: " + nextNode);
         if (nextNode == null) {
             return currentIndex;
         }
@@ -282,8 +282,8 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
                 rules.add(rule);
             }
             return rules.isEmpty() ? defaultRules : rules;
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
+        } catch (Exception e) {
+            ExceptionReporterHolder.report("JsonTranslateStrategyService.loadJsonExtractRules", e);
             return defaultRules;
         }
     }
