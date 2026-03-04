@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.TranslateContext;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
@@ -24,6 +25,8 @@ public class ModelTranslateService {
     private ChatGptIntegration chatGptIntegration;
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
+    @Autowired
+    private TranslateGateway translateGateway;
 
     // ai translate
     public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
@@ -47,6 +50,15 @@ public class ModelTranslateService {
         // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回.
         AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
         return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
+    }
+
+    public Pair<String, Integer> modelTranslate(TranslateContext context, String prompt, String target, String sourceText) {
+        Pair<String, Integer> privateResult = translateByPrivateKey(context, prompt, target);
+        if (privateResult != null) {
+            return privateResult;
+        }
+        String aiModel = context == null ? null : context.getAiModel();
+        return modelTranslate(aiModel, prompt, target, sourceText);
     }
 
     public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, Map<Integer, String> sourceMap) {
@@ -95,5 +107,63 @@ public class ModelTranslateService {
 
         return new Pair<String, Integer>(JsonUtils.objectToJson(resultMap), totalCount);
 
+    }
+
+    public Pair<String, Integer> modelTranslate(TranslateContext context, String prompt, String target, Map<Integer, String> sourceMap) {
+        Pair<String, Integer> privateResult = translateMapByPrivateKey(context, prompt, target, sourceMap);
+        if (privateResult != null) {
+            return privateResult;
+        }
+        String aiModel = context == null ? null : context.getAiModel();
+        return modelTranslate(aiModel, prompt, target, sourceMap);
+    }
+
+    private Pair<String, Integer> translateByPrivateKey(TranslateContext context, String prompt, String target) {
+        if (context == null || !context.isUsePrivateKey()) {
+            return null;
+        }
+        return translateGateway.translate(prompt, target, context.getPrivateApiKey(),
+                context.getPrivateApiName(), context.getPrivateApiModel(), context.getPrivateTaskClientKey());
+    }
+
+    private Pair<String, Integer> translateMapByPrivateKey(TranslateContext context, String prompt,
+                                                           String target, Map<Integer, String> sourceMap) {
+        if (context == null || !context.isUsePrivateKey()) {
+            return null;
+        }
+        if (sourceMap == null || sourceMap.isEmpty()) {
+            return null;
+        }
+
+        Integer privateApiName = context.getPrivateApiName();
+        if (privateApiName == null) {
+            return null;
+        }
+
+        // Google API 不适合直接翻译拼装 prompt，按条翻译后再组装 JSON
+        if (TranslateGateway.GOOGLE_FLAG == privateApiName) {
+            Map<Integer, String> resultMap = new LinkedHashMap<>();
+            int totalToken = 0;
+            for (Map.Entry<Integer, String> entry : sourceMap.entrySet()) {
+                String value = entry.getValue();
+                if (value == null || value.isBlank()) {
+                    resultMap.put(entry.getKey(), value);
+                    continue;
+                }
+                Pair<String, Integer> translated = translateGateway.translate(value, target, context.getPrivateApiKey(),
+                        privateApiName, context.getPrivateApiModel(), context.getPrivateTaskClientKey());
+                if (translated == null) {
+                    resultMap.put(entry.getKey(), value);
+                    continue;
+                }
+                resultMap.put(entry.getKey(), translated.getFirst());
+                totalToken += translated.getSecond();
+            }
+            return new Pair<>(JsonUtils.objectToJson(resultMap), totalToken);
+        }
+
+        // GPT 私有 key 保持原批量 prompt 能力
+        return translateGateway.translate(prompt, target, context.getPrivateApiKey(),
+                privateApiName, context.getPrivateApiModel(), context.getPrivateTaskClientKey());
     }
 }

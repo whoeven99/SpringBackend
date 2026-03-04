@@ -15,4 +15,7 @@ public class SingleTranslateVO {
     private String context;
     private String key;
     private String type;
+    private Boolean usePrivateKey;
+    private Integer privateApiName; // 0-google, 1-openai
+    private String aiModel;
 }

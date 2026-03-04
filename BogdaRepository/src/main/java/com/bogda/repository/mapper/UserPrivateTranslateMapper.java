@@ -1,7 +1,7 @@
-package com.bogda.service.mapper;
+package com.bogda.repository.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.bogda.common.entity.DO.UserPrivateTranslateDO;
+import com.bogda.repository.entity.UserPrivateTranslateDO;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

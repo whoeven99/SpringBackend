@@ -51,12 +51,17 @@ class TranslateGatewayTest {
         String privateKey = "test-key";
         Integer translateModelFlag = 0;
 
+        Pair<String, Integer> googlePair = new Pair<>("谷歌结果", 10);
+        when(googleMachineIntegration.googleTranslateWithSDK(testPrompt, testTargetLanguage, privateKey, null))
+                .thenReturn(googlePair);
+
         // When
         Pair<String, Integer> result = translateGateway.translate(testPrompt, testTargetLanguage, privateKey, translateModelFlag);
 
         // Then
-        assertNull(result);
-        // Google integration is not implemented yet, so no verification
+        assertNotNull(result);
+        assertEquals(googlePair, result);
+        verify(googleMachineIntegration).googleTranslateWithSDK(testPrompt, testTargetLanguage, privateKey, null);
         verifyNoInteractions(chatGptIntegration);
     }
 
@@ -66,12 +71,17 @@ class TranslateGatewayTest {
         String privateKey = "test-key";
         Integer translateModelFlag = 1;
 
+        Pair<String, Integer> gptPair = new Pair<>("GPT结果", 12);
+        when(chatGptIntegration.chatWithGptByApiKey(testPrompt, testTargetLanguage, privateKey, null))
+                .thenReturn(gptPair);
+
         // When
         Pair<String, Integer> result = translateGateway.translate(testPrompt, testTargetLanguage, privateKey, translateModelFlag);
 
         // Then
-        assertNull(result);
-        // ChatGPT integration is commented out, so no verification
+        assertNotNull(result);
+        assertEquals(gptPair, result);
+        verify(chatGptIntegration).chatWithGptByApiKey(testPrompt, testTargetLanguage, privateKey, null);
     }
 
     @Test

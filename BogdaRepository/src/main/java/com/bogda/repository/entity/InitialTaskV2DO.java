@@ -21,7 +21,7 @@ public class InitialTaskV2DO extends BaseDO {
     @TableField("is_cover")
     private boolean isCover;
     @TableField("trans_model_type")
-    private String transModelType; // 用户选择的翻译模型
+    private String transModelType; // 用户选择的翻译模块类型
     @TableField("send_email")
     private boolean sendEmail;
     @TableField("init_minutes")
@@ -40,4 +40,6 @@ public class InitialTaskV2DO extends BaseDO {
     private boolean isHandle;
     @TableField("ai_model")
     private String aiModel;
+    @TableField("private_api_type")
+    private Integer privateApiType; // 私有key的 api 类型  0: google 1： gpt
 }

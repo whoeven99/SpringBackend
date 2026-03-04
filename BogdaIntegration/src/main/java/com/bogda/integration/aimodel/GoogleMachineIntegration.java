@@ -9,12 +9,15 @@ import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
 import kotlin.Pair;
 import org.springframework.stereotype.Component;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Component
 public class GoogleMachineIntegration {
     private static final int GOOGLE_MACHINE_COEFFICIENT = 2;
     private final Translate translate;
+    private final Map<String, Translate> privateTranslateClientMap = new ConcurrentHashMap<>();
 
     /**
      * 初始化 Google Translate 客户端
@@ -54,6 +57,56 @@ public class GoogleMachineIntegration {
             AppInsightsUtils.trackTrace("FatalException Google Translate SDK 翻译错误：" + e.getMessage());
             AppInsightsUtils.trackException(e);
             return null;
+        }
+    }
+
+    /**
+     * 使用用户私有 API Key 通过 SDK 进行翻译，客户端按 taskClientKey 复用。
+     */
+    public Pair<String, Integer> googleTranslateWithSDK(String content, String target,
+                                                        String userApiKey, String taskClientKey) {
+        if (content == null || target == null || userApiKey == null || userApiKey.isBlank()) {
+            return null;
+        }
+        try {
+            Translate privateClient = getOrInitPrivateClient(userApiKey, taskClientKey);
+            Translation translation = TimeOutUtils.callWithTimeoutAndRetry(() ->
+                    privateClient.translate(content, Translate.TranslateOption.targetLanguage(target),
+                            Translate.TranslateOption.model("base")));
+            String translatedText = LiquidHtmlTranslatorUtils.isHtmlEntity(translation.getTranslatedText());
+            int totalToken = content.length() * GOOGLE_MACHINE_COEFFICIENT;
+            AppInsightsUtils.trackTrace("googleTranslateWithSDK(private) 翻译文本: " + translatedText + " all：" + totalToken);
+            return new Pair<>(translatedText, totalToken);
+        } catch (Exception e) {
+            AppInsightsUtils.trackTrace("FatalException Google Translate SDK(private) 翻译错误：" + e.getMessage());
+            AppInsightsUtils.trackException(e);
+            return null;
+        }
+    }
+
+    public void closePrivateClient(String taskClientKey) {
+        if (taskClientKey == null || taskClientKey.isBlank()) {
+            return;
+        }
+        Translate client = privateTranslateClientMap.remove(taskClientKey);
+        closeQuietly(client);
+    }
+
+    private Translate getOrInitPrivateClient(String userApiKey, String taskClientKey) {
+        String cacheKey = (taskClientKey == null || taskClientKey.isBlank()) ? userApiKey : taskClientKey;
+        return privateTranslateClientMap.computeIfAbsent(cacheKey, k -> TranslateOptions.newBuilder()
+                .setApiKey(userApiKey)
+                .build()
+                .getService());
+    }
+
+    private void closeQuietly(Translate client) {
+        if (client instanceof AutoCloseable autoCloseable) {
+            try {
+                autoCloseable.close();
+            } catch (Exception e) {
+                AppInsightsUtils.trackException(e);
+            }
         }
     }
 
