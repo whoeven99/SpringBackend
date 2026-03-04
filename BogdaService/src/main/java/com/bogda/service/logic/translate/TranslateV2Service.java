@@ -95,7 +95,8 @@ public class TranslateV2Service {
     @Autowired
     private ChatGptIntegration chatGptIntegration;
 
-    private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选
+    private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选（降级逻辑）
+    private static final String METAFIELD_JSON_TRANSLATE_RULE = "METAFIELD_JSON_TRANSLATE_RULE";
 
     /**
      * 根据模型选择 平均消耗 token 系数
@@ -157,7 +158,7 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Token limit reached");
         }
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
-                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()), GeminiIntegration.GEMINI_3_FLASH);
+                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()), ALiYunTranslateIntegration.QWEN_MAX);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);
@@ -1205,8 +1206,12 @@ public class TranslateV2Service {
         // 如果是特定类型，也从集合中移除
         if ("FILE_REFERENCE".equals(type) || "LINK".equals(type) || "URL".equals(type)
                 || "LIST_FILE_REFERENCE".equals(type) || "LIST_LINK".equals(type)
-                || "LIST_URL".equals(type) || "JSON".equals(type)
-                || "JSON_STRING".equals(type)) {
+                || "LIST_URL".equals(type) || "JSON_STRING".equals(type)) {
+            return false;
+        }
+
+        // 如果不是metatield 且是 type为JSON 返回false
+        if (!TranslateConstants.METAFIELD.equals(module) && "JSON".equals(type)) {
             return false;
         }
 
@@ -1285,25 +1290,133 @@ public class TranslateV2Service {
                 return false;
             }
 
-            if (JsonUtils.isJson(value) && (!value.contains(JSON_JUDGE) || !"RICH_TEXT_FIELD".equals(type))) {
-                return false;
-            }
-
-            if (JsonUtils.isJson(value) && value.contains(JSON_JUDGE) && "RICH_TEXT_FIELD".equals(type)) {
-                // 判断是否与product相关联
-                String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST,
-                        ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));
-                ShopifyCheckMetafieldResponse shopifyCheckMetafieldResponse = JsonUtils.jsonToObject(shopifyData,
-                        ShopifyCheckMetafieldResponse.class);
-                return Optional.ofNullable(shopifyCheckMetafieldResponse)
-                        .map(ShopifyCheckMetafieldResponse::getNode)
-                        .map(ShopifyCheckMetafieldResponse.Node::getOwner)
-                        .map(ShopifyCheckMetafieldResponse.Node.Owner::getId)
-                        .isPresent();
+            if (JsonUtils.isJson(value)) {
+                return canTranslateMetafieldJsonByConfig(value, type, shopName, accessToken, resourceId);
             }
         }
 
         return true;
+    }
+
+    /**
+     * 基于配置判断 Metafield 的 JSON 值是否需要翻译。
+     *
+     * 判定顺序（优先走新配置，失败时可降级）：
+     * 1. 读取配置 `METAFIELD_JSON_TRANSLATE_RULE.needTranslateJudge`；
+     * 2. 校验 `allowedShopifyTypes`（如果配置了该字段）；
+     * 3. 校验 `jsonMustContainAny`（如果配置了该字段）；
+     * 4. 按 `requireOwnerCheck` 决定是否追加 owner 存在性校验；
+     * 5. 任一步配置结构无效时，根据 `fallbackToLegacyWhenInvalid` 决定是否回退旧逻辑。
+     *
+     * 注意：
+     * - 该方法只负责“是否可翻译”的策略判定，不改动原始内容；
+     * - 异常场景统一兜底到旧逻辑，避免因配置问题导致线上翻译能力突然失效。
+     */
+    public boolean canTranslateMetafieldJsonByConfig(String value, String type, String shopName, String accessToken, String resourceId) {
+        try {
+            JsonNode configNode = JsonUtils.readTree(configRedisRepo.getConfig(METAFIELD_JSON_TRANSLATE_RULE));
+            if (configNode == null || !configNode.isObject()) {
+                return canTranslateMetafieldJsonLegacy(value, type, shopName, accessToken, resourceId);
+            }
+
+            JsonNode judgeNode = configNode.get("needTranslateJudge");
+            if (judgeNode == null || !judgeNode.isObject()) {
+                return canTranslateMetafieldJsonLegacy(value, type, shopName, accessToken, resourceId);
+            }
+
+            // 配置项缺失时默认 true，确保配置异常时优先兼容旧线上行为。
+            boolean fallbackToLegacy = !judgeNode.has("fallbackToLegacyWhenInvalid")
+                    || judgeNode.path("fallbackToLegacyWhenInvalid").asBoolean(true);
+
+            JsonNode allowedTypesNode = judgeNode.get("allowedShopifyTypes");
+            if (!matchAllowedType(type, allowedTypesNode)) {
+                return false;
+            }
+
+            JsonNode mustContainNode = judgeNode.get("jsonMustContainAny");
+            if (mustContainNode != null && !mustContainNode.isArray()) {
+                // 配置格式不合法（应为数组），按开关决定是否降级到旧逻辑。
+                return fallbackToLegacy && canTranslateMetafieldJsonLegacy(value, type, shopName, accessToken, resourceId);
+            }
+            if (!matchMustContainCondition(value, mustContainNode)) {
+                return false;
+            }
+
+            // 仅当显式要求时才调用 Shopify 校验 owner，避免额外远程请求。
+            boolean requireOwnerCheck = judgeNode.path("requireOwnerCheck").asBoolean(false);
+            return !requireOwnerCheck || hasMetafieldOwner(shopName, accessToken, resourceId);
+        } catch (Exception e) {
+            ExceptionReporterHolder.report("TranslateV2Service.canTranslateMetafieldJsonByConfig", e);
+            return canTranslateMetafieldJsonLegacy(value, type, shopName, accessToken, resourceId);
+        }
+    }
+
+    /**
+     * 类型白名单匹配：
+     * - 未配置或配置为空数组：默认放行；
+     * - 配置了数组：只要命中一个类型即放行，否则拦截。
+     */
+    private boolean matchAllowedType(String type, JsonNode allowedTypesNode) {
+        if (allowedTypesNode == null) {
+            return true;
+        }
+        if (!allowedTypesNode.isArray()) {
+            return true;
+        }
+        if (allowedTypesNode.size() == 0) {
+            return true;
+        }
+
+        for (JsonNode allowedTypeNode : allowedTypesNode) {
+            if (allowedTypeNode != null && allowedTypeNode.isTextual()
+                    && allowedTypeNode.asText().equals(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 内容关键字匹配：
+     * - 未配置或空数组：默认放行；
+     * - 配置了数组：JSON 字符串中命中任一关键字即放行。
+     */
+    private boolean matchMustContainCondition(String value, JsonNode mustContainNode) {
+        if (mustContainNode == null || mustContainNode.size() == 0) {
+            return true;
+        }
+        if (!mustContainNode.isArray()) {
+            return false;
+        }
+
+        for (JsonNode conditionNode : mustContainNode) {
+            if (conditionNode != null && conditionNode.isTextual()) {
+                String condition = conditionNode.asText();
+                if (!StringUtils.isEmpty(condition) && value.contains(condition)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean canTranslateMetafieldJsonLegacy(String value, String type, String shopName, String accessToken, String resourceId) {
+        if (!value.contains(JSON_JUDGE) || !"RICH_TEXT_FIELD".equals(type)) {
+            return false;
+        }
+        return hasMetafieldOwner(shopName, accessToken, resourceId);
+    }
+
+    private boolean hasMetafieldOwner(String shopName, String accessToken, String resourceId) {
+        String shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST,
+                ShopifyRequestUtils.getQueryForCheckMetafieldId(resourceId));
+        ShopifyCheckMetafieldResponse shopifyCheckMetafieldResponse = JsonUtils.jsonToObject(shopifyData,
+                ShopifyCheckMetafieldResponse.class);
+        return Optional.ofNullable(shopifyCheckMetafieldResponse)
+                .map(ShopifyCheckMetafieldResponse::getNode)
+                .map(ShopifyCheckMetafieldResponse.Node::getOwner)
+                .map(ShopifyCheckMetafieldResponse.Node.Owner::getId)
+                .isPresent();
     }
 
     public void deleteToShopify() {

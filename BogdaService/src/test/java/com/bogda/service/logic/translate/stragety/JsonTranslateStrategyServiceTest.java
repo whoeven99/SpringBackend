@@ -2,7 +2,7 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.utils.JsonUtils;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.bogda.service.logic.redis.ConfigRedisRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +23,8 @@ class JsonTranslateStrategyServiceTest {
 
     @Mock
     private BatchTranslateStrategyService batchTranslateStrategyService;
+    @Mock
+    private ConfigRedisRepo configRedisRepo;
 
     @InjectMocks
     private JsonTranslateStrategyService jsonTranslateStrategyService;
@@ -51,41 +53,22 @@ class JsonTranslateStrategyServiceTest {
         // Given
         String jsonContent = "{\"type\":\"text\",\"value\":\"Hello World\",\"children\":[]}";
         context = new TranslateContext(jsonContent, testTarget, new HashMap<>(), testAiModel);
+        doAnswer(invocation -> {
+            TranslateContext ctx = invocation.getArgument(0);
+            Map<Integer, String> translatedMap = new HashMap<>();
+            translatedMap.put(0, "你好世界");
+            ctx.getTranslatedTextMap().putAll(translatedMap);
+            return null;
+        }).when(batchTranslateStrategyService).translate(context);
 
-        try (MockedStatic<JsonUtils> mockedJsonUtils = mockStatic(JsonUtils.class)) {
-            JsonNode mockNode = mock(JsonNode.class);
-            mockedJsonUtils.when(() -> JsonUtils.readTree(jsonContent)).thenReturn(mockNode);
-            mockedJsonUtils.when(() -> JsonUtils.objectToJson(any())).thenReturn("{\"type\":\"text\",\"value\":\"你好世界\",\"children\":[]}");
+        // When
+        jsonTranslateStrategyService.translate(context);
 
-            when(mockNode.isObject()).thenReturn(true);
-            when(mockNode.has("type")).thenReturn(true);
-            when(mockNode.get("type")).thenReturn(mock(JsonNode.class));
-            when(mockNode.get("type").asText()).thenReturn("text");
-            when(mockNode.has("value")).thenReturn(true);
-            when(mockNode.get("value")).thenReturn(mock(JsonNode.class));
-            when(mockNode.get("value").isTextual()).thenReturn(true);
-            when(mockNode.get("value").asText()).thenReturn("Hello World");
-            when(mockNode.has("children")).thenReturn(true);
-            when(mockNode.get("children")).thenReturn(mock(JsonNode.class));
-            when(mockNode.get("children").isArray()).thenReturn(true);
-            when(mockNode.get("children").size()).thenReturn(0);
-
-            doAnswer(invocation -> {
-                TranslateContext ctx = invocation.getArgument(0);
-                Map<Integer, String> translatedMap = new HashMap<>();
-                translatedMap.put(0, "你好世界");
-                ctx.getTranslatedTextMap().putAll(translatedMap);
-                return null;
-            }).when(batchTranslateStrategyService).translate(context);
-
-            // When
-            jsonTranslateStrategyService.translate(context);
-
-            // Then
-            assertEquals("JSON翻译", context.getStrategy());
-            assertNotNull(context.getTranslatedContent());
-            verify(batchTranslateStrategyService).translate(context);
-        }
+        // Then
+        assertEquals("JSON翻译", context.getStrategy());
+        assertNotNull(context.getTranslatedContent());
+        assertTrue(context.getTranslatedContent().contains("\"value\":\"你好世界\""));
+        verify(batchTranslateStrategyService).translate(context);
     }
 
     @Test
@@ -111,32 +94,13 @@ class JsonTranslateStrategyServiceTest {
         // Given
         String jsonContent = "{\"type\":\"text\",\"value\":\"\",\"children\":[]}";
         context = new TranslateContext(jsonContent, testTarget, new HashMap<>(), testAiModel);
+        // When
+        jsonTranslateStrategyService.translate(context);
 
-        try (MockedStatic<JsonUtils> mockedJsonUtils = mockStatic(JsonUtils.class)) {
-            JsonNode mockNode = mock(JsonNode.class);
-            mockedJsonUtils.when(() -> JsonUtils.readTree(jsonContent)).thenReturn(mockNode);
-
-            when(mockNode.isObject()).thenReturn(true);
-            when(mockNode.has("type")).thenReturn(true);
-            when(mockNode.get("type")).thenReturn(mock(JsonNode.class));
-            when(mockNode.get("type").asText()).thenReturn("text");
-            when(mockNode.has("value")).thenReturn(true);
-            when(mockNode.get("value")).thenReturn(mock(JsonNode.class));
-            when(mockNode.get("value").isTextual()).thenReturn(true);
-            when(mockNode.get("value").asText()).thenReturn("");
-            when(mockNode.has("children")).thenReturn(true);
-            when(mockNode.get("children")).thenReturn(mock(JsonNode.class));
-            when(mockNode.get("children").isArray()).thenReturn(true);
-            when(mockNode.get("children").size()).thenReturn(0);
-
-            // When
-            jsonTranslateStrategyService.translate(context);
-
-            // Then
-            assertEquals("JSON翻译（无内容）", context.getStrategy());
-            assertEquals(jsonContent, context.getTranslatedContent());
-            verifyNoInteractions(batchTranslateStrategyService);
-        }
+        // Then
+        assertEquals("JSON翻译（无内容）", context.getStrategy());
+        assertEquals(jsonContent, context.getTranslatedContent());
+        verifyNoInteractions(batchTranslateStrategyService);
     }
 
     @Test
@@ -144,60 +108,23 @@ class JsonTranslateStrategyServiceTest {
         // Given
         String jsonContent = "{\"type\":\"text\",\"value\":\"Hello\",\"children\":[{\"type\":\"text\",\"value\":\"World\"}]}";
         context = new TranslateContext(jsonContent, testTarget, new HashMap<>(), testAiModel);
+        doAnswer(invocation -> {
+            TranslateContext ctx = invocation.getArgument(0);
+            Map<Integer, String> translatedMap = new HashMap<>();
+            translatedMap.put(0, "你好");
+            translatedMap.put(1, "世界");
+            ctx.getTranslatedTextMap().putAll(translatedMap);
+            return null;
+        }).when(batchTranslateStrategyService).translate(context);
 
-        try (MockedStatic<JsonUtils> mockedJsonUtils = mockStatic(JsonUtils.class)) {
-            JsonNode rootNode = mock(JsonNode.class);
-            JsonNode childNode = mock(JsonNode.class);
-            JsonNode childrenArray = mock(JsonNode.class);
+        // When
+        jsonTranslateStrategyService.translate(context);
 
-            mockedJsonUtils.when(() -> JsonUtils.readTree(jsonContent)).thenReturn(rootNode);
-            mockedJsonUtils.when(() -> JsonUtils.objectToJson(any())).thenReturn(jsonContent);
-
-            // Root node setup
-            when(rootNode.isObject()).thenReturn(true);
-            when(rootNode.has("type")).thenReturn(true);
-            when(rootNode.get("type")).thenReturn(mock(JsonNode.class));
-            when(rootNode.get("type").asText()).thenReturn("text");
-            when(rootNode.has("value")).thenReturn(true);
-            when(rootNode.get("value")).thenReturn(mock(JsonNode.class));
-            when(rootNode.get("value").isTextual()).thenReturn(true);
-            when(rootNode.get("value").asText()).thenReturn("Hello");
-            when(rootNode.has("children")).thenReturn(true);
-            when(rootNode.get("children")).thenReturn(childrenArray);
-            when(childrenArray.isArray()).thenReturn(true);
-            when(childrenArray.size()).thenReturn(1);
-            when(childrenArray.get(0)).thenReturn(childNode);
-
-            // Child node setup
-            when(childNode.isObject()).thenReturn(true);
-            when(childNode.has("type")).thenReturn(true);
-            when(childNode.get("type")).thenReturn(mock(JsonNode.class));
-            when(childNode.get("type").asText()).thenReturn("text");
-            when(childNode.has("value")).thenReturn(true);
-            when(childNode.get("value")).thenReturn(mock(JsonNode.class));
-            when(childNode.get("value").isTextual()).thenReturn(true);
-            when(childNode.get("value").asText()).thenReturn("World");
-            when(childNode.has("children")).thenReturn(true);
-            when(childNode.get("children")).thenReturn(mock(JsonNode.class));
-            when(childNode.get("children").isArray()).thenReturn(true);
-            when(childNode.get("children").size()).thenReturn(0);
-
-            doAnswer(invocation -> {
-                TranslateContext ctx = invocation.getArgument(0);
-                Map<Integer, String> translatedMap = new HashMap<>();
-                translatedMap.put(0, "你好");
-                translatedMap.put(1, "世界");
-                ctx.getTranslatedTextMap().putAll(translatedMap);
-                return null;
-            }).when(batchTranslateStrategyService).translate(context);
-
-            // When
-            jsonTranslateStrategyService.translate(context);
-
-            // Then
-            assertEquals("JSON翻译", context.getStrategy());
-            verify(batchTranslateStrategyService).translate(context);
-        }
+        // Then
+        assertEquals("JSON翻译", context.getStrategy());
+        assertTrue(context.getTranslatedContent().contains("\"value\":\"你好\""));
+        assertTrue(context.getTranslatedContent().contains("\"value\":\"世界\""));
+        verify(batchTranslateStrategyService).translate(context);
     }
 
     @Test
@@ -222,6 +149,36 @@ class JsonTranslateStrategyServiceTest {
         assertEquals("0", context.getTranslateVariables().get("glossaryCount"));
         assertEquals("50", context.getTranslateVariables().get("translatedChars"));
         assertNotNull(context.getTranslatedTime());
+    }
+
+    @Test
+    void testTranslate_WithDynamicPathRules_ShouldTranslateVirtualOptions() {
+        // Given
+        String jsonContent = "{\"product_id\":\"6948995727533\",\"virtual_options\":[{\"title\":\"Entrer title\",\"values\":[{\"key\":\"Nous key\"}]}]}";
+        String config = "{\"jsonExtractRules\":[{\"mode\":\"path\",\"path\":\"virtual_options[*].title\"},{\"mode\":\"path\",\"path\":\"virtual_options[*].values[*].key\"}]}";
+        when(configRedisRepo.getConfig("METAFIELD_JSON_TRANSLATE_RULE")).thenReturn(config);
+        context = new TranslateContext(jsonContent, testTarget, new HashMap<>(), testAiModel);
+
+        doAnswer(invocation -> {
+            TranslateContext ctx = invocation.getArgument(0);
+            ctx.getOriginalTextMap().forEach((k, v) -> {
+                if ("Entrer title".equals(v)) {
+                    ctx.getTranslatedTextMap().put(k, "输入标题");
+                } else if ("Nous key".equals(v)) {
+                    ctx.getTranslatedTextMap().put(k, "联系说明");
+                }
+            });
+            return null;
+        }).when(batchTranslateStrategyService).translate(any(TranslateContext.class));
+
+        // When
+        jsonTranslateStrategyService.translate(context);
+
+        // Then
+        assertEquals("JSON翻译", context.getStrategy());
+        assertTrue(context.getTranslatedContent().contains("\"title\":\"输入标题\""));
+        assertTrue(context.getTranslatedContent().contains("\"key\":\"联系说明\""));
+        verify(batchTranslateStrategyService).translate(context);
     }
 }
 
