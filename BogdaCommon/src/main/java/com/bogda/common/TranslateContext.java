@@ -28,6 +28,11 @@ public class TranslateContext {
 
     // Translate Model
     private String aiModel;
+    private boolean usePrivateKey;
+    private Integer privateApiName; // 0-google, 1-openai
+    private String privateApiKey;
+    private String privateApiModel;
+    private String privateTaskClientKey;
 
     // Batch
     private Map<Integer, String> originalTextMap = new HashMap<>();

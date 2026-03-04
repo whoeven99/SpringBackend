@@ -279,7 +279,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         Pair<Map<Integer, String>, Integer> result = batchTranslate(
             prompt, 
             ctx.getTargetLanguage(), 
-            ctx.getAiModel(), 
+            ctx,
             textsToTranslate
         );
 
@@ -361,7 +361,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         Pair<Map<Integer, String>, Integer> result = batchTranslate(
             prompt, 
             ctx.getTargetLanguage(), 
-            ctx.getAiModel(), 
+            ctx,
             batchTexts
         );
 
@@ -496,18 +496,18 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      *
      * @param prompt 翻译提示词
      * @param targetLanguage 目标语言
-     * @param aiModel AI模型名称
+     * @param ctx 翻译上下文（含模型与私有Key信息）
      * @param sourceMap 待翻译的文本Map（序号 -> 原文）
      * @return 翻译结果（译文Map + 使用的token数），失败返回null
      */
     private Pair<Map<Integer, String>, Integer> batchTranslate(
             String prompt,
             String targetLanguage,
-            String aiModel,
+            TranslateContext ctx,
             Map<Integer, String> sourceMap) {
         
         // 调用AI模型翻译
-        Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(aiModel, prompt, targetLanguage, sourceMap);
+        Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(ctx, prompt, targetLanguage, sourceMap);
         if (aiResult == null) {
             return null;
         }

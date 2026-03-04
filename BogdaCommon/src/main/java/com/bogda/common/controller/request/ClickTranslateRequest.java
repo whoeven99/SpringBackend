@@ -21,4 +21,6 @@ public class ClickTranslateRequest {
     private String translateSettings2; // 语言包，先不管
     private List<String> translateSettings3; // 模块类型
     private String customKey; // 自定义key
+    private Boolean usePrivateKey; // 是否使用私有key翻译
+    private Integer privateApiName; // 私有API类型：0-google，1-openai
 }
