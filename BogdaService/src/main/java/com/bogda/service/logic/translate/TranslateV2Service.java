@@ -1290,7 +1290,7 @@ public class TranslateV2Service {
                 return false;
             }
 
-            if (JsonUtils.isJson(value)) {
+            if (JsonUtils.isJson(value) || "JSON".equals(type)) {
                 return canTranslateMetafieldJsonByConfig(value, type, shopName, accessToken, resourceId);
             }
         }
