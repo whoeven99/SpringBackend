@@ -67,15 +67,15 @@ public class TranslateTask {
             executorService.submit(() -> {
                 shopsSet.add(groupKey);
                 List<InitialTaskV2DO> groupTasks = entry.getValue();
-                TraceReporterHolder.report("TranslateTask.process","TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
+                TraceReporterHolder.report("TranslateTask.process", "TranslateTaskV2 start " + taskName + " group: " + groupKey + " with " + groupTasks.size() + " tasks.");
 
                 try {
                     for (InitialTaskV2DO initialTaskV2DO : groupTasks) {
                         taskConsumer.accept(initialTaskV2DO);
-                        TraceReporterHolder.report("TranslateTask.process","TranslateTaskV2 " + taskName + " success for group: " + groupKey + " , initialTaskId: " + initialTaskV2DO.getId());
+                        TraceReporterHolder.report("TranslateTask.process", "TranslateTaskV2 " + taskName + " success for group: " + groupKey + " , initialTaskId: " + initialTaskV2DO.getId());
                     }
                 } catch (Exception e) {
-                    TraceReporterHolder.report("TranslateTask.process","FatalException TaskRunFailed " + taskName + " " + e.getMessage());
+                    TraceReporterHolder.report("TranslateTask.process", "FatalException TaskRunFailed " + taskName + " " + e.getMessage());
                     ExceptionReporterHolder.report("TranslateTask.process", e);
                 } finally {
                     shopsSet.remove(groupKey);
@@ -147,13 +147,13 @@ public class TranslateTask {
                 // 1. 按状态分组
                 List<InitialTaskV2DO> translatedTasks = shopTasks.stream()
                         .filter(t -> t.getStatus() == 3)
-                        .collect(Collectors.toList());
+                        .toList();
 
                 List<InitialTaskV2DO> partialTasks = shopTasks.stream()
-                        .filter(t -> t.getStatus() == 5)
-                        .collect(Collectors.toList());
+                        .filter(t -> t.getStatus() == 5 || t.getStatus() == 6)
+                        .toList();
 
-                // 2. 判断是否全部属于 4 / 5
+                // 2. 判断是否全部属于 4 / 5 / 6
                 if (translatedTasks.size() + partialTasks.size() != shopTasks.size()) {
                     continue;
                 }
@@ -214,7 +214,7 @@ public class TranslateTask {
             return;
         }
 
-        TraceReporterHolder.report("TranslateTask.cleanTask","TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
+        TraceReporterHolder.report("TranslateTask.cleanTask", "TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
         translateV2Service.cleanDeleteTask(cleanTask.get(0));
     }
