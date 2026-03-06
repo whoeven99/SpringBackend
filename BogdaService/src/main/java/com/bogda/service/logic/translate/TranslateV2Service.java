@@ -1123,6 +1123,12 @@ public class TranslateV2Service {
             return false;
         }
 
+        if (initialTaskV2Repo.existsTranslatingTask(shopName, source, target)) {
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2",
+                    "autoTranslateV2 已存在翻译中任务，跳过创建 shop: " + shopName + " source: " + source + " target: " + target);
+            return false;
+        }
+
         // 判断这条语言是否在用户本地存在
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());

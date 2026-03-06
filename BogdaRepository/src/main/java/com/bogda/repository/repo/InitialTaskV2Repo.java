@@ -47,7 +47,9 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
-    /** 可继续的任务：翻译阶段停止(5) + 初始化阶段停止(6) */
+    /**
+     * 可继续的任务：翻译阶段停止(5) + 初始化阶段停止(6)
+     */
     public List<InitialTaskV2DO> selectResumableByShopName(String shopName) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
@@ -83,6 +85,16 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getTaskType, taskType)
                 .eq(InitialTaskV2DO::isSendEmail, false)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
+    public boolean existsTranslatingTask(String shopName, String source, String target) {
+        return baseMapper.selectCount(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getSource, source)
+                .eq(InitialTaskV2DO::getTarget, target)
+                .eq(InitialTaskV2DO::getTaskType, "manual")
+                .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
+                .eq(InitialTaskV2DO::getIsDeleted, false)) > 0;
     }
 
     public List<InitialTaskV2DO> selectByTaskTypeAndNotEmail(String taskType) {
