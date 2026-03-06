@@ -1140,6 +1140,12 @@ public class TranslateV2Service {
             return false;
         }
 
+        if (initialTaskV2Repo.existsTranslatingTask(shopName, source, target)) {
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2",
+                    "autoTranslateV2 已存在翻译中任务，跳过创建 shop: " + shopName + " source: " + source + " target: " + target);
+            return false;
+        }
+
         TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 任务准备创建 " + shopName + " target: " + target);
         createAutoTask(shopName, source, target);
         TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 任务创建成功 " + shopName + " target: " + target);

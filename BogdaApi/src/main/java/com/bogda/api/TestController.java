@@ -179,4 +179,9 @@ public class TestController {
         rateRedisService.refreshRates(rates);
     }
 
+    // 创建自动翻译任务
+    @GetMapping("/testAutoTranslate")
+    public BaseResponse<Object> testAutoTranslate(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
+        return new BaseResponse<>().CreateSuccessResponse(translateV2Service.autoTranslateV2(shopName, source, target));
+    }
 }
