@@ -49,7 +49,14 @@ public class PromptUtils {
             return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.
             """;
 
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{\\{.*?}}|\\{%.*?%}|<[^>]+>|https?://\\S+|www\\.\\S+");
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile(
+            "\\{\\{\\s*[^{}]*?\\s*\\}\\}"      // {{ ... }}
+                    + "|\\{%\\s*.*?\\s*%\\}"   // {% ... %}
+                    + "|%\\{\\s*[^{}]*?\\s*\\}"// %{...}
+                    + "|<[^>]+>"
+                    + "|https?://\\S+"
+                    + "|www\\.\\S+"
+    );
 
     public static String buildDynamicJsonPrompt(String target, Map<Integer, String> sourceMap,
                                                 String termRules, String styleRules) {
