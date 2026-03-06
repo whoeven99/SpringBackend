@@ -31,7 +31,7 @@ public class PromptUtils {
 
     private static final String PROTECTION_RULE = """
             Protection:
-            Preserve variables, placeholders, HTML tags, URLs, and emojis unchanged((e.g., {{aaa}}, {{aa.bbb}}, {% ccc %}, {% capture email_title %} etc.).
+            Preserve variables, placeholders, HTML tags, URLs, and emojis unchanged((e.g., {{aaa}}, {{aa.bbb}}, {% ccc %}, {% capture email_title %}, [ddd] etc.).
             """;
 
     private static final String JSON_OUTPUT_RULE = """
