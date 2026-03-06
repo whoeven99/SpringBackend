@@ -6,22 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 
 public class PlaceholderUtilsTest {
-
-    @Test
-    void testGetHandlePrompt() {
-        String prompt = PlaceholderUtils.getHandlePrompt("English");
-        assertNotNull(prompt);
-        assertTrue(prompt.contains("English"));
-        assertTrue(prompt.contains("Translate"));
-    }
-
-    @Test
-    void testGetHandlePromptWithDifferentLanguage() {
-        String prompt = PlaceholderUtils.getHandlePrompt("Chinese");
-        assertNotNull(prompt);
-        assertTrue(prompt.contains("Chinese"));
-    }
-
     @Test
     void testBuildDescriptionPrompt() {
         String prompt = PlaceholderUtils.buildDescriptionPrompt(

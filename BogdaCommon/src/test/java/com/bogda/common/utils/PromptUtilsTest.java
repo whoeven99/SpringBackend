@@ -20,6 +20,9 @@ public class PromptUtilsTest {
         assertNotNull(prompt);
         assertTrue(prompt.contains("English"));
         assertTrue(prompt.contains(glossaryMapping));
+        assertTrue(prompt.contains("Context Rule:"));
+        assertTrue(prompt.contains("Terminology:"));
+        assertTrue(prompt.contains("Output:"));
     }
 
     @Test
@@ -37,12 +40,14 @@ public class PromptUtilsTest {
     void testJsonPrompt() {
         String target = "en";
         Map<Integer, String> originalTextMap = new HashMap<>();
-        originalTextMap.put(1, "Hello");
+        originalTextMap.put(1, "Hello {{name}}");
         originalTextMap.put(2, "World");
 
         String prompt = PromptUtils.JsonPrompt(target, originalTextMap);
         assertNotNull(prompt);
         assertTrue(prompt.contains("English"));
+        assertTrue(prompt.contains("Context Rule:"));
+        assertTrue(prompt.contains("Protection:"));
     }
 
     @Test
@@ -58,14 +63,15 @@ public class PromptUtilsTest {
     @Test
     void testGlossarySinglePrompt() {
         String targetLanguage = "en";
-        String text = "Hello World";
+        String text = "Hello {{name}}";
         String glossaryMapping = "term:translation";
 
         String prompt = PromptUtils.GlossarySinglePrompt(targetLanguage, text, glossaryMapping);
         assertNotNull(prompt);
         assertTrue(prompt.contains("English"));
-        assertTrue(prompt.contains("Hello World"));
+        assertTrue(prompt.contains("Hello {{name}}"));
         assertTrue(prompt.contains(glossaryMapping));
+        assertTrue(prompt.contains("Protection:"));
     }
 
     @Test
@@ -88,6 +94,7 @@ public class PromptUtilsTest {
         assertNotNull(prompt);
         assertTrue(prompt.contains("English"));
         assertTrue(prompt.contains("Hello World"));
+        assertTrue(prompt.contains("Context Rule:"));
     }
 
     @Test

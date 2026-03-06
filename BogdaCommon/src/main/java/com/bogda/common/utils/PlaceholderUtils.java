@@ -5,30 +5,12 @@ import java.util.Map;
 
 public class PlaceholderUtils {
     /**
-     * handle类型的提示词
-     */
-    public static String getHandlePrompt(String target) {
-        return "Translate the following text into " + target + ". Detect the input language. If it is " + target + ", return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.";
-    }
-
-    /**
      * 构建描述生成提示词的动态方法
      * */
     public static String buildDescriptionPrompt(
-            String productName,
-            String productCategory,
-            String productDescription,
-            String seoKeywords,
-            String image,
-            String imageDescription,
-            String tone,
-            String templateType,
-            String brand,
-            String templateStructure,
-            String language,
-            String contentType,
-            String brandWord,
-            String brandSlogan
+            String productName, String productCategory, String productDescription, String seoKeywords,
+            String image, String imageDescription, String tone, String templateType, String brand, String templateStructure,
+            String language, String contentType, String brandWord, String brandSlogan
     ) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are a professional e-commerce ") ;
