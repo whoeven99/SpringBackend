@@ -148,8 +148,12 @@ public class TranslateTask {
                         .filter(t -> t.getStatus() == 5)
                         .collect(Collectors.toList());
 
-                // 2. 判断是否全部属于 4 / 5
-                if (translatedTasks.size() + partialTasks.size() != shopTasks.size()) {
+                List<InitialTaskV2DO> initialFailedTasks = shopTasks.stream()
+                        .filter(t -> t.getStatus() == 6)
+                        .collect(Collectors.toList());
+
+                // 2. 判断是否全部属于 4 / 5 / 6
+                if (translatedTasks.size() + partialTasks.size() + initialFailedTasks.size() != shopTasks.size()) {
                     continue;
                 }
 
@@ -159,7 +163,8 @@ public class TranslateTask {
                 }
 
                 // 4. 部分翻译（额度不足）→ 发送部分翻译邮件
-                if (!partialTasks.isEmpty()) {
+                if (!partialTasks.isEmpty() || initialFailedTasks.isEmpty()) {
+                    partialTasks.addAll(initialFailedTasks);
                     tencentEmailService.sendTranslatePartialEmail(shopName, partialTasks, "auto translation");
                 }
 

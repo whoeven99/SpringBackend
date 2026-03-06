@@ -27,7 +27,6 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
     @Override
     public void translate(TranslateContext ctx) {
         String value = ctx.getContent();
-        String target = ctx.getTargetLanguage();
 
         // 解析 JSON
         JsonNode rootNode = JsonUtils.readTree(value);
@@ -129,28 +128,6 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
         }
 
         return currentIndex;
-    }
-
-    /**
-     * 假翻译方法 - 用于演示，实际应该调用真实的翻译服务
-     * @param originalTextMap 原始文本映射
-     * @param targetLanguage 目标语言
-     * @return 翻译后的文本映射
-     */
-    private Map<Integer, String> fakeTranslate(Map<Integer, String> originalTextMap, String targetLanguage) {
-        Map<Integer, String> translatedMap = new HashMap<>();
-
-        for (Map.Entry<Integer, String> entry : originalTextMap.entrySet()) {
-            Integer key = entry.getKey();
-            String originalText = entry.getValue();
-
-            // 假翻译：在原文前加上 "[翻译到" + targetLanguage + "]"
-            // 实际使用时应该替换为真实的翻译逻辑
-            String translatedText = "[翻译到" + targetLanguage + "]" + originalText;
-            translatedMap.put(key, translatedText);
-        }
-
-        return translatedMap;
     }
 
     /**
