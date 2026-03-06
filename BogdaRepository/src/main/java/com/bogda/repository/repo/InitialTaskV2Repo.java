@@ -85,6 +85,15 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    public boolean existsTranslatingTask(String shopName, String source, String target) {
+        return baseMapper.selectCount(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getSource, source)
+                .eq(InitialTaskV2DO::getTarget, target)
+                .in(InitialTaskV2DO::getStatus, 1, 2, 3)
+                .eq(InitialTaskV2DO::getIsDeleted, false)) > 0;
+    }
+
     public List<InitialTaskV2DO> selectByTaskTypeAndNotEmail(String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getTaskType, taskType)
