@@ -1123,6 +1123,12 @@ public class TranslateV2Service {
             return false;
         }
 
+        if (initialTaskV2Repo.existsTranslatingTask(shopName, source, target)) {
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2",
+                    "autoTranslateV2 已存在翻译中任务，跳过创建 shop: " + shopName + " source: " + source + " target: " + target);
+            return false;
+        }
+
         // 判断这条语言是否在用户本地存在
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(),
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
@@ -1137,12 +1143,6 @@ public class TranslateV2Service {
             // 将用户的自动翻译标识改为false
             translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
             TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
-            return false;
-        }
-
-        if (initialTaskV2Repo.existsTranslatingTask(shopName, source, target)) {
-            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2",
-                    "autoTranslateV2 已存在翻译中任务，跳过创建 shop: " + shopName + " source: " + source + " target: " + target);
             return false;
         }
 
