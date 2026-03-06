@@ -3,6 +3,8 @@ package com.bogda.api;
 import com.alibaba.fastjson.JSONObject;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
+import com.bogda.common.controller.request.TranslateRequest;
+import com.bogda.common.utils.PromptUtils;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -15,6 +17,8 @@ import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AppInsightsUtils;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -183,5 +187,35 @@ public class TestController {
     @GetMapping("/testAutoTranslate")
     public BaseResponse<Object> testAutoTranslate(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
         return new BaseResponse<>().CreateSuccessResponse(translateV2Service.autoTranslateV2(shopName, source, target));
+    }
+
+    // 测试提示词的返回
+    @PostMapping("/testBatchPrompt")
+    public BaseResponse<Object> testPrompt(@RequestBody promptBatchRequest a) {
+        String s = PromptUtils.buildDynamicJsonPrompt(a.getTarget(), a.getSource(), a.getTermRules(), a.getStyleRules());
+        return new BaseResponse<>().CreateSuccessResponse(s);
+    }
+
+    @PostMapping("/testSinglePrompt")
+    public BaseResponse<Object> testPrompt(@RequestBody promptSingleRequest a) {
+        String s = PromptUtils.buildDynamicSinglePrompt(a.getTarget(), a.getSource(), a.getTermRules(), a.getStyleRules());
+        return new BaseResponse<>().CreateSuccessResponse(s);
+    }
+    @Getter
+    @Setter
+    public static class promptBatchRequest {
+        private String target;
+        private Map<Integer, String> source;
+        private String termRules;
+        private String styleRules;
+    }
+
+    @Getter
+    @Setter
+    public static class promptSingleRequest {
+        private String target;
+        private String source;
+        private String termRules;
+        private String styleRules;
     }
 }
