@@ -7,8 +7,8 @@ import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
+import com.bogda.service.logic.translate.PromptConfigService;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.PromptUtils;
 import com.bogda.common.utils.StringUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +26,8 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
     private RedisProcessService redisProcessService;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+    @Autowired
+    private PromptConfigService promptConfigService;
 
     @Override
     public String getType() {
@@ -41,7 +43,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
                 && "handle".equals(ctx.getShopifyTextKey())) {
             String prompt;
             String fixContent = StringUtils.replaceHyphensWithSpaces(value);
-            prompt = PromptUtils.buildDynamicHandlePrompt(target, fixContent);
+            prompt = promptConfigService.buildHandlePrompt(ctx.getModule(), target, fixContent);
             ctx.setStrategy("Handle 长文本翻译");
             ctx.setPrompt(prompt);
 //            return;
@@ -61,13 +63,13 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
         if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
             String glossaryMappingText = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), value);
-            String prompt = PromptUtils.GlossarySinglePrompt(target, value, glossaryMappingText);
+            String prompt = promptConfigService.buildGlossarySinglePrompt(ctx.getModule(), target, value, glossaryMappingText);
             ctx.setStrategy("语法表单条翻译");
             ctx.setPrompt(prompt);
         } else {
             // 普通 prompt（仅当前面没设置）
             if (ctx.getPrompt() == null) {
-                String prompt = PromptUtils.SinglePrompt(target, value);
+                String prompt = promptConfigService.buildPlainSinglePrompt(ctx.getModule(), target, value);
                 ctx.setStrategy("普通单条文本翻译");
                 ctx.setPrompt(prompt);
             }

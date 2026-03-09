@@ -160,7 +160,8 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Token limit reached");
         }
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
-                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()), ALiYunTranslateIntegration.QWEN_MAX);
+                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()),
+                ALiYunTranslateIntegration.QWEN_MAX, request.getResourceType());
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);
@@ -832,6 +833,7 @@ public class TranslateV2Service {
             boolean isHtml = randomDo.isSingleHtml();
             if (JsonUtils.isJson(randomDo.getSourceValue())) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
+                context.setModule(randomDo.getModule());
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("JSON");
                 service.translate(context);
 
@@ -844,6 +846,7 @@ public class TranslateV2Service {
 
             } else if (isHtml) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
+                context.setModule(randomDo.getModule());
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
                 service.translate(context);
 
@@ -875,6 +878,7 @@ public class TranslateV2Service {
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
+                context.setModule(randomDo.getModule());
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
                 service.translate(context);
 
