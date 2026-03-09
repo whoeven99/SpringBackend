@@ -8,8 +8,8 @@ import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
+import com.bogda.service.logic.translate.PromptConfigService;
 import com.bogda.common.utils.JsonUtils;
-import com.bogda.common.utils.PromptUtils;
 import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
@@ -30,6 +30,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     private ModelTranslateService modelTranslateService;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+    @Autowired
+    private PromptConfigService promptConfigService;
 
     @Override
     public String getType() {
@@ -270,10 +272,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         // 构建带词汇表的翻译提示词
-        String prompt = PromptUtils.GlossaryJsonPrompt(
-            ctx.getTargetLanguage(), 
-            glossaryMapping, 
-            textsToTranslate
+        String prompt = promptConfigService.buildGlossaryJsonPrompt(
+            ctx.getModule(), ctx.getTargetLanguage(), glossaryMapping, textsToTranslate
         );
 
         // 调用AI翻译
@@ -356,7 +356,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             Map<Integer, String> actuallyTranslateMap) {
         
         // 构建翻译提示词
-        String prompt = PromptUtils.JsonPrompt(ctx.getTargetLanguage(), batchTexts);
+        String prompt = promptConfigService.buildPlainJsonPrompt(
+            ctx.getModule(), ctx.getTargetLanguage(), batchTexts);
 
         // 调用AI翻译
         Pair<Map<Integer, String>, Integer> result = batchTranslate(

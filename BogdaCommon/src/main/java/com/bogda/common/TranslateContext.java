@@ -12,6 +12,8 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class TranslateContext {
+    private String module; // 用户翻译模块
+
     // Start
     private String content;
 
@@ -60,7 +62,7 @@ public class TranslateContext {
 
     // For single
     public TranslateContext(String content, String targetLanguage, String type, String key,
-                            Map<String, GlossaryDO> glossaryMap, String aiModel) {
+                            Map<String, GlossaryDO> glossaryMap, String aiModel, String module) {
         this.content = content;
         this.targetLanguage = targetLanguage;
         this.shopifyTextType = type;
@@ -69,6 +71,7 @@ public class TranslateContext {
         this.startTime = System.currentTimeMillis();
         this.translatedChars = content.length();
         this.aiModel = aiModel;
+        this.module = module;
     }
 
     // For batch
