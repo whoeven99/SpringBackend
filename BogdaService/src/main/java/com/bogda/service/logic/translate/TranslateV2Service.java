@@ -3,6 +3,7 @@ package com.bogda.service.logic.translate;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.ChatGptIntegration;
+import com.bogda.integration.aimodel.KimiIntegration;
 import com.bogda.integration.model.*;
 import com.bogda.repository.entity.DeleteTasksDO;
 import com.bogda.repository.repo.DeleteTasksRepo;
@@ -94,7 +95,8 @@ public class TranslateV2Service {
     private DeleteTasksRepo deleteTasksRepo;
     @Autowired
     private ChatGptIntegration chatGptIntegration;
-
+    @Autowired
+    private KimiIntegration kimiIntegration;
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选（降级逻辑）
     private static final String METAFIELD_JSON_TRANSLATE_RULE = "METAFIELD_JSON_TRANSLATE_RULE";
 
@@ -201,12 +203,25 @@ public class TranslateV2Service {
                 return handleGemini(model, prompt, picUrl);
             } else if (model.contains("gpt")) {
                 return handleGpt(prompt, target);
+            } else if (model.contains("kimi")) {
+                return handleKimi(prompt, target);
             }
         } catch (Exception e) {
             ExceptionReporterHolder.report("TranslateV2Service.testTranslate", e);
         }
 
         return defaultNullMap();
+    }
+
+    /**
+     * 处理kimi逻辑
+     * */
+    private Map<String, Object> handleKimi(String prompt, String target) {
+        Pair<String, Integer> pair = kimiIntegration.chat(prompt, target);
+        if (pair == null) {
+            return defaultNullMap();
+        }
+        return buildResponse(pair.getFirst(), pair.getSecond(), "text");
     }
 
     /**
