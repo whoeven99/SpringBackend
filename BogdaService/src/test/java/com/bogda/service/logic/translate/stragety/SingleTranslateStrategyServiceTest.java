@@ -7,6 +7,7 @@ import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
+import com.bogda.service.logic.translate.PromptConfigService;
 import com.bogda.common.utils.StringUtils;
 import kotlin.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ class SingleTranslateStrategyServiceTest {
     @Mock
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
+    @Mock
+    private PromptConfigService promptConfigService;
+
     @InjectMocks
     private SingleTranslateStrategyService singleTranslateStrategyService;
 
@@ -50,7 +54,7 @@ class SingleTranslateStrategyServiceTest {
         testTarget = "zh";
         testAiModel = "gemini-3-flash";
 
-        context = new TranslateContext(testContent, testTarget, "TEXT", "test-key", new HashMap<>(), testAiModel);
+        context = new TranslateContext(testContent, testTarget, "TEXT", "test-key", new HashMap<>(), testAiModel, "ARTICLE");
     }
 
     @Test
@@ -92,6 +96,7 @@ class SingleTranslateStrategyServiceTest {
             mockedGlossary.when(() -> GlossaryService.hasGlossary(eq(testContent), anyMap(), anyMap())).thenReturn(true);
             mockedGlossary.when(() -> GlossaryService.convertMapToText(anyMap(), eq(testContent))).thenReturn("Hello -> 你好");
 
+            when(promptConfigService.buildGlossarySinglePrompt(anyString(), eq(testTarget), eq(testContent), anyString())).thenReturn("glossary-prompt");
             Pair<String, Integer> mockPair = new Pair<>("你好，世界！", 50);
             when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent)))
                     .thenReturn(mockPair);
@@ -115,6 +120,7 @@ class SingleTranslateStrategyServiceTest {
         try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class)) {
             mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
 
+            when(promptConfigService.buildPlainSinglePrompt(anyString(), eq(testTarget), eq(testContent))).thenReturn("plain-prompt");
             Pair<String, Integer> mockPair = new Pair<>("你好，世界！", 50);
             when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent)))
                     .thenReturn(mockPair);
@@ -147,6 +153,7 @@ class SingleTranslateStrategyServiceTest {
             mockedStringUtils.when(() -> StringUtils.replaceHyphensWithSpaces("hello-world-product"))
                     .thenReturn("hello world product");
 
+            when(promptConfigService.buildHandlePrompt(anyString(), eq(testTarget), eq("hello world product"))).thenReturn("handle-prompt");
             Pair<String, Integer> mockPair = new Pair<>("你好世界产品", 50);
             when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(context.getContent())))
                     .thenReturn(mockPair);
@@ -169,6 +176,7 @@ class SingleTranslateStrategyServiceTest {
         try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class)) {
             mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
 
+            when(promptConfigService.buildPlainSinglePrompt(anyString(), eq(testTarget), eq(testContent))).thenReturn("plain-prompt");
             when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent)))
                     .thenReturn(null);
 
