@@ -147,7 +147,7 @@ class TranslateV2ServiceTest {
         when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<>());
         when(translateStrategyFactory.getServiceByContext(any(TranslateContext.class))).thenReturn(translateStrategyService);
 
-        TranslateContext mockContext = new TranslateContext(testContext, testTarget, "TEXT", "test-key", new HashMap<>(), GeminiIntegration.GEMINI_3_FLASH);
+        TranslateContext mockContext = new TranslateContext(testContext, testTarget, "TEXT", "test-key", new HashMap<>(), GeminiIntegration.GEMINI_3_FLASH, "ARTICLE");
         mockContext.setTranslatedContent("你好，世界！");
         mockContext.setUsedToken(100);
         mockContext.setTranslateVariables(new HashMap<>());
