@@ -2,12 +2,12 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.PlaceholderUtils;
 import com.bogda.common.utils.PromptUtils;
 import com.bogda.common.utils.StringUtils;
 import kotlin.Pair;
@@ -41,8 +41,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
                 && "handle".equals(ctx.getShopifyTextKey())) {
             String prompt;
             String fixContent = StringUtils.replaceHyphensWithSpaces(value);
-            prompt = PlaceholderUtils.getHandlePrompt(target);
-            prompt += "The text is: " + fixContent;
+            prompt = PromptUtils.buildDynamicHandlePrompt(target, fixContent);
             ctx.setStrategy("Handle 长文本翻译");
             ctx.setPrompt(prompt);
 //            return;
@@ -81,6 +80,8 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             return;
         }
 
+        TraceReporterHolder.report("test","单条翻译提示词： " + ctx.getPrompt());
+        TraceReporterHolder.report("test","单条翻译原文： " + value);
         redisProcessService.setCacheData(target, pair.getFirst(), value);
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());
