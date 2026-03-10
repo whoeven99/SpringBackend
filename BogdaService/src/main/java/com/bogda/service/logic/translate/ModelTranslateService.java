@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
@@ -45,7 +46,7 @@ public class ModelTranslateService {
         }
 
         // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回.
-        AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
+        TraceReporterHolder.report("ModelTranslateService.modelTranslate","FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
         return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
     }
 
@@ -57,7 +58,7 @@ public class ModelTranslateService {
         }
 
         // json批量翻译不行，翻译值会少数据，目前只能循环批量翻译
-        AppInsightsUtils.trackTrace("FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
+        TraceReporterHolder.report("ModelTranslateService.modelTranslate","FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
 
         // 将文本转为Map<Integer, String>, 循环翻译
         if (sourceMap == null || sourceMap.isEmpty()) {

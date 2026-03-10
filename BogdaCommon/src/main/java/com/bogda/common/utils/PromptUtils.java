@@ -94,6 +94,56 @@ public class PromptUtils {
                 false, null, null, false, HANDLE_OUTPUT_RULE);
     }
 
+    /**
+     * JSON 批量翻译 — 支持外部 BasePrompt
+     * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
+     */
+    public static String buildDynamicJsonPrompt(String target, Map<Integer, String> sourceMap,
+                                                String termRules, String styleRules,
+                                                String customBasePrompt) {
+        String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
+        String targetLanguage = ModuleCodeUtils.getLanguageName(target);
+        boolean includeProtection = hasSpecialContent(sourceMap);
+        String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
+        return buildDynamicPrompt(base
+                        .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
+                        .replace("{{TARGET_LANGUAGE}}", targetLanguage),
+                true, termRules, styleRules, includeProtection, JSON_OUTPUT_RULE);
+    }
+
+    /**
+     * 单条翻译 — 支持外部 BasePrompt
+     * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
+     */
+    public static String buildDynamicSinglePrompt(String targetLanguage, String text,
+                                                  String termRules, String styleRules,
+                                                  String customBasePrompt) {
+        String safeText = text == null ? "" : text;
+        boolean includeProtection = hasSpecialContent(safeText);
+        String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
+        return buildDynamicPrompt(base
+                        .replace("{{SOURCE_TEXT}}", safeText)
+                        .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
+                true, termRules, styleRules, includeProtection, SINGLE_OUTPUT_RULE);
+    }
+
+    /**
+     * Handle 翻译 — 支持外部 BasePrompt
+     * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
+     */
+    public static String buildDynamicHandlePrompt(String target, String sourceText,
+                                                  String customBasePrompt) {
+        Map<Integer, String> sourceMap = new LinkedHashMap<>();
+        sourceMap.put(1, sourceText == null ? "" : sourceText);
+        String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
+        String targetLanguage = ModuleCodeUtils.getLanguageName(target);
+        String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
+        return buildDynamicPrompt(base
+                        .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
+                        .replace("{{TARGET_LANGUAGE}}", targetLanguage),
+                false, null, null, false, HANDLE_OUTPUT_RULE);
+    }
+
     public static String GlossaryJsonPrompt(String target, String glossaryMapping,
                                             Map<Integer, String> glossaryTextMap) {
         return buildDynamicJsonPrompt(target, glossaryTextMap, glossaryMapping, null);

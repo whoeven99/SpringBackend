@@ -7,6 +7,7 @@ import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
+import com.bogda.service.logic.translate.PromptConfigService;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -38,6 +39,9 @@ class BatchTranslateStrategyServiceTest {
 
     @Mock
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+
+    @Mock
+    private PromptConfigService promptConfigService;
 
     @InjectMocks
     private BatchTranslateStrategyService batchTranslateStrategyService;
@@ -81,6 +85,7 @@ class BatchTranslateStrategyServiceTest {
             
             // Mock calculateBaiLianToken 方法，避免 tokenizer 为 null 的 NPE
             mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
+            when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
 
             // When
             batchTranslateStrategyService.translate(context);
@@ -109,6 +114,7 @@ class BatchTranslateStrategyServiceTest {
 
             // Mock calculateBaiLianToken 方法，避免 tokenizer 为 null 的 NPE
             mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
+            when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
 
             // When
             batchTranslateStrategyService.translate(context);
@@ -134,6 +140,7 @@ class BatchTranslateStrategyServiceTest {
             translatedMap.put(2, "世界");
             Pair<String, Integer> mockPair = new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 100);
 
+            when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
             when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
                     .thenReturn(mockPair);
 
