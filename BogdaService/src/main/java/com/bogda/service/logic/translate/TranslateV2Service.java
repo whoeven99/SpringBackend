@@ -203,7 +203,7 @@ public class TranslateV2Service {
             } else if (model.contains("gemini")) {
                 return handleGemini(model, prompt, picUrl);
             } else if (model.contains("gpt")) {
-                return handleGpt(prompt, target);
+                return handleGpt(model, prompt, target);
             } else if (model.contains("kimi")) {
                 return handleKimi(prompt, target);
             }
@@ -226,10 +226,10 @@ public class TranslateV2Service {
     }
 
     /**
-     * 处理gpt逻辑
+     * 处理gpt逻辑，支持指定模型名称
      */
-    private Map<String, Object> handleGpt(String prompt, String target) {
-        Pair<String, Integer> pair = chatGptIntegration.chatWithGpt(prompt, target);
+    private Map<String, Object> handleGpt(String modelName, String prompt, String target) {
+        Pair<String, Integer> pair = chatGptIntegration.chatWithGpt(modelName, prompt, target);
         if (pair == null) {
             return defaultNullMap();
         }
