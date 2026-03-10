@@ -1000,7 +1000,7 @@ public class TranslateV2Service {
             sendManualSuccessEmail(initialTaskV2DO);
             return;
         }
-        if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus()) {
+        if (InitialTaskStatus.STOPPED.status == initialTaskV2DO.getStatus() || InitialTaskStatus.INIT_STOPPED.status == initialTaskV2DO.getStatus()) {
             handleManualStoppedEmail(initialTaskV2DO);
         }
     }
