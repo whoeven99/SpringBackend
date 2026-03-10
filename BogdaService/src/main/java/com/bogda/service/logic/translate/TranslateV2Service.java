@@ -638,6 +638,7 @@ public class TranslateV2Service {
      */
     private void doInitStoppedCleanup(InitialTaskV2DO initialTaskV2DO) {
         initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), false, false);
+        translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskV2DO.getId());
         TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 init stopped cleanup: shop=" + initialTaskV2DO.getShopName() + " taskId=" + initialTaskV2DO.getId());
     }
 
