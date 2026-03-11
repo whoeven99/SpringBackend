@@ -4,6 +4,7 @@ import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
+import com.bogda.integration.aimodel.KimiIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.redis.ConfigRedisRepo;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -44,9 +45,10 @@ public class AiModelConfigService {
             }
         }
         return switch (type) {
-            case "gpt" -> ChatGptIntegration.GPT_4;
+            case "gpt" -> ChatGptIntegration.GPT_4_1;
             case "qwen" -> ALiYunTranslateIntegration.QWEN_MAX;
             case "gemini" -> GeminiIntegration.GEMINI_3_FLASH;
+            case "kimi" -> KimiIntegration.KIMI_K25;
             default -> null;
         };
     }
@@ -78,8 +80,9 @@ public class AiModelConfigService {
             return ALiYunTranslateIntegration.QWEN_MAX;
         }
         return switch (config.trim().toLowerCase()) {
-            case "gpt" -> ModuleCodeUtils.GPT_5;
+            case "gpt" -> ChatGptIntegration.GPT_4_1_NANO;
             case "gemini" -> GeminiIntegration.GEMINI_3_FLASH;
+            case "kimi" -> KimiIntegration.KIMI_K25;
             default -> ALiYunTranslateIntegration.QWEN_MAX;
         };
     }

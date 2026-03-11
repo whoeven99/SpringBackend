@@ -44,10 +44,10 @@ public class KimiIntegration {
     }
 
     public Pair<String, Integer> chat(String prompt, String target) {
-        return chat(KIMI_K25, prompt, target);
+        return chatWithKimi(KIMI_K25, prompt, target, KIMI_COEFFICIENT);
     }
 
-    public Pair<String, Integer> chat(String model, String prompt, String target) {
+    public Pair<String, Integer> chatWithKimi(String model, String prompt, String target, double magnification) {
         try {
             Map<String, Object> requestBody = Map.of(
                     "model", model,
@@ -93,7 +93,7 @@ public class KimiIntegration {
             int inputTokens = root.at("/usage/prompt_tokens").asInt(0);
             int outputTokens = root.at("/usage/completion_tokens").asInt(0);
             int totalTokens = root.at("/usage/total_tokens").asInt(0);
-            int allToken = totalTokens * KIMI_COEFFICIENT;
+            int allToken = (int) Math.ceil(totalTokens * magnification);
 
             TraceReporterHolder.report("KimiIntegration.chat", "KimiIntegration model: " + model + " 提示词：" + prompt
                     + " 翻译成：" + content + " all: " + allToken
