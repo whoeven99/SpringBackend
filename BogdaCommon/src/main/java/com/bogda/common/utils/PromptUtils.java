@@ -1,8 +1,6 @@
 package com.bogda.common.utils;
 
 import com.vdurmont.emoji.EmojiManager;
-
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -53,7 +51,8 @@ public class PromptUtils {
             "\\{\\{\\s*[^{}]*?\\s*\\}\\}"      // {{ ... }}
                     + "|\\{%\\s*.*?\\s*%\\}"   // {% ... %}
                     + "|%\\{\\s*[^{}]*?\\s*\\}"// %{...}
-                    + "|<[^>]+>"
+                    + "|<[^>]+>"               // <tag>
+                    + "|\\[\\s*[^\\[\\]]+\\s*\\]" // [ ... ]
                     + "|https?://\\S+"
                     + "|www\\.\\S+"
     );
@@ -81,17 +80,6 @@ public class PromptUtils {
                         .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
                         .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
                 true, termRules, styleRules, includeProtection, SINGLE_OUTPUT_RULE);
-    }
-
-    public static String buildDynamicHandlePrompt(String target, String sourceText) {
-        Map<Integer, String> sourceMap = new LinkedHashMap<>();
-        sourceMap.put(1, sourceText == null ? "" : sourceText);
-        String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
-        String targetLanguage = ModuleCodeUtils.getLanguageName(target);
-        return buildDynamicPrompt(BASE_PROMPT
-                        .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
-                        .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                false, null, null, false, HANDLE_OUTPUT_RULE);
     }
 
     /**
@@ -133,13 +121,10 @@ public class PromptUtils {
      */
     public static String buildDynamicHandlePrompt(String target, String sourceText,
                                                   String customBasePrompt) {
-        Map<Integer, String> sourceMap = new LinkedHashMap<>();
-        sourceMap.put(1, sourceText == null ? "" : sourceText);
-        String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
         String targetLanguage = ModuleCodeUtils.getLanguageName(target);
         String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
         return buildDynamicPrompt(base
-                        .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
+                        .replace("{{SOURCE_LANGUAGE_LIST}}", sourceText)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
                 false, null, null, false, HANDLE_OUTPUT_RULE);
     }
