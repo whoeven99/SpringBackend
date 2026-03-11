@@ -1,7 +1,6 @@
 package com.bogda.service.logic.translate;
 
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
@@ -25,15 +24,21 @@ public class ModelTranslateService {
     private ChatGptIntegration chatGptIntegration;
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
+    @Autowired
+    private AiModelConfigService aiModelConfigService;
 
     // ai translate
     public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
         Pair<String, Integer> pair = null;
-        if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
+        String lowerModel = aiModel.toLowerCase();
+        if (lowerModel.contains("qwen")) {
             pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        } else if (ModuleCodeUtils.GPT_5.equals(aiModel)) {
-            pair = chatGptIntegration.chatWithGpt(prompt, target);
-        } else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
+        } else if (lowerModel.contains("gpt")) {
+            pair = chatGptIntegration.chatWithGpt(
+                    aiModelConfigService.getModel("gpt"),
+                    aiModelConfigService.getMagnification("gpt"),
+                    prompt, target);
+        } else if (lowerModel.contains("gemini")) {
             pair = geminiIntegration.generateText(aiModel, prompt);
         }
         return pair;
