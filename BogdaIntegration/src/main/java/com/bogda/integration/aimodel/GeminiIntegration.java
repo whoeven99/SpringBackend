@@ -25,7 +25,6 @@ public class GeminiIntegration {
     public Pair<String, Integer> generateText(String model, String prompt) {
         // 发送对话请求
         try {
-//            AppInsightsUtils.trackTrace("model : " + model + " translateText : " + prompt);
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
                         try {
                             return client.models.generateContent(

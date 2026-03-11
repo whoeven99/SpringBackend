@@ -25,7 +25,7 @@ public class ChatGptIntegration {
     public static final double GPT_4_1_NANO_OPENAI_MAGNIFICATION = 1.5;
     private OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
-    public static String GPT_4 = "gpt-4.1";
+    public static String GPT_4_1 = "gpt-4.1";
     public static String GPT_4_1_MINI = "gpt-4.1-mini";
     public static String GPT_4_1_NANO = "gpt-4.1-nano";
 

@@ -12,8 +12,9 @@ public class ModuleCodeUtilsTest {
 
     @Test
     void testGetModuleCodeWithDefault() {
-        assertEquals("qwen-max", ModuleCodeUtils.getModuleCode("1"));
-        assertEquals("qwen-max", ModuleCodeUtils.getModuleCode("3"));
+        assertEquals("kimi-k2.5", ModuleCodeUtils.getModuleCode("1"));
+        assertEquals("gpt-4.1", ModuleCodeUtils.getModuleCode("3"));
+        assertEquals("gemini-3-flash-preview", ModuleCodeUtils.getModuleCode("4"));
         assertEquals("qwen-max", ModuleCodeUtils.getModuleCode("default"));
     }
 

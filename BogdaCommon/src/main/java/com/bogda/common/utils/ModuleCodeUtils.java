@@ -11,6 +11,9 @@ public class ModuleCodeUtils {
     public static String getModuleCode(String code) {
         return switch (code) {
             case "2" -> GPT_5; // ChatGptIntegration.GPT_4;
+            case "1" -> "kimi-k2.5"; // KimiIntegration.KIMI_K25
+            case "3" -> "gpt-4.1"; // ALiYunTranslateIntegration.GPT_4_1;
+            case "4" -> "gemini-3-flash-preview"; // GeminiIntegration.GEMINI_3_FLASH
             default -> "qwen-max"; // ALiYunTranslateIntegration.QWEN_MAX;
         };
     }
