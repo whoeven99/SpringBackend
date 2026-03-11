@@ -75,10 +75,10 @@ public class PromptUtils {
         boolean includeProtection = hasSpecialContent(safeText);
         String prompt = """
                 You are a professional e-commerce translator.
-                Translate the text in {{SOURCE_TEXT}} into {{TARGET_LANGUAGE}}.
+                Translate the text in {{SOURCE_LANGUAGE_LIST}} into {{TARGET_LANGUAGE}}.
                 """;
         return buildDynamicPrompt(prompt
-                        .replace("{{SOURCE_TEXT}}", safeText)
+                        .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
                         .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
                 true, termRules, styleRules, includeProtection, SINGLE_OUTPUT_RULE);
     }
@@ -122,7 +122,7 @@ public class PromptUtils {
         boolean includeProtection = hasSpecialContent(safeText);
         String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
         return buildDynamicPrompt(base
-                        .replace("{{SOURCE_TEXT}}", safeText)
+                        .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
                         .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
                 true, termRules, styleRules, includeProtection, SINGLE_OUTPUT_RULE);
     }
