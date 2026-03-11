@@ -49,7 +49,28 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
 //            return;
         }
 
-        // 1. 先检查缓存（无论是否有词汇表）
+        // 1. 先检查词汇表
+        Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
+
+        // 1.1 词汇表完全匹配：直接使用词汇表译文，无需AI翻译
+        String glossaryMatch = GlossaryService.match(value, glossaryMap);
+        if (glossaryMatch != null) {
+            ctx.setStrategy("词汇表完全匹配-单条翻译");
+            ctx.setTranslatedContent(glossaryMatch);
+            redisProcessService.setCacheData(target, glossaryMatch, value);
+            return;
+        }
+
+        // 1.2 包含词汇表词条：带词汇表的AI翻译
+        if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
+            String glossaryMappingText = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), value);
+            String prompt = promptConfigService.buildGlossarySinglePrompt(ctx.getModule(), target, value, glossaryMappingText);
+            ctx.setStrategy("语法表单条翻译");
+            ctx.setPrompt(prompt);
+        }
+
+
+        // 2. 检查缓存
         String cachedValue = redisProcessService.getCacheData(target, value);
         if (cachedValue != null) {
             translateTaskMonitorV2RedisService.addCacheCount(value);
@@ -59,20 +80,11 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             return;
         }
 
-        // 2. 缓存未命中，再检查词汇表
-        Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
-        if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
-            String glossaryMappingText = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), value);
-            String prompt = promptConfigService.buildGlossarySinglePrompt(ctx.getModule(), target, value, glossaryMappingText);
-            ctx.setStrategy("语法表单条翻译");
+        // 普通 prompt（仅当前面没设置）
+        if (ctx.getPrompt() == null) {
+            String prompt = promptConfigService.buildPlainSinglePrompt(ctx.getModule(), target, value);
+            ctx.setStrategy("普通单条文本翻译");
             ctx.setPrompt(prompt);
-        } else {
-            // 普通 prompt（仅当前面没设置）
-            if (ctx.getPrompt() == null) {
-                String prompt = promptConfigService.buildPlainSinglePrompt(ctx.getModule(), target, value);
-                ctx.setStrategy("普通单条文本翻译");
-                ctx.setPrompt(prompt);
-            }
         }
 
         Pair<String, Integer> pair = modelTranslateService.modelTranslate(ctx.getAiModel(), ctx.getPrompt()
@@ -82,8 +94,8 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             return;
         }
 
-        TraceReporterHolder.report("test","单条翻译提示词： " + ctx.getPrompt());
-        TraceReporterHolder.report("test","单条翻译原文： " + value);
+        TraceReporterHolder.report("test", "单条翻译提示词： " + ctx.getPrompt());
+        TraceReporterHolder.report("test", "单条翻译原文： " + value);
         redisProcessService.setCacheData(target, pair.getFirst(), value);
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());
