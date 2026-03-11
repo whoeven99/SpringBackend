@@ -21,7 +21,9 @@ import java.util.*;
 @Component
 public class BatchTranslateStrategyService implements ITranslateStrategyService {
 
-    /** 纯 AI 分批翻译时，每批估算 token 上限（字符维度） */
+    /**
+     * 纯 AI 分批翻译时，每批估算 token 上限（字符维度）
+     */
     private static final int BATCH_CHAR_LIMIT = 600;
 
     @Autowired
@@ -53,39 +55,39 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     @Override
     public void translate(TranslateContext ctx) {
         ctx.setStrategy("Batch json 翻译");
-        
+
         // 步骤1: 去重原文并建立映射关系
         DeduplicationResult deduplicationResult = deduplicateTexts(ctx.getOriginalTextMap());
-        
+
         // 步骤2: 分类处理文本（缓存/词汇表/AI翻译）
         TranslationClassification classification = classifyTexts(
-            ctx, 
-            deduplicationResult.actuallyTranslateMap, 
-            deduplicationResult.textOccurrences
+                ctx,
+                deduplicationResult.actuallyTranslateMap,
+                deduplicationResult.textOccurrences
         );
-        
+
         // 步骤3: 执行带词汇表的AI翻译
         translateWithGlossary(
-            ctx, 
-            classification.glossarySeqList, 
-            deduplicationResult.actuallyTranslateMap,
-            deduplicationResult.textOccurrences,
-            classification.translatedResultMap
+                ctx,
+                classification.glossarySeqList,
+                deduplicationResult.actuallyTranslateMap,
+                deduplicationResult.textOccurrences,
+                classification.translatedResultMap
         );
-        
+
         // 步骤4: 执行纯AI分批翻译
         translateWithAI(
-            ctx, 
-            classification.aiSeqList, 
-            deduplicationResult.actuallyTranslateMap,
-            classification.translatedResultMap
+                ctx,
+                classification.aiSeqList,
+                deduplicationResult.actuallyTranslateMap,
+                classification.translatedResultMap
         );
-        
+
         // 步骤5: 按原始顺序回填译文
         fillTranslatedResults(
-            ctx, 
-            deduplicationResult.translateMappingMap, 
-            classification.translatedResultMap
+                ctx,
+                deduplicationResult.translateMappingMap,
+                classification.translatedResultMap
         );
     }
 
@@ -155,10 +157,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             TranslateContext ctx,
             Map<Integer, String> actuallyTranslateMap,
             Map<String, Long> textOccurrences) {
-        
+
         String targetLanguage = ctx.getTargetLanguage();
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
-        
+
         // 存储已翻译的结果
         Map<Integer, String> translatedResultMap = new HashMap<>();
         // 需要带词汇表翻译的序号列表
@@ -172,23 +174,23 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String text = entry.getValue();
             long occurrenceCount = textOccurrences.getOrDefault(text, 1L);
 
-            // 优先级1: 检查缓存
-            String cachedTranslation = redisProcessService.getCacheData(targetLanguage, text);
-            if (cachedTranslation != null) {
-                handleCacheHit(ctx, seq, text, cachedTranslation, occurrenceCount, translatedResultMap);
-                continue;
-            }
-
-            // 优先级2: 检查词汇表完全匹配
+            // 优先级1: 检查词汇表完全匹配
             String glossaryMatch = GlossaryService.match(text, glossaryMap);
             if (glossaryMatch != null) {
                 handleGlossaryMatch(ctx, seq, glossaryMatch, occurrenceCount, translatedResultMap);
                 continue;
             }
 
-            // 优先级3: 检查是否包含词汇表词条（需要带词汇表翻译）
+            // 优先级2: 检查是否包含词汇表词条（需要带词汇表翻译）
             if (GlossaryService.hasGlossary(text, glossaryMap, ctx.getUsedGlossaryMap())) {
                 glossarySeqList.add(seq);
+                continue;
+            }
+
+            // 优先级3: 检查缓存
+            String cachedTranslation = redisProcessService.getCacheData(targetLanguage, text);
+            if (cachedTranslation != null) {
+                handleCacheHit(ctx, seq, text, cachedTranslation, occurrenceCount, translatedResultMap);
                 continue;
             }
 
@@ -211,10 +213,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String cachedTranslation,
             long occurrenceCount,
             Map<Integer, String> translatedResultMap) {
-        
+
         // 保存翻译结果
         translatedResultMap.put(seq, cachedTranslation);
-        
+
         // 更新统计：该文本出现了多少次，就统计多少次缓存命中
         for (int i = 0; i < occurrenceCount; i++) {
             translateTaskMonitorV2RedisService.addCacheCount(originalText);
@@ -233,10 +235,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String glossaryTranslation,
             long occurrenceCount,
             Map<Integer, String> translatedResultMap) {
-        
+
         // 保存翻译结果
         translatedResultMap.put(seq, glossaryTranslation);
-        
+
         // 更新统计：该文本出现了多少次，就统计多少次词汇表命中
         for (int i = 0; i < occurrenceCount; i++) {
             ctx.incrementGlossaryCount();
@@ -254,34 +256,51 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             Map<Integer, String> actuallyTranslateMap,
             Map<String, Long> textOccurrences,
             Map<Integer, String> translatedResultMap) {
-        
+
         if (glossarySeqList.isEmpty()) {
             return;
         }
 
         // 构建需要翻译的文本Map（序号 -> 文本）
+        Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
         Map<Integer, String> textsToTranslate = new HashMap<>();
+
         for (Integer seq : glossarySeqList) {
-            textsToTranslate.put(seq, actuallyTranslateMap.get(seq));
+            String text = actuallyTranslateMap.get(seq);
+            String glossaryMatch = GlossaryService.match(text, glossaryMap);
+            if (glossaryMatch != null) {
+                translatedResultMap.put(seq, glossaryMatch);
+                redisProcessService.setCacheData(ctx.getTargetLanguage(), glossaryMatch, text);
+                long occurrenceCount = textOccurrences.getOrDefault(text, 1L);
+                for (int i = 0; i < occurrenceCount; i++) {
+                    ctx.incrementGlossaryCount();
+                }
+            } else {
+                textsToTranslate.put(seq, text);
+            }
+        }
+
+        if (textsToTranslate.isEmpty()) {
+            return;
         }
 
         // 生成词汇表映射文本
         String glossaryMapping = GlossaryService.convertMapToText(
-            ctx.getUsedGlossaryMap(), 
-            String.join(" ", textsToTranslate.values())
+                ctx.getUsedGlossaryMap(),
+                String.join(" ", textsToTranslate.values())
         );
 
         // 构建带词汇表的翻译提示词
         String prompt = promptConfigService.buildGlossaryJsonPrompt(
-            ctx.getModule(), ctx.getTargetLanguage(), glossaryMapping, textsToTranslate
+                ctx.getModule(), ctx.getTargetLanguage(), glossaryMapping, textsToTranslate
         );
 
         // 调用AI翻译
         Pair<Map<Integer, String>, Integer> result = batchTranslate(
-            prompt, 
-            ctx.getTargetLanguage(), 
-            ctx.getAiModel(), 
-            textsToTranslate
+                prompt,
+                ctx.getTargetLanguage(),
+                ctx.getAiModel(),
+                textsToTranslate
         );
 
         if (result == null) {
@@ -291,8 +310,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         // 应用翻译结果（保存到结果Map并写入缓存）
         applyBatchResult(ctx, result, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
 
-        // 更新词汇表命中统计
-        for (Integer seq : glossarySeqList) {
+        // 更新词汇表命中统计（仅针对部分匹配且通过AI翻译的文本）
+        for (Integer seq : textsToTranslate.keySet()) {
             long occurrenceCount = textOccurrences.getOrDefault(actuallyTranslateMap.get(seq), 1L);
             for (int i = 0; i < occurrenceCount; i++) {
                 ctx.incrementGlossaryCount();
@@ -311,7 +330,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             List<Integer> aiSeqList,
             Map<Integer, String> actuallyTranslateMap,
             Map<Integer, String> translatedResultMap) {
-        
+
         if (aiSeqList.isEmpty()) {
             return;
         }
@@ -354,17 +373,17 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             Map<Integer, String> batchTexts,
             Map<Integer, String> translatedResultMap,
             Map<Integer, String> actuallyTranslateMap) {
-        
+
         // 构建翻译提示词
         String prompt = promptConfigService.buildPlainJsonPrompt(
-            ctx.getModule(), ctx.getTargetLanguage(), batchTexts);
+                ctx.getModule(), ctx.getTargetLanguage(), batchTexts);
 
         // 调用AI翻译
         Pair<Map<Integer, String>, Integer> result = batchTranslate(
-            prompt, 
-            ctx.getTargetLanguage(), 
-            ctx.getAiModel(), 
-            batchTexts
+                prompt,
+                ctx.getTargetLanguage(),
+                ctx.getAiModel(),
+                batchTexts
         );
 
         if (result == null) {
@@ -384,9 +403,9 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             TranslateContext ctx,
             Map<Integer, Integer> translateMappingMap,
             Map<Integer, String> translatedResultMap) {
-        
+
         Map<Integer, String> originalTextMap = ctx.getOriginalTextMap();
-        
+
         originalTextMap.forEach((originalKey, originalText) -> {
             // 处理空文本：直接保留
             if (originalText == null || originalText.isEmpty()) {
@@ -409,11 +428,17 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * 去重结果数据类
      */
     private static class DeduplicationResult {
-        /** 去重后的文本Map（序号 -> 唯一文本） */
+        /**
+         * 去重后的文本Map（序号 -> 唯一文本）
+         */
         final Map<Integer, String> actuallyTranslateMap;
-        /** 原始位置到序号的映射（原始key -> 序号） */
+        /**
+         * 原始位置到序号的映射（原始key -> 序号）
+         */
         final Map<Integer, Integer> translateMappingMap;
-        /** 文本出现次数统计（文本 -> 次数） */
+        /**
+         * 文本出现次数统计（文本 -> 次数）
+         */
         final Map<String, Long> textOccurrences;
 
         DeduplicationResult(
@@ -430,11 +455,17 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * 文本分类结果数据类
      */
     private static class TranslationClassification {
-        /** 已翻译的结果Map（序号 -> 译文） */
+        /**
+         * 已翻译的结果Map（序号 -> 译文）
+         */
         final Map<Integer, String> translatedResultMap;
-        /** 需要带词汇表翻译的序号列表 */
+        /**
+         * 需要带词汇表翻译的序号列表
+         */
         final List<Integer> glossarySeqList;
-        /** 需要纯AI翻译的序号列表 */
+        /**
+         * 需要纯AI翻译的序号列表
+         */
         final List<Integer> aiSeqList;
 
         TranslationClassification(
@@ -452,11 +483,11 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * <p>
      * 将AI翻译结果保存到结果Map，并写入Redis缓存，同时累计使用的token数
      *
-     * @param ctx 翻译上下文
-     * @param result AI翻译结果（包含译文Map和使用的token数）
+     * @param ctx                  翻译上下文
+     * @param result               AI翻译结果（包含译文Map和使用的token数）
      * @param actuallyTranslateMap 原文Map（序号 -> 原文）
-     * @param translatedResultMap 译文结果Map（序号 -> 译文）
-     * @param targetLanguage 目标语言
+     * @param translatedResultMap  译文结果Map（序号 -> 译文）
+     * @param targetLanguage       目标语言
      */
     private void applyBatchResult(
             TranslateContext ctx,
@@ -464,7 +495,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             Map<Integer, String> actuallyTranslateMap,
             Map<Integer, String> translatedResultMap,
             String targetLanguage) {
-        
+
         // 累计使用的token数
         ctx.incrementUsedTokenCount(result.getSecond());
 
@@ -472,7 +503,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         result.getFirst().forEach((seq, translation) -> {
             // 保存到结果Map
             translatedResultMap.put(seq, translation);
-            
+
             // 写入Redis缓存（原文 -> 译文）
             String originalText = actuallyTranslateMap.get(seq);
             redisProcessService.setCacheData(targetLanguage, translation, originalText);
@@ -496,10 +527,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * <p>
      * 调用AI模型进行翻译，并解析返回的JSON结果
      *
-     * @param prompt 翻译提示词
+     * @param prompt         翻译提示词
      * @param targetLanguage 目标语言
-     * @param aiModel AI模型名称
-     * @param sourceMap 待翻译的文本Map（序号 -> 原文）
+     * @param aiModel        AI模型名称
+     * @param sourceMap      待翻译的文本Map（序号 -> 原文）
      * @return 翻译结果（译文Map + 使用的token数），失败返回null
      */
     private Pair<Map<Integer, String>, Integer> batchTranslate(
@@ -507,7 +538,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String targetLanguage,
             String aiModel,
             Map<Integer, String> sourceMap) {
-        
+
         // 调用AI模型翻译
         Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(aiModel, prompt, targetLanguage, sourceMap);
         if (aiResult == null) {
@@ -517,15 +548,15 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         // 解析AI返回的JSON结果
         String aiResponse = aiResult.getFirst();
         Map<Integer, String> translatedMap = parseOutput(aiResponse);
-        
+
         // 检查解析结果是否有效
         if (translatedMap == null || translatedMap.isEmpty()) {
             // 解析失败，可能是AI返回格式错误
             return null;
         }
 
-        TraceReporterHolder.report("test","batch 提示词： " + prompt);
-        TraceReporterHolder.report("test","batch 原文： " + sourceMap);
+        TraceReporterHolder.report("test", "batch 提示词： " + prompt);
+        TraceReporterHolder.report("test", "batch 原文： " + sourceMap);
 
         // 返回译文Map和token数
         return new Pair<>(translatedMap, aiResult.getSecond());
@@ -553,16 +584,17 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 步骤2: 将JSON字符串解析为Map对象
         LinkedHashMap<Integer, String> resultMap = JsonUtils.jsonToObjectWithNull(
-            jsonPart, 
-            new TypeReference<LinkedHashMap<Integer, String>>() {}
+                jsonPart,
+                new TypeReference<LinkedHashMap<Integer, String>>() {
+                }
         );
         if (resultMap == null) {
             return null;
         }
 
         // 步骤3: 过滤掉空值或空白译文
-        resultMap.entrySet().removeIf(entry -> 
-            entry.getValue() == null || entry.getValue().trim().isEmpty()
+        resultMap.entrySet().removeIf(entry ->
+                entry.getValue() == null || entry.getValue().trim().isEmpty()
         );
 
         return resultMap;

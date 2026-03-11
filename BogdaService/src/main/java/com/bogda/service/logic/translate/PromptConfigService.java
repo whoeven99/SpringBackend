@@ -16,7 +16,6 @@ public class PromptConfigService {
     private ConfigRedisRepo configRedisRepo;
 
     public String getModuleBasePrompt(String module) {
-        System.out.println("module: " + module);
         if (module == null || module.isEmpty()) {
             return null;
         }
