@@ -97,6 +97,8 @@ public class TranslateV2Service {
     private ChatGptIntegration chatGptIntegration;
     @Autowired
     private KimiIntegration kimiIntegration;
+    @Autowired
+    private AiModelConfigService aiModelConfigService;
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选（降级逻辑）
     private static final String METAFIELD_JSON_TRANSLATE_RULE = "METAFIELD_JSON_TRANSLATE_RULE";
 
@@ -159,9 +161,10 @@ public class TranslateV2Service {
         if (usedToken >= maxToken) {
             return BaseResponse.FailedResponse("Token limit reached");
         }
+        String aiModel = aiModelConfigService.getSingleTranslateModel();
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
                 request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()),
-                ALiYunTranslateIntegration.QWEN_MAX, request.getResourceType());
+                aiModel, request.getResourceType());
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);

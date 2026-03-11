@@ -21,7 +21,8 @@ import java.util.List;
 
 @Component
 public class ChatGptIntegration {
-    public static final int OPENAI_MAGNIFICATION = 3;
+    public static final int GPT_4_OPENAI_MAGNIFICATION = 3;
+    public static final double GPT_4_1_NANO_OPENAI_MAGNIFICATION = 1.5;
     private OpenAIClient client;
     public static String endpoint = "https://eastus.api.cognitive.microsoft.com/";
     public static String GPT_4 = "gpt-4.1";
@@ -42,23 +43,22 @@ public class ChatGptIntegration {
     }
 
     /**
-     * content - allToken，默认使用 GPT_4 模型
+     * content - allToken，支持指定模型名称，使用默认系数
      */
-    public Pair<String, Integer> chatWithGpt(String prompt, String target) {
-        return chatWithGpt(GPT_4, prompt, target);
+    public Pair<String, Integer> chatWithGpt(String modelName, String prompt, String target) {
+        return chatWithGpt(modelName, GPT_4_OPENAI_MAGNIFICATION, prompt, target);
     }
 
     /**
-     * content - allToken，支持指定模型名称
+     * content - allToken，支持指定模型名称和系数（配置化入口）
      */
-    public Pair<String, Integer> chatWithGpt(String modelName, String prompt, String target) {
+    public Pair<String, Integer> chatWithGpt(String modelName, double magnification, String prompt, String target) {
         ChatMessage userMessage = new ChatMessage(ChatRole.USER);
         userMessage.setContent(prompt);
 
         List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(userMessage);
 
-        // gpt-4.1-mini / gpt-4.1-nano
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setFrequencyPenalty(0.0)
                 .setPresencePenalty(0.0)
@@ -67,12 +67,12 @@ public class ChatGptIntegration {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
                     client.getChatCompletions(modelName, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
-            int allToken = chatCompletions.getUsage().getTotalTokens() * OPENAI_MAGNIFICATION;
+            int allToken = (int) Math.ceil(chatCompletions.getUsage().getTotalTokens() * magnification);
             int input = chatCompletions.getUsage().getPromptTokens();
             int output = chatCompletions.getUsage().getCompletionTokens();
-            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译提示词： " + prompt + " model: " + modelName
-                    + " token openai : " + content + " all: "
-                    + allToken + " input: " + input + " output: " + output + " target: " + target + " modelName: " + modelName);
+            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译提示词： " + prompt + " modelName: " + modelName
+                    + " magnification: " + magnification + " token openai : " + content + " all: "
+                    + allToken + " input: " + input + " output: " + output + " target: " + target);
             return new Pair<>(content, allToken);
         } catch (Exception e) {
             TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage()
