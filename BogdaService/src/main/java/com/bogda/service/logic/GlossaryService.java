@@ -27,8 +27,6 @@ public class GlossaryService {
                     ? Pattern.compile("\\b" + Pattern.quote(key) + "\\b")
                     : Pattern.compile("\\b" + Pattern.quote(key) + "\\b", Pattern.CASE_INSENSITIVE);
 
-            // TODO @庄泽 前面做过校验了，这里应该都contains?
-            // TODO 这个还是不能用contains 有大小写的问题
             if (pattern.matcher(mergedText).find()) {
                 stringBuilder.append(key)
                         .append(" -> ")

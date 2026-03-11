@@ -59,8 +59,7 @@ public class ChatGptIntegration {
         List<ChatMessage> prompts = new ArrayList<>();
         prompts.add(userMessage);
 
-        // gpt-5-mini 不支持 max_tokens， Temperature， TopP
-        // 故不设置 maxTokens，由服务端使用默认 max_completion_tokens，避免 400 unsupported_parameter 错误
+        // gpt-4.1-mini / gpt-4.1-nano
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setFrequencyPenalty(0.0)
                 .setPresencePenalty(0.0)
