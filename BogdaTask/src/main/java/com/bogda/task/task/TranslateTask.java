@@ -84,6 +84,7 @@ public class TranslateTask {
         }
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTask() {
         process(0,
@@ -92,6 +93,7 @@ public class TranslateTask {
                 translateV2Service::initialToTranslateTask);
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void translateEachTask() {
         process(1,
@@ -100,6 +102,7 @@ public class TranslateTask {
                 translateV2Service::translateEachTask);
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void saveToShopify() {
 
@@ -115,11 +118,13 @@ public class TranslateTask {
 
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 300 * 1000)
     public void deleteToShopify() {
         translateV2Service.deleteToShopify();
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 30 * 1000)
     public void sendEmail() {
         // 自动翻译的邮件
@@ -189,6 +194,7 @@ public class TranslateTask {
 
     // 自动翻译，每小时整点执行一次，只翻译拆创建小时=当前小时的店铺
     // TODO 刚启动的时候断电怎么处理
+    @EnableScheduledTask
     @Scheduled(cron = "0 0 * * * ?")
     public void autoTranslateTask() {
         List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
@@ -200,6 +206,7 @@ public class TranslateTask {
         }
     }
 
+    @EnableScheduledTask
     @Scheduled(fixedDelay = 13 * 1000 * 60)
     public void cleanTask() {
         // 3天前 且 isDeleted 的任务清理掉
