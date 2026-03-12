@@ -35,7 +35,7 @@ public class ModelTranslateService {
         Pair<String, Integer> pair = null;
         String lowerModel = aiModel.toLowerCase();
         if (lowerModel.contains("qwen")) {
-            pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+            pair = aLiYunTranslateIntegration.userTranslate(prompt, target, aiModelConfigService.getMagnification("qwen"));
         } else if (aiModel.equals(ChatGptIntegration.GPT_4_1)) {
             pair = chatGptIntegration.chatWithGpt(ChatGptIntegration.GPT_4_1, ChatGptIntegration.GPT_4_OPENAI_MAGNIFICATION
                     , prompt, target);
@@ -45,7 +45,7 @@ public class ModelTranslateService {
                     aiModelConfigService.getMagnification("gpt"),
                     prompt, target);
         } else if (lowerModel.contains("gemini")) {
-            pair = geminiIntegration.generateText(aiModel, prompt);
+            pair = geminiIntegration.generateText(aiModel, prompt, aiModelConfigService.getMagnification("gemini"));
         } else if (lowerModel.contains("kimi")) {
             pair = kimiIntegration.chatWithKimi(aiModel, prompt, target, aiModelConfigService.getMagnification("kimi"));
         }
