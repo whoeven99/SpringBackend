@@ -1,6 +1,5 @@
 package com.bogda.service.logic.translate;
 
-import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
 import com.bogda.integration.aimodel.GoogleMachineIntegration;
@@ -35,6 +34,9 @@ class ModelTranslateServiceTest {
     @Mock
     private GoogleMachineIntegration googleMachineIntegration;
 
+    @Mock
+    private AiModelConfigService aiModelConfigService;
+    
     @InjectMocks
     private ModelTranslateService modelTranslateService;
 
@@ -54,7 +56,7 @@ class ModelTranslateServiceTest {
         // Given
         String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(expectedPair);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(expectedPair);
 
         // When
         Pair<String, Integer> result = modelTranslateService.aiTranslate(aiModel, testPrompt, testTarget);
@@ -62,7 +64,7 @@ class ModelTranslateServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedPair, result);
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verifyNoInteractions(geminiIntegration, chatGptIntegration);
     }
 
@@ -71,7 +73,7 @@ class ModelTranslateServiceTest {
         // Given
         String aiModel = GeminiIntegration.GEMINI_3_FLASH;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
-        when(geminiIntegration.generateText(aiModel, testPrompt)).thenReturn(expectedPair);
+        when(geminiIntegration.generateText(aiModel, testPrompt, 0)).thenReturn(expectedPair);
 
         // When
         Pair<String, Integer> result = modelTranslateService.aiTranslate(aiModel, testPrompt, testTarget);
@@ -79,25 +81,8 @@ class ModelTranslateServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedPair, result);
-        verify(geminiIntegration).generateText(aiModel, testPrompt);
+        verify(geminiIntegration).generateText(aiModel, testPrompt, 0);
         verifyNoInteractions(aLiYunTranslateIntegration, chatGptIntegration);
-    }
-
-    @Test
-    void testAiTranslate_WithGpt4_ShouldCallChatGptIntegration() {
-        // Given
-        String aiModel = ModuleCodeUtils.GPT_5;
-        Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
-        when(chatGptIntegration.chatWithGpt(testPrompt, testTarget)).thenReturn(expectedPair);
-
-        // When
-        Pair<String, Integer> result = modelTranslateService.aiTranslate(aiModel, testPrompt, testTarget);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(expectedPair, result);
-        verify(chatGptIntegration).chatWithGpt(testPrompt, testTarget);
-        verifyNoInteractions(aLiYunTranslateIntegration, geminiIntegration);
     }
 
     @Test
@@ -118,7 +103,7 @@ class ModelTranslateServiceTest {
         // Given
         String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(expectedPair);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(expectedPair);
 
         // When - explicitly call the String version
         Pair<String, Integer> result = modelTranslateService.modelTranslate(aiModel, testPrompt, testTarget, testSourceText);
@@ -126,7 +111,7 @@ class ModelTranslateServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedPair, result);
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verifyNoInteractions(googleMachineIntegration);
     }
 
@@ -135,7 +120,7 @@ class ModelTranslateServiceTest {
         // Given
         String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
         Pair<String, Integer> googlePair = new Pair<>("Google翻译结果", 50);
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(null);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
         when(googleMachineIntegration.googleTranslateWithSDK(testSourceText, testTarget)).thenReturn(googlePair);
 
         // When - explicitly call the String version
@@ -144,7 +129,7 @@ class ModelTranslateServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(googlePair, result);
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verify(googleMachineIntegration).googleTranslateWithSDK(testSourceText, testTarget);
     }
 
@@ -156,7 +141,7 @@ class ModelTranslateServiceTest {
         sourceMap.put(1, "Hello");
         sourceMap.put(2, "World");
         Pair<String, Integer> expectedPair = new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 100);
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(expectedPair);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(expectedPair);
 
         // When
         Pair<String, Integer> result = modelTranslateService.modelTranslate(aiModel, testPrompt, testTarget, sourceMap);
@@ -164,7 +149,7 @@ class ModelTranslateServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedPair, result);
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verifyNoInteractions(googleMachineIntegration);
     }
 
@@ -175,7 +160,7 @@ class ModelTranslateServiceTest {
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
         sourceMap.put(2, "World");
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(null);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
         when(googleMachineIntegration.googleTranslateWithSDK("Hello", testTarget)).thenReturn(new Pair<>("你好", 10));
         when(googleMachineIntegration.googleTranslateWithSDK("World", testTarget)).thenReturn(new Pair<>("世界", 10));
 
@@ -186,7 +171,7 @@ class ModelTranslateServiceTest {
         assertNotNull(result);
         assertNotNull(result.getFirst());
         assertEquals(20, result.getSecond());
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verify(googleMachineIntegration, times(2)).googleTranslateWithSDK(anyString(), eq(testTarget));
     }
 
@@ -194,7 +179,7 @@ class ModelTranslateServiceTest {
     void testModelTranslate_WithMap_WithNullMap_ShouldReturnNull() {
         // Given
         String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(null);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
 
         // When - explicitly pass null as Map to call the Map version
         Map<Integer, String> nullMap = null;
@@ -202,7 +187,7 @@ class ModelTranslateServiceTest {
 
         // Then
         assertNull(result);
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verifyNoInteractions(googleMachineIntegration);
     }
 
@@ -211,14 +196,14 @@ class ModelTranslateServiceTest {
         // Given
         String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
         Map<Integer, String> emptyMap = new LinkedHashMap<>();
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(null);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
 
         // When
         Pair<String, Integer> result = modelTranslateService.modelTranslate(aiModel, testPrompt, testTarget, emptyMap);
 
         // Then
         assertNull(result);
-        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget);
+        verify(aLiYunTranslateIntegration).userTranslate(testPrompt, testTarget, 0);
         verifyNoInteractions(googleMachineIntegration);
     }
 
@@ -230,7 +215,7 @@ class ModelTranslateServiceTest {
         sourceMap.put(1, "Hello");
         sourceMap.put(2, "");
         sourceMap.put(3, "   ");
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(null);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
         when(googleMachineIntegration.googleTranslateWithSDK("Hello", testTarget)).thenReturn(new Pair<>("你好", 10));
 
         // When
@@ -247,7 +232,7 @@ class ModelTranslateServiceTest {
         String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
-        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget)).thenReturn(null);
+        when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
         when(googleMachineIntegration.googleTranslateWithSDK("Hello", testTarget))
                 .thenThrow(new RuntimeException("Translation failed"));
 

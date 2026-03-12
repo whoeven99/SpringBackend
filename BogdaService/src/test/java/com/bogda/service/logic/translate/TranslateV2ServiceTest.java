@@ -70,6 +70,9 @@ class TranslateV2ServiceTest {
     private ConfigRedisRepo configRedisRepo;
 
     @Mock
+    private AiModelConfigService aiModelConfigService;
+
+    @Mock
     private ITranslateStrategyService translateStrategyService;
 
     @InjectMocks
@@ -144,6 +147,7 @@ class TranslateV2ServiceTest {
         // Given
         when(userTokenService.getMaxToken(testShopName)).thenReturn(1000);
         when(userTokenService.getUsedToken(testShopName)).thenReturn(500);
+        when(aiModelConfigService.getSingleTranslateModel()).thenReturn(GeminiIntegration.GEMINI_3_FLASH);
         when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<>());
         when(translateStrategyFactory.getServiceByContext(any(TranslateContext.class))).thenReturn(translateStrategyService);
 

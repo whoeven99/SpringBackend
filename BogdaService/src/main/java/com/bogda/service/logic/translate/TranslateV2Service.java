@@ -97,6 +97,8 @@ public class TranslateV2Service {
     private ChatGptIntegration chatGptIntegration;
     @Autowired
     private KimiIntegration kimiIntegration;
+    @Autowired
+    private AiModelConfigService aiModelConfigService;
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选（降级逻辑）
     private static final String METAFIELD_JSON_TRANSLATE_RULE = "METAFIELD_JSON_TRANSLATE_RULE";
 
@@ -159,9 +161,10 @@ public class TranslateV2Service {
         if (usedToken >= maxToken) {
             return BaseResponse.FailedResponse("Token limit reached");
         }
+        String aiModel = aiModelConfigService.getSingleTranslateModel();
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
                 request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()),
-                ALiYunTranslateIntegration.QWEN_MAX, request.getResourceType());
+                aiModel, request.getResourceType());
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);
@@ -240,7 +243,7 @@ public class TranslateV2Service {
      * 处理通义千问逻辑
      */
     private Map<String, Object> handleAliYun(String prompt, String target) {
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target, aiModelConfigService.getMagnification("qwen"));
         if (pair == null) {
             return defaultNullMap();
         }
@@ -252,7 +255,7 @@ public class TranslateV2Service {
      */
     private Map<String, Object> handleGemini(String model, String prompt, String picUrl) throws Exception {
         if (picUrl == null) {
-            Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt);
+            Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt, aiModelConfigService.getMagnification("gemini"));
             if (pair == null) {
                 return defaultNullMap();
             }

@@ -1,7 +1,7 @@
 package com.bogda.service.logic.translate;
 
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.common.utils.ModuleCodeUtils;
+import com.bogda.integration.aimodel.KimiIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
@@ -25,19 +25,33 @@ public class ModelTranslateService {
     private ChatGptIntegration chatGptIntegration;
     @Autowired
     private GoogleMachineIntegration googleMachineIntegration;
+    @Autowired
+    private AiModelConfigService aiModelConfigService;
+    @Autowired
+    private KimiIntegration kimiIntegration;
 
     // ai translate
     public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
         Pair<String, Integer> pair = null;
-        if (ALiYunTranslateIntegration.QWEN_MAX.equals(aiModel)) {
-            pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
-        } else if (ModuleCodeUtils.GPT_5.equals(aiModel)) {
-            pair = chatGptIntegration.chatWithGpt(prompt, target);
-        } else if (GeminiIntegration.GEMINI_3_FLASH.equals(aiModel)) {
-            pair = geminiIntegration.generateText(aiModel, prompt);
+        String lowerModel = aiModel.toLowerCase();
+        if (lowerModel.contains("qwen")) {
+            pair = aLiYunTranslateIntegration.userTranslate(prompt, target, aiModelConfigService.getMagnification("qwen"));
+        } else if (aiModel.equals(ChatGptIntegration.GPT_4_1)) {
+            pair = chatGptIntegration.chatWithGpt(ChatGptIntegration.GPT_4_1, ChatGptIntegration.GPT_4_OPENAI_MAGNIFICATION
+                    , prompt, target);
+        } else if (lowerModel.contains("gpt") || "gpt-5-mini".equals(aiModel)) {
+            pair = chatGptIntegration.chatWithGpt(
+                    aiModelConfigService.getModel("gpt"),
+                    aiModelConfigService.getMagnification("gpt"),
+                    prompt, target);
+        } else if (lowerModel.contains("gemini")) {
+            pair = geminiIntegration.generateText(aiModel, prompt, aiModelConfigService.getMagnification("gemini"));
+        } else if (lowerModel.contains("kimi")) {
+            pair = kimiIntegration.chatWithKimi(aiModel, prompt, target, aiModelConfigService.getMagnification("kimi"));
         }
         return pair;
     }
+
     public Pair<String, Integer> modelTranslate(String aiModel, String prompt, String target, String sourceText) {
         Pair<String, Integer> pair = aiTranslate(aiModel, prompt, target);
 
@@ -46,7 +60,7 @@ public class ModelTranslateService {
         }
 
         // 做一个保底处理，当pair为null的时候，用google再翻译一次，如果再为null，就直接返回.
-        TraceReporterHolder.report("ModelTranslateService.modelTranslate","FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
+        TraceReporterHolder.report("ModelTranslateService.modelTranslate", "FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceText);
         return googleMachineIntegration.googleTranslateWithSDK(sourceText, target);
     }
 
@@ -58,7 +72,7 @@ public class ModelTranslateService {
         }
 
         // json批量翻译不行，翻译值会少数据，目前只能循环批量翻译
-        TraceReporterHolder.report("ModelTranslateService.modelTranslate","FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
+        TraceReporterHolder.report("ModelTranslateService.modelTranslate", "FatalException  " + aiModel + " 翻译失败， 数据如下，用google翻译 : " + sourceMap);
 
         // 将文本转为Map<Integer, String>, 循环翻译
         if (sourceMap == null || sourceMap.isEmpty()) {
