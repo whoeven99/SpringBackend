@@ -64,7 +64,7 @@ public class ALiYunTranslateIntegration {
 //        return "qwen-max";
     }
 
-    public Pair<String, Integer> userTranslate(String prompt, String target) {
+    public Pair<String, Integer> userTranslate(String prompt, String target, double magnification) {
         String model = switchModel(target);
         Generation gen = new Generation();
         Message userMsg = Message.builder()
@@ -99,7 +99,7 @@ public class ALiYunTranslateIntegration {
             }
             String content = call.getOutput().getChoices().get(0).getMessage().getContent();
 
-            int totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
+            int totalToken = (int) (call.getUsage().getTotalTokens() * magnification);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
             AppInsightsUtils.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +

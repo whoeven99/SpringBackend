@@ -22,7 +22,7 @@ public class GeminiIntegration {
     /**
      * gemini 文本调用
      */
-    public Pair<String, Integer> generateText(String model, String prompt) {
+    public Pair<String, Integer> generateText(String model, String prompt, double magnification) {
         // 发送对话请求
         try {
             GenerateContentResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
@@ -50,7 +50,7 @@ public class GeminiIntegration {
             var usage = response.usageMetadata().orElse(null);
             int inputToken = (usage != null) ? usage.promptTokenCount().orElse(0) : 0;
             int outputToken = (usage != null) ? usage.candidatesTokenCount().orElse(0) : 0;
-            int allToken = (usage != null) ? usage.totalTokenCount().orElse(0) * GEMINI_COEFFICIENT : 0;
+            int allToken = (usage != null) ? (int) Math.ceil(usage.totalTokenCount().orElse(0) * magnification) : 0;
 
             AppInsightsUtils.trackTrace("Gemini  model : " + model + " 提示词：" + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(text, allToken);

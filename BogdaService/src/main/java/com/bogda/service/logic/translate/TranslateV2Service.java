@@ -243,7 +243,7 @@ public class TranslateV2Service {
      * 处理通义千问逻辑
      */
     private Map<String, Object> handleAliYun(String prompt, String target) {
-        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target);
+        Pair<String, Integer> pair = aLiYunTranslateIntegration.userTranslate(prompt, target, aiModelConfigService.getMagnification("qwen"));
         if (pair == null) {
             return defaultNullMap();
         }
@@ -255,7 +255,7 @@ public class TranslateV2Service {
      */
     private Map<String, Object> handleGemini(String model, String prompt, String picUrl) throws Exception {
         if (picUrl == null) {
-            Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt);
+            Pair<String, Integer> pair = geminiIntegration.generateText(model, prompt, aiModelConfigService.getMagnification("gemini"));
             if (pair == null) {
                 return defaultNullMap();
             }
