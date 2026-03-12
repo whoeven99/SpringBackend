@@ -34,11 +34,11 @@ public class ModelTranslateService {
     public Pair<String, Integer> aiTranslate(String aiModel, String prompt, String target) {
         Pair<String, Integer> pair = null;
         String lowerModel = aiModel.toLowerCase();
-        if (lowerModel.contains("qwen")) {
-            pair = aLiYunTranslateIntegration.userTranslate(prompt, target, aiModelConfigService.getMagnification("qwen"));
-        } else if (aiModel.equals(ChatGptIntegration.GPT_4_1)) {
+        if (prompt.contains("Apply approved translations when context matches:") || aiModel.equals(ChatGptIntegration.GPT_4_1)) {
             pair = chatGptIntegration.chatWithGpt(ChatGptIntegration.GPT_4_1, ChatGptIntegration.GPT_4_OPENAI_MAGNIFICATION
                     , prompt, target);
+        } else if (lowerModel.contains("qwen")) {
+            pair = aLiYunTranslateIntegration.userTranslate(prompt, target, aiModelConfigService.getMagnification("qwen"));
         } else if (lowerModel.contains("gpt") || "gpt-5-mini".equals(aiModel)) {
             pair = chatGptIntegration.chatWithGpt(
                     aiModelConfigService.getModel("gpt"),
