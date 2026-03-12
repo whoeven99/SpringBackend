@@ -95,7 +95,7 @@ public class KimiIntegration {
             int totalTokens = root.at("/usage/total_tokens").asInt(0);
             int allToken = (int) Math.ceil(totalTokens * magnification);
 
-            TraceReporterHolder.report("KimiIntegration.chat", "KimiIntegration model: " + model + " 提示词：" + prompt
+            TraceReporterHolder.report("KimiIntegration.chat", "KimiIntegration model : " + model + " 提示词 ：" + prompt
                     + " 翻译成：" + content + " all: " + allToken
                     + " input: " + inputTokens + " output: " + outputTokens + " target: " + target);
 

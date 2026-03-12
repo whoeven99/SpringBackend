@@ -102,7 +102,7 @@ public class ALiYunTranslateIntegration {
             int totalToken = (int) (call.getUsage().getTotalTokens() * magnification);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            AppInsightsUtils.trackTrace("userTranslate 原文本：" + prompt + " 翻译成： " + content +
+            AppInsightsUtils.trackTrace("userTranslate 提示词 ：" + prompt + " 翻译成： " + content +
                     " token ali  all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
