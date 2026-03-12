@@ -29,7 +29,7 @@ public class KimiIntegration {
     private String kimiIdVault;
     public static final String KIMI_K25 = "kimi-k2.5";
     private static final String API_URL = "https://api.moonshot.cn/v1/chat/completions";
-    private static final int KIMI_COEFFICIENT = 2;
+    public static final int KIMI_COEFFICIENT = 2;
 
     private HttpClient httpClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
