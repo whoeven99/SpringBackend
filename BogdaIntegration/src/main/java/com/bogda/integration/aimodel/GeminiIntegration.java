@@ -52,7 +52,7 @@ public class GeminiIntegration {
             int outputToken = (usage != null) ? usage.candidatesTokenCount().orElse(0) : 0;
             int allToken = (usage != null) ? (int) Math.ceil(usage.totalTokenCount().orElse(0) * magnification) : 0;
 
-            AppInsightsUtils.trackTrace("Gemini  model : " + model + " 提示词：" + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
+            AppInsightsUtils.trackTrace("Gemini  model : " + model + " 提示词 ：" + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(text, allToken);
         } catch (Exception e) {
             AppInsightsUtils.trackTrace("FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);

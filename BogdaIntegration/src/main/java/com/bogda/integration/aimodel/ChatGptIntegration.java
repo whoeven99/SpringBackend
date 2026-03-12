@@ -70,7 +70,7 @@ public class ChatGptIntegration {
             int allToken = (int) Math.ceil(chatCompletions.getUsage().getTotalTokens() * magnification);
             int input = chatCompletions.getUsage().getPromptTokens();
             int output = chatCompletions.getUsage().getCompletionTokens();
-            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译提示词： " + prompt + " modelName: " + modelName
+            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译 提示词 ： " + prompt + " modelName: " + modelName
                     + " magnification: " + magnification + " token openai : " + content + " all: "
                     + allToken + " input: " + input + " output: " + output + " target: " + target);
             return new Pair<>(content, allToken);
