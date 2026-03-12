@@ -66,6 +66,9 @@ public class AiModelConfigService {
         }
         return switch (type) {
             case "gpt" -> ChatGptIntegration.GPT_4_OPENAI_MAGNIFICATION;
+            case "gemini" -> GeminiIntegration.GEMINI_COEFFICIENT;
+            case "kimi" -> KimiIntegration.KIMI_COEFFICIENT;
+            case "qwen" -> 1.5;
             default -> 2.0;
         };
     }
