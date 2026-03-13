@@ -92,6 +92,7 @@ public class JudgeTranslateUtils {
 
     // 白名单单词集合
     private static final Set<String> WHITELIST_WORDS = new HashSet<>();
+
     static {
         WHITELIST_WORDS.add("heading");
         WHITELIST_WORDS.add("text");
@@ -109,6 +110,35 @@ public class JudgeTranslateUtils {
         WHITELIST_WORDS.add("checkout");
     }
 
+    // 黑名单单词集合
+    public static final Set<String> BLACKLIST_WORDS = new HashSet<>();
+
+    static {
+        BLACKLIST_WORDS.add("Example heading");
+        BLACKLIST_WORDS.add("Heading");
+        BLACKLIST_WORDS.add("Heading 1");
+        BLACKLIST_WORDS.add("Heading 2");
+        BLACKLIST_WORDS.add("Heading 3");
+        BLACKLIST_WORDS.add("Heading 4");
+        BLACKLIST_WORDS.add("Image heading");
+        BLACKLIST_WORDS.add("Video heading");
+        BLACKLIST_WORDS.add("VIDEO SLIDE");
+        BLACKLIST_WORDS.add("Video slide 1");
+        BLACKLIST_WORDS.add("Video slide 2");
+        BLACKLIST_WORDS.add("Video slide 3");
+        BLACKLIST_WORDS.add("Video slide 4");
+        BLACKLIST_WORDS.add("Example title");
+        BLACKLIST_WORDS.add("Image with text");
+        BLACKLIST_WORDS.add("Image with text overlay");
+        BLACKLIST_WORDS.add("Collapsible row");
+        BLACKLIST_WORDS.add("Collapsible row 1");
+        BLACKLIST_WORDS.add("Collapsible row 2");
+        BLACKLIST_WORDS.add("Collapsible row 3");
+        BLACKLIST_WORDS.add("Collapsible row 4");
+        BLACKLIST_WORDS.add("IMAGE SLIDE 1");
+        BLACKLIST_WORDS.add("IMAGE SLIDE 2");
+    }
+
     // 正则表达式
     public static final Pattern SUSPICIOUS_PATTERN = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])[A-Za-z0-9]{9,}$"); //如UXxSP8cSm，UgvyqJcxm。有大写字母和小写字母的组合。有大写字母，小写字母和数字的组合。
     public static final Pattern SUSPICIOUS2_PATTERN = Pattern.compile("^(?=.*[A-Z])[A-Za-z0-9]{10}$"); //10位大写和 数字组合
@@ -119,6 +149,10 @@ public class JudgeTranslateUtils {
     private static final int SLASH_CONTAINS_MAX_LENGTH = 20; // 可改为15
     private static final Pattern ICON_MATH_PATTERN = Pattern.compile(".*\\.icon_\\d+:.*"); // icon_X 类型
     public static final Pattern GENERAL_OR_SECTION_PATTERN = Pattern.compile("^(general|section)\\."); // general.开头的key
+    public static final Pattern IMAGE_PATTERN = Pattern.compile("\\b\\S+\\.(jpg|jpeg|png|gif|bmp|webp|svg|mp4)\\b",
+            Pattern.CASE_INSENSITIVE); // 图片/视频后缀不翻译
+
+    public static final Pattern PATH_PATTERN = Pattern.compile("^/[a-zA-Z0-9_\\-./?=&%]*$"); // 以路径相关 key不翻译
 
     /**
      * theme模块判断给定的key是否需要翻译
@@ -133,12 +167,12 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        if (value.startsWith("=")){
+        if (value.startsWith("=")) {
             printTranslateReason("value: " + value + " 是以=开头, key是： " + key);
             return false;
         }
 
-        if(key.contains("captions")){
+        if (key.contains("captions")) {
             printTranslateReason("general.&section. " + key + "包含captions, value是： " + value);
             return false;
         }
@@ -164,7 +198,7 @@ public class JudgeTranslateUtils {
         //第一步： 检查是否为不翻译的key
         for (String substring : OLD_NO_TRANSLATE) {
             if (key.contains(substring)) {
-                printTranslateReason("general.&section. " + key + "包含" + substring +"的字符, value是： " + value);
+                printTranslateReason("general.&section. " + key + "包含" + substring + "的字符, value是： " + value);
                 return false;
             }
         }
@@ -172,7 +206,7 @@ public class JudgeTranslateUtils {
         // 第二步：检查是否为明确不翻译的key
         for (String substring : NO_TRANSLATE_KEYS) {
             if (key.contains(substring)) {
-                printTranslateReason("general.&section. " + key + "包含" + substring +"的字符, value是： " + value);
+                printTranslateReason("general.&section. " + key + "包含" + substring + "的字符, value是： " + value);
                 return false;
             }
         }
@@ -181,7 +215,7 @@ public class JudgeTranslateUtils {
         if (key.contains(".json")) {
             for (String substring : JSON_NO_TRANSLATE_SUBSTRINGS) {
                 if (key.contains(substring)) {
-                    printTranslateReason("general.&section. " + key + "包含.json且包含 " + substring +" 的字符, value是： " + value);
+                    printTranslateReason("general.&section. " + key + "包含.json且包含 " + substring + " 的字符, value是： " + value);
                     return false;
                 }
             }
@@ -212,7 +246,7 @@ public class JudgeTranslateUtils {
             return false;
         }
 
-        if ("value".equals(key) && JsonUtils.isJson(value)){
+        if ("value".equals(key) && JsonUtils.isJson(value)) {
             return true;
         }
 
@@ -240,7 +274,7 @@ public class JudgeTranslateUtils {
         // 包含http://、https://或shopify://
         for (String prefix : URL_PREFIXES) {
             if (value.startsWith(prefix)) {
-                printTranslateReason(value + "包含" + prefix + ", key是： " + key );
+                printTranslateReason(value + "包含" + prefix + ", key是： " + key);
                 return false;
             }
         }
@@ -258,6 +292,7 @@ public class JudgeTranslateUtils {
 
     /**
      * 元字段对应的数据不翻译，left，right，top，bottom
+     *
      * @param value 对应的value，可能为null
      * @return true表示需要翻译，false表示不需要翻译
      */
@@ -267,18 +302,18 @@ public class JudgeTranslateUtils {
 
     /**
      * 打印被白名单和黑名单命中的理由
-     * */
+     */
     public static void printTranslateReason(String reason) {
         TraceReporterHolder.report("JudgeTranslateUtils.printTranslateReason", "命中的理由： " + reason);
     }
 
     /**
      * 在主题翻译黑名单前添加一个白名单规则，命中后直接翻译
-     * */
+     */
     public static boolean whiteListTranslate(String key) {
         String prefix = key.split(":")[0];
-        for (String text: WHITELIST_WORDS
-             ) {
+        for (String text : WHITELIST_WORDS
+        ) {
             if (prefix.endsWith(text)) {
                 TraceReporterHolder.report("JudgeTranslateUtils.whiteListTranslate", "命中的理由： 以 " + text + " 结尾");
                 return true;

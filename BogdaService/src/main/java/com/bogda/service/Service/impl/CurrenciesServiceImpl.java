@@ -64,7 +64,6 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
         List<Map<String, Object>> mapList = new ArrayList<>();
         if (list.length == 0){
-            TraceReporterHolder.report("CurrenciesServiceImpl.getCurrencyByShopName", "FatalException getCurrencyByShopName No currency found for shopName: " + shopName);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         for (CurrenciesDO currenciesDO : list) {
