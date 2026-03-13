@@ -471,7 +471,7 @@ public class TranslateV2Service {
         initialTask.setStatus(InitialTaskStatus.INIT_READING_SHOPIFY.getStatus());
         initialTask.setTaskType("auto");
 //        initialTask.setAiModel(GeminiIntegration.GEMINI_3_FLASH);
-        initialTask.setAiModel(ALiYunTranslateIntegration.QWEN_MAX);
+        initialTask.setAiModel(ChatGptIntegration.GPT_4_1_NANO);
         initialTaskV2Repo.insert(initialTask);
 
         translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, GeminiIntegration.GEMINI_3_FLASH);
