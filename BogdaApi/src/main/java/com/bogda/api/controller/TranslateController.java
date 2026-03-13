@@ -3,6 +3,7 @@ package com.bogda.api.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.VO.*;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUserTypeTokenService;
 import com.bogda.service.Service.IUsersService;
@@ -16,13 +17,13 @@ import com.bogda.service.logic.redis.TranslationParametersRedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
+
 import static com.bogda.common.enums.ErrorEnum.*;
 
 @RestController
@@ -135,7 +136,7 @@ public class TranslateController {
             }
 
             translateArrayVO.setTranslatesDOResult(translatesDOResult);
-            AppInsightsUtils.trackTrace("readTranslateDOByArray : " + Arrays.toString(translatesDOS));
+            TraceReporterHolder.report("TranslateController.readTranslateDOByArray", "readTranslateDOByArray : " + Arrays.toString(translatesDOS));
             return new BaseResponse<>().CreateSuccessResponse(translateArrayVO);
         } else {
             return new BaseResponse<>().CreateErrorResponse(DATA_IS_EMPTY);
@@ -164,7 +165,7 @@ public class TranslateController {
     public void insertTranslatedText(@RequestBody CloudInsertRequest cloudServiceRequest) {
         Map<String, Object> body = cloudServiceRequest.getBody();
         String s = shopifyHttpIntegration.registerTransaction(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
-        AppInsightsUtils.trackTrace("insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
+        TraceReporterHolder.report("TranslateController.insertTranslatedText", "insertTranslatedText 用户 ： " + cloudServiceRequest.getShopName() + " insertTranslatedText : " + s);
     }
 
 
@@ -172,7 +173,7 @@ public class TranslateController {
     @PostMapping("/deleteFromTranslates")
     public BaseResponse<Object> deleteFromTranslates(@RequestBody TranslateRequest request) {
         Boolean b = translatesService.deleteFromTranslates(request);
-        AppInsightsUtils.trackTrace("deleteFromTranslates 用户删除翻译语言： " + request);
+        TraceReporterHolder.report("TranslateController.insertTranslatedText", "deleteFromTranslates 用户删除翻译语言： " + request);
         if (b) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -204,7 +205,7 @@ public class TranslateController {
         }
     }
 
-    private TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest){
+    private TranslateRequest TargetListRequestToTranslateRequest(TargetListRequest targetListRequest) {
         TranslateRequest translateRequest = new TranslateRequest();
         translateRequest.setAccessToken(targetListRequest.getAccessToken());
         translateRequest.setShopName(targetListRequest.getShopName());

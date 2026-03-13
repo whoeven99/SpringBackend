@@ -8,7 +8,7 @@ import com.bogda.service.logic.TranslateService;
 import com.bogda.service.logic.UserService;
 import com.bogda.common.controller.request.UserSubscriptionsRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.TraceReporterHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +42,7 @@ public class UserController {
     // 用户初始化 上面addUser的新方法
     @PostMapping("/userInitialization")
     public BaseResponse<Object> userInitialization(@RequestParam String shopName, @RequestBody UserInitialVO userInitialVO) {
-        AppInsightsUtils.trackTrace("userInitialization userInitialVO : " + userInitialVO);
+        TraceReporterHolder.report("UserController.userInitialization", "userInitialization userInitialVO : " + userInitialVO);
         return userService.userInitialization(shopName, userInitialVO);
     }
 

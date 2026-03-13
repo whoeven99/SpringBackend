@@ -2,11 +2,11 @@ package com.bogda.service.logic.PCApp;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.common.controller.response.BaseResponse;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.repository.repo.PCOrdersRepo;
 import com.bogda.repository.repo.PCUserTrialsRepo;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +45,7 @@ public class PCUserTrialsService {
         List<PCOrdersDO> pcOrdersDOList = pcOrdersRepo.selectOrdersByShopName(shopName);
 
         if (!pcOrdersDOList.isEmpty()) {
-            AppInsightsUtils.trackTrace("queryUserTrialByShopName " + shopName + " 返回的pcOrdersDOList 值为 ： " + pcOrdersDOList);
+            TraceReporterHolder.report("PCUserTrialsService.queryUserTrialByShopName", "queryUserTrialByShopName " + shopName + " 返回的pcOrdersDOList 值为 ： " + pcOrdersDOList);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
 

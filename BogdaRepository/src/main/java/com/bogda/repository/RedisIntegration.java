@@ -1,6 +1,7 @@
 package com.bogda.repository;
 
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,8 @@ public class RedisIntegration {
             Boolean result = redisTemplate.opsForHash().putIfAbsent(key, field, value);
             return Boolean.TRUE.equals(result);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException setHashValueIfAbsent " + key + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.setHashValueIfAbsent", "FatalException setHashValueIfAbsent " + key + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.setHashValueIfAbsent", e);
         }
         return false;
     }
@@ -43,7 +45,8 @@ public class RedisIntegration {
         try {
             redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException set " + key + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.set", "FatalException set " + key + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.set", e);
         }
     }
 
@@ -54,7 +57,8 @@ public class RedisIntegration {
         try {
             redisTemplate.opsForValue().set(key, value);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException set " + key + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.set", "FatalException set " + key + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.set", e);
         }
     }
 
@@ -65,7 +69,8 @@ public class RedisIntegration {
         try {
             redisTemplate.opsForHash().put(key, field, value);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException setHash " + key + " " + field + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.setHash", "FatalException setHash " + key + " " + field + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.setHash", e);
         }
     }
 
@@ -73,7 +78,8 @@ public class RedisIntegration {
         try {
             return redisTemplate.opsForHash().increment(key, field, value.longValue());
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException incrementHash " + key + " " + field + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.incrementHash", "FatalException incrementHash " + key + " " + field + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.incrementHash", e);
         }
         return 0L;
     }
@@ -85,7 +91,8 @@ public class RedisIntegration {
         try {
             return redisTemplate.opsForHash().increment(key, field, value);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException incrementHash " + key + " " + field + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.incrementHash", "FatalException incrementHash " + key + " " + field + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.incrementHash", e);
         }
         return 0L;
     }
@@ -97,7 +104,8 @@ public class RedisIntegration {
         try {
             return redisTemplate.opsForValue().increment(key, delta);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException incrementValue " + key + " " + delta + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.incrementValue", "FatalException incrementValue " + key + " " + delta);
+            ExceptionReporterHolder.report("RedisIntegration.incrementValue", e);
         }
         return 0L;
     }
@@ -110,7 +118,8 @@ public class RedisIntegration {
             Object res = redisTemplate.opsForHash().get(key, field);
             return res != null ? res.toString() : null;
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException getHash " + key + " " + field + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.getHash", "FatalException getHash " + key + " " + field);
+            ExceptionReporterHolder.report("RedisIntegration.getHash", e);
         }
         return null;
     }
@@ -121,7 +130,8 @@ public class RedisIntegration {
         try {
             map = redisTemplate.opsForHash().entries(key);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException hGetAll " + key + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.hGetAll", "FatalException hGetAll " + key);
+            ExceptionReporterHolder.report("RedisIntegration.hGetAll", e);
         }
 
         if (CollectionUtils.isEmpty(map)) {
@@ -142,7 +152,8 @@ public class RedisIntegration {
         try {
             add = redisTemplate.opsForSet().add(key, value);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException setSet " + key + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.setSet", "FatalException setSet " + key + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.setSet", e);
         }
         return add != null && add > 0;
     }
@@ -156,7 +167,8 @@ public class RedisIntegration {
         try {
             remove = redisTemplate.opsForSet().remove(key, value);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException remove " + key + " " + value + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.remove", "FatalException remove " + key + " " + value);
+            ExceptionReporterHolder.report("RedisIntegration.remove", e);
         }
         return remove != null && remove > 0;
     }
@@ -168,7 +180,8 @@ public class RedisIntegration {
         try {
             return redisTemplate.opsForValue().get(key) + "";
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException get " + key + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.get", "FatalException get " + key);
+            ExceptionReporterHolder.report("RedisIntegration.get", e);
         }
         return "null";
     }
@@ -176,12 +189,13 @@ public class RedisIntegration {
 
     /**
      * multiGet
-     * */
+     */
     public List<String> multiGet(Collection<String> keys) {
         try {
             return redisTemplate.opsForValue().multiGet(keys);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException multiGet " + keys + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.multiGet", "FatalException multiGet " + keys);
+            ExceptionReporterHolder.report("RedisIntegration.multiGet", e);
         }
         return new ArrayList<>();
     }
@@ -193,19 +207,21 @@ public class RedisIntegration {
         try {
             return redisTemplate.delete(key);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException delete " + key + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.delete", "FatalException delete " + key);
+            ExceptionReporterHolder.report("RedisIntegration.delete", e);
         }
         return false;
     }
 
     /**
      * 删除Hash的field
-     * */
+     */
     public boolean hashDelete(String key, String field) {
         try {
             return redisTemplate.opsForHash().delete(key, field) > 0;
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException hashDelete " + key + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.hashDelete", "FatalException hashDelete " + key);
+            ExceptionReporterHolder.report("RedisIntegration.hashDelete", e);
         }
         return false;
     }
@@ -217,7 +233,8 @@ public class RedisIntegration {
         try {
             return redisTemplate.expire(key, timeout, TimeUnit.SECONDS);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException expire " + key + " " + timeout + " " + e.getMessage());
+            TraceReporterHolder.report("RedisIntegration.expire", "FatalException expire " + key + " " + timeout);
+            ExceptionReporterHolder.report("RedisIntegration.expire", e);
         }
         return false;
     }

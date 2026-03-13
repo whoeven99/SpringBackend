@@ -3,9 +3,9 @@ package com.bogda.repository.repo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.repository.mapper.PCUserTrialsMapper;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -30,7 +30,7 @@ public class PCUserTrialsRepo extends ServiceImpl<PCUserTrialsMapper, PCUserTria
     public Boolean queryUserTrialByShopName(String shopName) {
         PCUserTrialsDO userTrialsDO = baseMapper.selectOne(new LambdaQueryWrapper<PCUserTrialsDO>().eq(PCUserTrialsDO::getShopName, shopName));
         if (userTrialsDO != null && userTrialsDO.getIsTrialExpired() != null) {
-            AppInsightsUtils.trackTrace("PC queryUserTrialByShopName " + shopName + " userTrialsDO : " + userTrialsDO);
+            TraceReporterHolder.report("PCUserTrialsRepo.queryUserTrialByShopName", "PC queryUserTrialByShopName " + shopName + " userTrialsDO : " + userTrialsDO);
             return userTrialsDO.getIsTrialExpired();
         }
         return false;

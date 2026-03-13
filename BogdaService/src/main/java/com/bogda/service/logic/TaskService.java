@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.common.entity.DO.*;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.service.Service.*;
@@ -16,7 +18,6 @@ import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCSubscriptionQuotaRecordDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
 import com.bogda.service.logic.translate.TranslateV2Service;
@@ -30,6 +31,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+
 import static com.bogda.common.utils.ShopifyUtils.isQueryValid;
 
 @Component
@@ -115,8 +117,8 @@ public class TaskService {
             try {
                 addCharsByUserData(userPriceRequest);
             } catch (Exception e) {
-                AppInsightsUtils.trackException(e);
-                AppInsightsUtils.trackTrace("FatalException judgeAddChars 用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
+                ExceptionReporterHolder.report("TaskService.judgeAddChars", e);
+                TraceReporterHolder.report("TaskService.judgeAddChars", "FatalException judgeAddChars 用户： " + userPriceRequest.getShopName() + " 获取数据 errors : " + e);
             }
         }
 
@@ -146,18 +148,18 @@ public class TaskService {
                 //根据订阅计划信息，判断是否过期，如果过期，将用户计划改为2
                 JSONObject node = analyzeOrderData(order.getSubscriptionId(), order.getAccessToken(), order.getShopName());
                 if (node == null) {
-                    AppInsightsUtils.trackTrace("judgeAddChars " + order.getShopName() + " 获取不到计划的相关数据，获取为null");
+                    TraceReporterHolder.report("TaskService.judgeSubscriptionStatus", "FatalException judgeAddChars " + order.getShopName() + " 获取不到计划的相关数据，获取为null");
                     continue;
                 }
                 String status = node.getString("status");
                 if (!"ACTIVE".equals(status)) {
                     //如果过期，将用户计划改为2
                     boolean i = iUserSubscriptionsService.checkUserPlan(order.getShopName(), 2) > 0;
-                    AppInsightsUtils.trackTrace("judgeAddChars " + order.getShopName() + " 计划过期，将用户计划改为2 " + " 修改状态: " + i);
+                    TraceReporterHolder.report("TaskService.judgeSubscriptionStatus", "FatalException judgeAddChars " + order.getShopName() + " 计划过期，将用户计划改为2 " + " 修改状态: " + i);
                 }
             } catch (Exception e) {
-                AppInsightsUtils.trackException(e);
-                AppInsightsUtils.trackTrace("FatalException judgeAddChars 用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
+                ExceptionReporterHolder.report("TaskService.judgeSubscriptionStatus", e);
+                TraceReporterHolder.report("TaskService.judgeSubscriptionStatus", "FatalException judgeAddChars 用户： " + order.getShopName() + " 获取订阅计划数据 errors : " + e);
             }
         }
     }
@@ -171,7 +173,7 @@ public class TaskService {
         infoByShopify = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
         JSONObject root = JSON.parseObject(infoByShopify);
         if (root == null || root.isEmpty()) {
-            AppInsightsUtils.trackTrace("FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + " 获取数据失败" + " token: " + accessToken);
+            TraceReporterHolder.report("TaskService.analyzeOrderData", "FatalException " + shopName + " 定时任务根据订单id: " + subscriptionId + " 获取数据失败" + " token: " + accessToken);
             return null;
         }
         JSONObject node = root.getJSONObject("node");
@@ -188,7 +190,7 @@ public class TaskService {
         // 根据新的集合获取这个订阅计划的信息
         JSONObject node = analyzeOrderData(userPriceRequest.getSubscriptionId(), userPriceRequest.getAccessToken(), userPriceRequest.getShopName());
         if (node == null) {
-            AppInsightsUtils.trackTrace("FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
+            TraceReporterHolder.report("TaskService.addCharsByUserData", "FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 获取不到计划的相关数据，获取为null " + userPriceRequest);
             return;
         }
         String name = node.getString("name");
@@ -201,7 +203,7 @@ public class TaskService {
 
         //订阅结束时间
         if (currentPeriodEnd == null) {
-            AppInsightsUtils.trackTrace("FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 订阅结束时间为null : " + node);
+            TraceReporterHolder.report("TaskService.addCharsByUserData", "FatalException addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 订阅结束时间为null : " + node);
             return;
         }
         Instant end = Instant.parse(currentPeriodEnd);
@@ -211,24 +213,24 @@ public class TaskService {
 
         // 只处理活跃、非试用、且还在本期内的订阅
         if (!"ACTIVE".equals(status) || now.isAfter(end)) {
-//            AppInsightsUtils.trackTrace("不满足条件");
+//            TraceReporterHolder.report("不满足条件");
             return;
         }
 
         //计算当前是第几个月
         int billingCycle = (int) ChronoUnit.DAYS.between(buyCreateInstant, now) / 30 + 1;
-//        AppInsightsUtils.trackTrace("billingCycle = " + billingCycle);
+//        TraceReporterHolder.report("billingCycle = " + billingCycle);
 
         // 如果这一周期还没发放过额度，则发放并记录
         SubscriptionQuotaRecordDO quotaRecordDO = subscriptionQuotaRecordRepo.getDataByIdAndBillingCycle(userPriceRequest.getSubscriptionId(), billingCycle);
         if (quotaRecordDO == null) {
             // 满足条件，执行添加字符的逻辑
-//            AppInsightsUtils.trackTrace("满足条件，执行添加字符的逻辑");
+//            TraceReporterHolder.report("满足条件，执行添加字符的逻辑");
             // 根据计划获取对应的字符
             Integer chars = subscriptionPlansService.getCharsByPlanName(name);
             subscriptionQuotaRecordRepo.saveNewRecord(userPriceRequest.getSubscriptionId(), billingCycle);
             Boolean flag = translationCounterService.updateCharsByShopName(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId(), chars);
-            AppInsightsUtils.trackTrace("addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
+            TraceReporterHolder.report("TaskService.addCharsByUserData", "addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
 
             // 将用户免费Ip清零
             iUserIpService.clearIP(userPriceRequest.getShopName());
@@ -253,14 +255,14 @@ public class TaskService {
     //自动翻译模块顺序
     public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
             TranslateConstants.SHOP, TranslateConstants.MENU, TranslateConstants.LINK, TranslateConstants.FILTER, TranslateConstants.PACKING_SLIP_TEMPLATE, TranslateConstants.DELIVERY_METHOD_DEFINITION, TranslateConstants.METAOBJECT, TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE, TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP, TranslateConstants.
-            ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT, TranslateConstants.
-            COLLECTION, TranslateConstants.PRODUCT, TranslateConstants.PRODUCT_OPTION, TranslateConstants.PRODUCT_OPTION_VALUE, TranslateConstants.BLOG, TranslateConstants.ARTICLE, TranslateConstants.PAGE, TranslateConstants.METAFIELD, TranslateConstants.SHOP_POLICY, TranslateConstants.EMAIL_TEMPLATE, TranslateConstants.SELLING_PLAN, TranslateConstants.SELLING_PLAN_GROUP
+                    ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT, TranslateConstants.
+                    COLLECTION, TranslateConstants.PRODUCT, TranslateConstants.PRODUCT_OPTION, TranslateConstants.PRODUCT_OPTION_VALUE, TranslateConstants.BLOG, TranslateConstants.ARTICLE, TranslateConstants.PAGE, TranslateConstants.METAFIELD, TranslateConstants.SHOP_POLICY, TranslateConstants.EMAIL_TEMPLATE, TranslateConstants.SELLING_PLAN, TranslateConstants.SELLING_PLAN_GROUP
     ));
 
     // test自动翻译模块
     public static final List<String> TEST_AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
             TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE, TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP, TranslateConstants.
-            ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT
+                    ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT
     ));
 
     /**
@@ -289,7 +291,7 @@ public class TaskService {
                 // 获取最新一条gid订单，判断是否支付成功
                 String latestActiveSubscribeId = orderService.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
-                    AppInsightsUtils.trackTrace("freeTrialTask  latestActiveSubscribeId的数据为null，用户是：" + shopName);
+                    TraceReporterHolder.report("TaskService.freeTrialTask", "freeTrialTask  latestActiveSubscribeId的数据为null，用户是：" + shopName);
 
                     // 将is_trial_expired改为true
                     iUserTrialsService.updateExpiredByShopName(shopName);
@@ -326,7 +328,7 @@ public class TaskService {
                         // 词汇表改为0
                         iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userTrialsDO.getShopName()).set("status", 0));
                     } catch (Exception e) {
-                        AppInsightsUtils.trackTrace("FatalException " + userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
+                        TraceReporterHolder.report("TaskService.freeTrialTask", "FatalException " + userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
                     }
                     continue;
                 }
@@ -336,7 +338,7 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度
                 Boolean flag = translationCounterService.updateCharsByShopName(shopName, usersDO.getAccessToken(), latestActiveSubscribeId, charsByPlanName);
-                AppInsightsUtils.trackTrace(shopName + " 用户 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
+                TraceReporterHolder.report("TaskService.freeTrialTask", shopName + " 用户 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
             }
         }
     }
@@ -359,8 +361,8 @@ public class TaskService {
             try {
                 addPCCharsByUserData(usersDO.getShopName(), usersDO.getAccessToken(), pcOrdersDO.getOrderId(), pcOrdersDO.getCreatedAt());
             } catch (Exception e) {
-                AppInsightsUtils.trackException(e);
-                AppInsightsUtils.trackTrace("FatalException judgeAddChars 用户： " + pcOrdersDO.getShopName() + " 获取数据 errors : " + e);
+                ExceptionReporterHolder.report("TaskService.judgePCAppAddChars", e);
+                TraceReporterHolder.report("TaskService.judgePCAppAddChars", "FatalException judgeAddChars 用户： " + pcOrdersDO.getShopName() + " 获取数据 errors : " + e);
             }
         }
 
@@ -372,7 +374,7 @@ public class TaskService {
         // 根据新的集合获取这个订阅计划的信息
         JSONObject node = analyzeOrderData(subscriptionId, accessToken, shopName);
         if (node == null) {
-            AppInsightsUtils.trackTrace("addCharsByUserData 用户： " + shopName + " 获取不到计划的相关数据，获取为null " + accessToken + " " + subscriptionId);
+            TraceReporterHolder.report("TaskService.addPCCharsByUserData", "addCharsByUserData 用户： " + shopName + " 获取不到计划的相关数据，获取为null " + accessToken + " " + subscriptionId);
             return;
         }
         String name = node.getString("name");
@@ -391,14 +393,14 @@ public class TaskService {
 
         // 只处理活跃、非试用、且还在本期内的订阅
         if (!"ACTIVE".equals(status) || now.isAfter(end)) {
-            AppInsightsUtils.trackTrace("FatalException 不满足条件 只处理活跃、非试用、且还在本期内的订阅: " + shopName + " " + status + " " + end + " " + now);
+            TraceReporterHolder.report("TaskService.addPCCharsByUserData", "FatalException 不满足条件 只处理活跃、非试用、且还在本期内的订阅: " + shopName + " " + status + " " + end + " " + now);
 
             return;
         }
 
         // 计算当前是第几个月
         int billingCycle = (int) ChronoUnit.DAYS.between(buyCreateInstant, now) / 30 + 1;
-        AppInsightsUtils.trackTrace("PC billingCycle = " + billingCycle);
+        TraceReporterHolder.report("TaskService.addPCCharsByUserData", "PC billingCycle = " + billingCycle);
 
         // 如果这一周期还没发放过额度，则发放并记录
         PCSubscriptionQuotaRecordDO quotaRecordDO = pcSubscriptionQuotaRecordRepo.getQuotaRecordDO(subscriptionId, billingCycle);
@@ -408,13 +410,13 @@ public class TaskService {
             // 根据计划获取对应的字符
             Integer chars = pcSubscriptionsRepo.getCharsByPlanName(name);
             if (chars == null) {
-                AppInsightsUtils.trackTrace("FatalException test chars is null : " + shopName);
+                TraceReporterHolder.report("TaskService.addPCCharsByUserData", "FatalException test chars is null : " + shopName);
                 return;
             }
 
             pcSubscriptionQuotaRecordRepo.insertQuotaRecord(subscriptionId, billingCycle);
             boolean flag = pcUsersRepo.updatePurchasePointsByShopName(shopName, accessToken, subscriptionId, chars);
-            AppInsightsUtils.trackTrace("PC addCharsByUserData 用户： " + shopName + " 添加字符额度： " + chars + " 是否成功： " + flag);
+            TraceReporterHolder.report("TaskService.addPCCharsByUserData", "PC addCharsByUserData 用户： " + shopName + " 添加字符额度： " + chars + " 是否成功： " + flag);
 
             // 修改该用户过期时间
             pcUserSubscriptionsRepo.updateUserEndDate(shopName, subEnd);
@@ -455,7 +457,7 @@ public class TaskService {
                 // 获取最新一条gid订单，判断是否支付成功
                 String latestActiveSubscribeId = pcOrdersRepo.getLatestActiveSubscribeId(shopName);
                 if (latestActiveSubscribeId == null) {
-                    AppInsightsUtils.trackTrace("PC freeTrialTask latestActiveSubscribeId的数据为null，用户是：" + shopName);
+                    TraceReporterHolder.report("TaskService.freeTrialTaskForImage", "PC freeTrialTask latestActiveSubscribeId的数据为null，用户是：" + shopName);
 
                     // 将数据改为true
                     pcUserTrialsRepo.updateTrialExpiredByShopName(shopName, true);
@@ -484,7 +486,7 @@ public class TaskService {
                         // 将用户计划改为1 免费计划
                         pcUserSubscriptionsRepo.updateUserPlanIdByShopName(shopName, 1);
                     } catch (Exception e) {
-                        AppInsightsUtils.trackTrace("FatalException " + shopName + " 用户  errors PC 修改用户计划失败: " + e.getMessage());
+                        TraceReporterHolder.report("TaskService.freeTrialTaskForImage", "FatalException " + shopName + " 用户  errors PC 修改用户计划失败: " + e.getMessage());
                     }
                     continue;
                 }
@@ -494,7 +496,7 @@ public class TaskService {
 
                 // 如果订单存在，并且支付成功，添加相关计划额度
                 boolean flag = pcUsersRepo.updatePurchasePoints(shopName, charsByPlanName);
-                AppInsightsUtils.trackTrace(shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
+                TraceReporterHolder.report("TaskService.freeTrialTaskForImage", shopName + " 用户 PC 添加额度成功 ： " + charsByPlanName + " 计划为： " + name + " 是否成功： " + flag);
             }
         }
     }

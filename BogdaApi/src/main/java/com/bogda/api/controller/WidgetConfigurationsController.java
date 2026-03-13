@@ -1,10 +1,10 @@
 package com.bogda.api.controller;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IWidgetConfigurationsService;
 import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.service.logic.UserIpService;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +28,7 @@ public class WidgetConfigurationsController {
         int maxRetries = 3;
         int attempt = 0;
         boolean success = false;
-        AppInsightsUtils.trackTrace("saveAndUpdateData 传的数据是： " + widgetConfigurationsDO);
+        TraceReporterHolder.report("WidgetConfigurationsController.saveAndUpdateData", "saveAndUpdateData 传的数据是： " + widgetConfigurationsDO);
         while (attempt < maxRetries && !success) {
             try {
                 b = widgetConfigurationsService.saveAndUpdateData(widgetConfigurationsDO);
@@ -37,11 +37,11 @@ public class WidgetConfigurationsController {
                     return new BaseResponse<>().CreateSuccessResponse(widgetConfigurationsDO);
                 } else {
                     attempt++;
-                    AppInsightsUtils.trackTrace("FatalException saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
+                    TraceReporterHolder.report("WidgetConfigurationsController.saveAndUpdateData", "FatalException saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存失败 (b=" + b + ")，正在重试第 " + (attempt + 1) + " 次");
                 }
             } catch (Exception e) {
                 attempt++;
-                AppInsightsUtils.trackTrace("FatalException saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
+                TraceReporterHolder.report("WidgetConfigurationsController.saveAndUpdateData", "FatalException saveAndUpdateData " + widgetConfigurationsDO.getShopName() + " 保存异常，正在重试第 " + (attempt + 1) + " 次: " + e.getMessage());
             }
         }
         return new BaseResponse<>().CreateErrorResponse("保存失败，已重试3次仍未成功");

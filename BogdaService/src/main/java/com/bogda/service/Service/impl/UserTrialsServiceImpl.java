@@ -4,14 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IUserTrialsService;
 import com.bogda.common.entity.DO.UserTrialsDO;
 import com.bogda.service.mapper.UserTrialsMapper;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-
 
 
 @Service
@@ -31,7 +30,7 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
     public Boolean queryUserTrialByShopName(String shopName) {
         UserTrialsDO userTrialsDO = baseMapper.selectOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
         if (userTrialsDO != null && userTrialsDO.getIsTrialExpired() != null) {
-            AppInsightsUtils.trackTrace("queryUserTrialByShopName " + shopName + " userTrialsDO: " + userTrialsDO);
+            TraceReporterHolder.report("UserTrialsServiceImpl.queryUserTrialByShopName", "queryUserTrialByShopName " + shopName + " userTrialsDO: " + userTrialsDO);
             return userTrialsDO.getIsTrialExpired();
         }
         return null;

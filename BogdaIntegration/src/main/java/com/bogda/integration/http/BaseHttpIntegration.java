@@ -1,6 +1,6 @@
 package com.bogda.integration.http;
 
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -74,7 +74,7 @@ public class BaseHttpIntegration {
                 try {
                     return httpClient.execute(http);
                 } catch (Exception e) {
-                    AppInsightsUtils.trackException(e);
+                    ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp", e);
                     return null;
                 }
             });
@@ -85,7 +85,7 @@ public class BaseHttpIntegration {
             response.close();
             return responseContent;
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
+            ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp", e);
             return null;
         }
     }
@@ -100,7 +100,7 @@ public class BaseHttpIntegration {
                 connectionManager.close();
             }
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
+            ExceptionReporterHolder.report("BaseHttpIntegration.destroy", e);
         }
     }
 }

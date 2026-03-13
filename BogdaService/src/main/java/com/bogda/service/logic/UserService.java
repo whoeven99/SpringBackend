@@ -2,6 +2,7 @@ package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.*;
 import com.bogda.common.entity.DO.EmailDO;
 import com.bogda.common.entity.DO.UsersDO;
@@ -12,7 +13,6 @@ import com.bogda.common.enums.ErrorEnum;
 import com.bogda.service.logic.redis.UserInitialRedisService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AESUtils;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,7 @@ public class UserService {
                 usersDO.setEncryptionEmail(encryptionEmail);
             }
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException addUser " + usersDO.getShopName() + " 加密失败");
+            TraceReporterHolder.report("UserService.addUser", "FatalException addUser " + usersDO.getShopName() + " 加密失败");
         }
 
         int i = usersService.addUser(usersDO);
@@ -97,7 +97,7 @@ public class UserService {
         while (attempt < MAX_RETRY_ATTEMPTS) {
             try {
                 String shopName = userRequest.getShopName();
-                AppInsightsUtils.trackTrace("unInstallApp " + shopName + " 用户卸载应用");
+                TraceReporterHolder.report("UserService.unInstallApp", "unInstallApp " + shopName + " 用户卸载应用");
 
                 // 更改用户卸载翻译时间
                 usersService.unInstallApp(userRequest);
@@ -124,13 +124,13 @@ public class UserService {
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= MAX_RETRY_ATTEMPTS) {
-                    AppInsightsUtils.trackTrace("Uninstallation failed, retrying..." + e);
+                    TraceReporterHolder.report("UserService.unInstallApp", "FatalException Uninstallation failed, retrying..." + e);
                     return false;
                 }
                 try {
                     Thread.sleep(RETRY_DELAY_MS);
                 } catch (InterruptedException ie) {
-                    AppInsightsUtils.trackTrace("Retry delay interrupted for shop: " + ie);
+                    TraceReporterHolder.report("UserService.unInstallApp", "FatalException Retry delay interrupted for shop: " + ie);
                     Thread.currentThread().interrupt(); // Restore interrupted status
                     return false;
                 }
@@ -193,7 +193,7 @@ public class UserService {
         try {
             encryptionEmail = AESUtils.encrypt(usersDO.getEmail());
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("getEncryptedEmail " + shopName + "加密邮箱失败");
+            TraceReporterHolder.report("UserService.checkUserPlan", "FatalException getEncryptedEmail " + shopName + "加密邮箱失败");
         }
 
         //更新加密邮箱
@@ -209,7 +209,7 @@ public class UserService {
         String themeName = userInitialVO.getDefaultThemeName();
         String themeId = userInitialVO.getDefaultThemeId();
         if (themeName == null || themeId == null) {
-            AppInsightsUtils.trackTrace("FatalException userInitialization themeData is null : " + userInitialVO);
+            TraceReporterHolder.report("UserService.userInitialization", "FatalException userInitialization themeData is null : " + userInitialVO);
             return new BaseResponse<>().CreateErrorResponse("Theme data is null");
         }
 
@@ -251,7 +251,7 @@ public class UserService {
     }
 
     public BaseResponse<Object> webhookDefaultTheme(String shopName, ThemeAndLanguageVO data) {
-        AppInsightsUtils.trackTrace("UserEmail webhookDefaultTheme 主题相关数据 : " + data.getThemeData() + " shopName : " + shopName);
+        TraceReporterHolder.report("UserService.webhookDefaultTheme", "UserEmail webhookDefaultTheme 主题相关数据 : " + data.getThemeData() + " shopName : " + shopName);
 
         // 解析数据
         JsonNode jsonNode = JsonUtils.readTree(data.getThemeData());
@@ -262,12 +262,12 @@ public class UserService {
         String themeName = jsonNode.get("name").asText(null);
         String themeId = jsonNode.get("admin_graphql_api_id").asText(null);
         if (themeName == null || themeId == null) {
-            AppInsightsUtils.trackTrace("FatalException webhookDefaultTheme themeData is null : " + data);
+            TraceReporterHolder.report("UserService.webhookDefaultTheme", "FatalException webhookDefaultTheme themeData is null : " + data);
             return new BaseResponse<>().CreateErrorResponse("Theme data is null");
         }
 
         String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
-        if ("null".equals(userDefaultTheme)){
+        if ("null".equals(userDefaultTheme)) {
             return new BaseResponse<>().CreateErrorResponse("userDefaultTheme is null");
         }
 
@@ -282,14 +282,14 @@ public class UserService {
 //            if (widgetConfigurationsService.getData(shopName) != null) {
 //                tencentEmailService.sendThemeSwitchEmail(shopName);
 //            }
-            AppInsightsUtils.trackTrace("UserEmail webhookDefaultTheme 用户主题改变 ： " + shopName + " name : " + themeName + " id : " + themeId + " 原主题id：" + userDefaultTheme);
+            TraceReporterHolder.report("UserService.webhookDefaultTheme", "UserEmail webhookDefaultTheme 用户主题改变 ： " + shopName + " name : " + themeName + " id : " + themeId + " 原主题id：" + userDefaultTheme);
         }
 
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 
     public BaseResponse<Object> webhookDefaultLanguage(String shopName, ThemeAndLanguageVO data) {
-        AppInsightsUtils.trackTrace("UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getLanguageData() + " shopName : " + shopName);
+        TraceReporterHolder.report("UserService.webhookDefaultLanguage", "UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getLanguageData() + " shopName : " + shopName);
 
         // 解析数据
         JsonNode jsonNode = JsonUtils.readTree(data.getLanguageData());
@@ -309,7 +309,7 @@ public class UserService {
             // 发送默认语言邮件
             tencentEmailService.sendDefaultLanguageEmail(shopName);
             userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
-            AppInsightsUtils.trackTrace("UserEmail webhookDefaultLanguage 用户默认语言改变 ： " + shopName + " source : " + userDefaultLanguage + " language : " + defaultLanguageData );
+            TraceReporterHolder.report("UserService.webhookDefaultLanguage", "UserEmail webhookDefaultLanguage 用户默认语言改变 ： " + shopName + " source : " + userDefaultLanguage + " language : " + defaultLanguageData);
         }
 
         return new BaseResponse<>().CreateSuccessResponse(true);

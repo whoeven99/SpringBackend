@@ -9,7 +9,6 @@ import com.azure.ai.openai.models.ChatRole;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,12 +33,10 @@ public class ChatGptIntegration {
 
     @PostConstruct
     public void init() {
-        AppInsightsUtils.trackTrace("gptKey : " + gptKey);
         client = new OpenAIClientBuilder()
                 .endpoint(endpoint)
                 .credential(new AzureKeyCredential(gptKey))
                 .buildClient();
-        AppInsightsUtils.trackTrace("ChatGptIntegration init success");
     }
 
     /**

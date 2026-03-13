@@ -1,6 +1,7 @@
 package com.bogda.service.logic;
 
 import com.bogda.common.entity.DO.*;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.StringUtils;
 import com.bogda.service.Service.*;
 import com.bogda.service.utils.CurrencyConfig;
@@ -10,9 +11,9 @@ import com.bogda.common.controller.request.TencentSendEmailRequest;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.contants.MailChimpConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -21,6 +22,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import static com.bogda.common.utils.StringUtils.parseShopName;
 
 @Component
@@ -88,7 +90,7 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            AppInsightsUtils.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            TraceReporterHolder.report("TencentEmailService.sendAutoTranslateEmail", "sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("html_data", String.valueOf(divBuilder));
@@ -256,7 +258,7 @@ public class TencentEmailService {
                                   List<Map<String, Integer>> languageEmailData, List<Map<String, Integer>> currencyEmailData) {
         UsersDO user = usersService.getUserByName(shopName);
         if (user == null) {
-            AppInsightsUtils.trackTrace("FatalException sendIpReportEmail user is null " + shopName);
+            TraceReporterHolder.report("TencentEmailService.sendIpReportEmail", "FatalException sendIpReportEmail user is null " + shopName);
             return;
         }
 
@@ -278,7 +280,7 @@ public class TencentEmailService {
         // 发送邮件（如果需要）
         boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
                 templateData, MailChimpConstants.IP_REPORT_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, user.getEmail()));
-        AppInsightsUtils.trackTrace("sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
+        TraceReporterHolder.report("TencentEmailService.sendIpReportEmail", "sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
     }
 
     /**
@@ -400,7 +402,7 @@ public class TencentEmailService {
 
         // 都continue了
         if (divBuilder.toString().isEmpty()) {
-            AppInsightsUtils.trackTrace("sendAutoTranslateEmail divBuilder is empty " + shopName);
+            TraceReporterHolder.report("TencentEmailService.sendTranslatePartialEmail", "sendAutoTranslateEmail divBuilder is empty " + shopName);
             return true;
         }
         templateData.put("language_progress_rows", String.valueOf(divBuilder));

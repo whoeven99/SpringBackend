@@ -1,12 +1,12 @@
 package com.bogda.api.controller;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IUserIpService;
 import com.bogda.common.entity.VO.IncludeCrawlerVO;
 import com.bogda.common.entity.VO.NoCrawlerVO;
 import com.bogda.service.logic.UserIpService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.UserIPRedirectionDO;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,7 +75,7 @@ public class UserIpController {
         try {
             return userIpService.syncUserIp(shopName, userIPRedirectionDOList);
         } catch (Exception e) {
-           AppInsightsUtils.trackTrace("FatalException syncUserIp error" + e.getMessage());
+           TraceReporterHolder.report("UserIpController.syncUserIp", "FatalException syncUserIp error" + e.getMessage());
         }
         return new BaseResponse<>().CreateErrorResponse("syncUserIp error");
     }
