@@ -555,9 +555,6 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             return null;
         }
 
-        TraceReporterHolder.report("test", "batch 提示词： " + prompt);
-        TraceReporterHolder.report("test", "batch 原文： " + sourceMap);
-
         // 返回译文Map和token数
         return new Pair<>(translatedMap, aiResult.getSecond());
     }

@@ -1274,6 +1274,27 @@ public class TranslateV2Service {
             if (key.contains("block") && key.contains("add_button_selector")) {
                 return false;
             }
+
+            // TODO: 暂时先硬编码下（解决下问题）， 后面再改为config配置
+            for (String blackValue : JudgeTranslateUtils.BLACKLIST_WORDS
+                 ) {
+                if (blackValue.equals(value)){
+                    return false;
+                }
+            }
+
+            // 判断图片 与 mp4
+            if (JudgeTranslateUtils.IMAGE_PATTERN.matcher(value).matches()) {
+                JudgeTranslateUtils.printTranslateReason("key : " + key + " 包含图片或视频, value是： " + value);
+                return false;
+            }
+
+            // 以/开头的不翻译
+            if (JudgeTranslateUtils.PATH_PATTERN.matcher(value).matches()) {
+                JudgeTranslateUtils.printTranslateReason("key : " + key + " value是： " + value + " 以/开头的不翻译");
+                return false;
+            }
+
             //对key中含section和general的做key值判断
             if (JudgeTranslateUtils.GENERAL_OR_SECTION_PATTERN.matcher(key).find()) {
                 //进行白名单的确认
