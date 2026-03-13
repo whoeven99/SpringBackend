@@ -2,6 +2,8 @@ package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.common.controller.response.BaseResponse;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.service.Service.ITranslatesService;
@@ -13,7 +15,6 @@ import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.integration.AidgeIntegration;
 import com.bogda.service.logic.redis.RedisStoppedRepository;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
+import javax.tools.DiagnosticCollector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,7 +62,7 @@ public class TranslateService {
         for (InitialTaskV2DO initialTaskV2DO : initialTaskV2s
         ) {
             redisStoppedRepository.manuallyStopped(shopName, initialTaskV2DO.getId());
-            AppInsightsUtils.trackTrace("stopTranslationManually 用户 " + shopName + " initialId: " + initialTaskV2DO.getId()
+            TraceReporterHolder.report("TranslateService.stopTranslationManually", "stopTranslationManually 用户 " + shopName + " initialId: " + initialTaskV2DO.getId()
                     + " 的翻译标识存储成功");
         }
 
@@ -95,8 +97,8 @@ public class TranslateService {
             shopifyData = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
             root = JsonUtils.readTree(shopifyData);
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
+            ExceptionReporterHolder.report("TranslateService.syncShopifyAndDatabase", e);
+            TraceReporterHolder.report("TranslateService.syncShopifyAndDatabase", "FatalException syncShopifyAndDatabase Failed to get Shopify data errors : " + e.getMessage());
             return;
         }
 
@@ -108,7 +110,7 @@ public class TranslateService {
         JsonNode shopLocales = root.path("shopLocales");
 
         if (!shopLocales.isArray()) {
-            AppInsightsUtils.trackTrace("syncShopifyAndDatabase: shopLocales is not an array.");
+            TraceReporterHolder.report("TranslateService.syncShopifyAndDatabase", "syncShopifyAndDatabase: shopLocales is not an array.");
             return;
         }
 
@@ -131,7 +133,7 @@ public class TranslateService {
     }
 
     public String imageTranslate(String sourceCode, String targetCode, String imageUrl, String shopName, String accessToken) {
-        AppInsightsUtils.trackTrace("imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
+        TraceReporterHolder.report("TranslateService.imageTranslate", "imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
 
         // 获取用户token，判断是否和数据库中一致再选择是否调用
         UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));

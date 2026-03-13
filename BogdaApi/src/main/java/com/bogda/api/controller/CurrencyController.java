@@ -1,11 +1,11 @@
 package com.bogda.api.controller;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ICurrenciesService;
 import com.bogda.common.entity.DO.CurrenciesDO;
 import com.bogda.service.logic.PurchaseService;
 import com.bogda.common.controller.request.CurrencyRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +22,7 @@ public class CurrencyController {
     //根据传入的货币代码插入货币信息
     @PostMapping("/insertCurrency")
     public BaseResponse<Object> addCurrency(@RequestBody CurrenciesDO currenciesDO) {
-        AppInsightsUtils.trackTrace("insertCurrency currenciesDO: " + currenciesDO);
+        TraceReporterHolder.report("CurrencyController.addCurrency", "insertCurrency currenciesDO: " + currenciesDO);
         return currencyService.insertCurrency(currenciesDO);
     }
 

@@ -1,6 +1,6 @@
 package com.bogda.service.logic;
 
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IUserPageFlyService;
 import com.bogda.common.entity.DO.UserPageFlyDO;
 import com.bogda.common.entity.VO.PageFlyVO;
@@ -45,7 +45,7 @@ public class UserPageFlyService {
                 try {
                     success = iUserPageFlyService.insertUserPageFlysData(item);
                 } catch (Exception e) {
-                    AppInsightsUtils.trackTrace("FatalException editTranslatedData " + e.getMessage());
+                    TraceReporterHolder.report("UserPageFlyService.editTranslatedData", "FatalException editTranslatedData " + e.getMessage());
                 }
 
                 if (success) {

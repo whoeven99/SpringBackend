@@ -2,6 +2,8 @@ package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
 import com.bogda.service.Service.IAPGUserPlanService;
@@ -16,7 +18,6 @@ import com.bogda.service.logic.APGUserGeneratedTaskService;
 import com.bogda.service.logic.redis.GenerateRedisService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,8 +78,8 @@ public class APGUserGeneratedTaskController {
             String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateDescriptionsVO);
             apgUserGeneratedTaskService.initOrUpdateData(shopName, 0, generateDescriptionsVO.getPageType() + " " + generateDescriptionsVO.getContentType(), json);
         } catch (JsonProcessingException e) {
-            AppInsightsUtils.trackTrace("batchGenerateDescription " + shopName + " 用户 批量生成任务失败 errors ：" + e);
-            AppInsightsUtils.trackException(e);
+            TraceReporterHolder.report("APGUserGeneratedTaskController.batchGenerateDescription", "FatalException batchGenerateDescription " + shopName + " 用户 批量生成任务失败 errors ：" + e);
+            ExceptionReporterHolder.report("APGUserGeneratedTaskController.batchGenerateDescription", e);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
@@ -106,16 +107,15 @@ public class APGUserGeneratedTaskController {
         } catch (ClientException e1) {
             //发送对应邮件
             //修改状态
-            AppInsightsUtils.trackTrace("batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
-//            AppInsightsUtils.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e1);
-            AppInsightsUtils.trackException(e1);
+            TraceReporterHolder.report("APGUserGeneratedTaskController.batchGenerateDescription", "FatalException batchGenerateDescription " + shopName + " 用户  errors ：" + e1);
+//            TraceReporterHolder.report(shopName + " 用户 batchGenerateDescription errors ：" + e1);
+            ExceptionReporterHolder.report("APGUserGeneratedTaskController.batchGenerateDescription", e1);
             return BaseResponse.FailedResponse(TranslateConstants.CHARACTER_LIMIT);
         } catch (Exception e) {
             //修改状态
             //发送邮件
-            AppInsightsUtils.trackTrace("FatalException batchGenerateDescription " + shopName + " 用户  errors ：" + e);
-//            AppInsightsUtils.trackTrace(shopName + " 用户 batchGenerateDescription errors ：" + e);
-            AppInsightsUtils.trackException(e);
+            TraceReporterHolder.report("APGUserGeneratedTaskController.batchGenerateDescription", "FatalException batchGenerateDescription " + shopName + " 用户  errors ：" + e);
+            ExceptionReporterHolder.report("APGUserGeneratedTaskController.batchGenerateDescription", e);
             return new BaseResponse<Object>().CreateErrorResponse(false);
         }
         return new BaseResponse<Object>().CreateSuccessResponse(true);
@@ -148,7 +148,7 @@ public class APGUserGeneratedTaskController {
         //根据shopName，获取userId
         APGUsersDO usersDO = iapgUsersService.getOne(new LambdaQueryWrapper<APGUsersDO>().eq(APGUsersDO::getShopName, shopName));
         Boolean result = generateRedisService.setStopFlag(usersDO.getId(), true);
-        AppInsightsUtils.trackTrace("stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
+        TraceReporterHolder.report("APGUserGeneratedTaskController.stopBatchGenerateDescription", "stopBatchGenerateDescription " + shopName + " 停止翻译标识 : " + result);
         //将任务和子任务的状态改为1
         Boolean updateFlag = apgUserGeneratedTaskService.updateTaskStatusTo1(usersDO.getId());
         if (updateFlag) {

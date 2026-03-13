@@ -1,7 +1,8 @@
 package com.bogda.integration.aimodel;
 
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.deepl.api.DeepLClient;
@@ -33,8 +34,8 @@ public class DeepLIntegration {
                         try {
                             return client.translateText(sourceText, null, target);
                         } catch (Exception e) {
-                            AppInsightsUtils.trackTrace("FatalException 每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
-                            AppInsightsUtils.trackException(e);
+                            TraceReporterHolder.report("DeepLIntegration.translateByDeepL", "FatalException 每日须看 translateByDeepL deepL翻译报错信息 errors ： " + e.getMessage() + " translateText : " + sourceText + " 用户：" + shopName);
+                            ExceptionReporterHolder.report("DeepLIntegration.translateByDeepL", e);
                             return null;
                         }
                     },
@@ -44,17 +45,15 @@ public class DeepLIntegration {
             if (result == null) {
                 return sourceText;
             }
-            AppInsightsUtils.trackTrace("result: " + result);
             String targetText = result.getText();
             int totalToken = result.getBilledCharacters() * TranslateConstants.DEEPL_MAGNIFICATION;
-            AppInsightsUtils.printTranslateCost(totalToken, totalToken, totalToken);
-            AppInsightsUtils.trackTrace("clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken);
+            TraceReporterHolder.report("DeepLIntegration.translateByDeepL", "clickTranslation translateByDeepL 用户： " + shopName + "翻译的文本： " + sourceText + " token deepL : " + targetText + " all: " + totalToken + " result: " + result);
 
             counter.addChars(totalToken);
             return targetText;
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
-            AppInsightsUtils.trackException(e);
+            TraceReporterHolder.report("DeepLIntegration.translateByDeepL", "FatalException clickTranslation translateByDeepL deepL翻译报错信息 errors : " + e + " sourceText: " + sourceText + " targetCode: " + targetCode);
+            ExceptionReporterHolder.report("DeepLIntegration.translateByDeepL", e);
         }
         return sourceText;
     }

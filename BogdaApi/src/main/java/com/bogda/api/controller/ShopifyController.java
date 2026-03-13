@@ -3,12 +3,13 @@ package com.bogda.api.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.DO.*;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.*;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,8 +39,8 @@ public class ShopifyController {
         try {
             infoByShopify = shopifyHttpIntegration.getInfoByShopify(cloudServiceRequest.getShopName(), cloudServiceRequest.getAccessToken(), body);
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException test123 " + cloudServiceRequest.getShopName() + " 无法获取shopify数据");
+            ExceptionReporterHolder.report("ShopifyController.test", e);
+            TraceReporterHolder.report("ShopifyController.test", "FatalException test123 " + cloudServiceRequest.getShopName() + " 无法获取shopify数据");
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -62,8 +63,8 @@ public class ShopifyController {
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                AppInsightsUtils.trackException(e);
-                AppInsightsUtils.trackTrace("FatalException getConsumedWords Error while getConsumedWords for shop " + e.getMessage());
+                ExceptionReporterHolder.report("ShopifyController.getConsumedWords", e);
+                TraceReporterHolder.report("ShopifyController.getConsumedWords", "FatalException getConsumedWords Error while getConsumedWords for shop " + shopName);
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -116,12 +117,13 @@ public class ShopifyController {
                     Integer maxCharsByShopName = translationCounterService.getMaxCharsByShopName(shopName);
                     map.put("chars", translationCounterRequests.getUsedChars());
                     map.put("totalChars", maxCharsByShopName);
-                    AppInsightsUtils.trackTrace("getUserLimitChars " + shopName + " chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
+                    TraceReporterHolder.report("ShopifyController.getUserLimitChars", "getUserLimitChars " + shopName + " chars: " + translationCounterRequests.getUsedChars() + " totalChars: " + maxCharsByShopName);
                     return new BaseResponse<>().CreateSuccessResponse(map);
                 }
             } catch (Exception e) {
                 // 日志记录错误，便于后续排查
-                AppInsightsUtils.trackTrace("FatalException getUserLimitChars Error while getUserLimitChars for shop " + e.getMessage());
+                TraceReporterHolder.report("ShopifyController.getUserLimitChars", "FatalException getUserLimitChars Error while getUserLimitChars for shop " + shopName);
+                ExceptionReporterHolder.report("ShopifyController.getUserLimitChars", e);
             }
 
             // 如果未成功且重试次数未达上限，等待一段时间后再重试
@@ -186,7 +188,7 @@ public class ShopifyController {
             return new BaseResponse<>().CreateErrorResponse("registerTransactionRequest is empty");
         }
         String s = shopifyService.updateShopifyDataByTranslateTextRequests(registerTransactionRequest);
-        AppInsightsUtils.trackTrace("updateItems 用户 " + registerTransactionRequest.get(0).getShopName() + " 返回数据 response: " + s);
+        TraceReporterHolder.report("ShopifyController.updateItems", "updateItems 用户 " + registerTransactionRequest.get(0).getShopName() + " 返回数据 response: " + s);
         if (s.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {

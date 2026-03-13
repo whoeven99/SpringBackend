@@ -1,6 +1,7 @@
 package com.bogda.service.logic.PCApp;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.common.entity.DO.PCUsersDO;
 import com.bogda.common.entity.VO.PCUserPointsVO;
@@ -12,7 +13,6 @@ import com.bogda.repository.entity.PCOrdersDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.utils.ShopifyUtils;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,7 @@ public class PCUsersService {
     @Autowired
     private PCEmailService pcEmailService;
 
-    public void initUser(String shopName, PCUsersDO pcUsersDO)  {
+    public void initUser(String shopName, PCUsersDO pcUsersDO) {
         // 获取用户是否存在 ，存在，做更新操作； 不存在，存储用户
         PCUsersDO pcUsers = pcUsersRepo.getUserByShopName(shopName);
         if (pcUsers == null) {
@@ -77,13 +77,13 @@ public class PCUsersService {
         // 判断是否有订单标识 有的话 就直接返回true
         String redisOrderId = ordersRedisService.getOrderId(shopName, orderId);
         if (!"null".equals(redisOrderId)) {
-            AppInsightsUtils.trackTrace("PC addCharsByShopName 用户 " + shopName + " redisOrderId : " + redisOrderId);
+            TraceReporterHolder.report("PCUsersService.addPurchasePoints", "PC addCharsByShopName 用户 " + shopName + " redisOrderId : " + redisOrderId);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
 
         boolean flag = pcUsersRepo.updatePurchasePointsByShopName(shopName, userByShopName.getAccessToken(), orderId, chars);
         if (flag) {
-            AppInsightsUtils.trackTrace("PC addPurchasePoints 添加额度成功 " + shopName + " chars: " + chars);
+            TraceReporterHolder.report("PCUsersService.addPurchasePoints", "PC addPurchasePoints 添加额度成功 " + shopName + " chars: " + chars);
             return new BaseResponse<>().CreateSuccessResponse(true);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
@@ -113,7 +113,7 @@ public class PCUsersService {
         Boolean isDeduct = pcUserTrialsDO.getIsDeduct();
         if (!isDeduct) {
             boolean deduct = pcUsersRepo.updatePurchasePoints(shopName, -80000);
-            AppInsightsUtils.trackTrace("PC uninstall 用户 " + shopName + " 扣除额度 ：" + deduct);
+            TraceReporterHolder.report("PCUsersService.uninstall", "PC uninstall 用户 " + shopName + " 扣除额度 ：" + deduct);
         }
 
         if (flag) {
@@ -130,14 +130,14 @@ public class PCUsersService {
         // 判断是否有订单标识 有的话 就直接返回true
         String redisOrderId = ordersRedisService.getOrderId(shopName, translationCharsVO.getSubGid());
         if (!"null".equals(redisOrderId)) {
-            AppInsightsUtils.trackTrace("PC addCharsByShopName 用户 " + shopName + " redisOrderId: " + redisOrderId  + " orderId : " + translationCharsVO.getSubGid());
+            TraceReporterHolder.report("PCUsersService.addCharsByShopNameAfterSubscribe", "PC addCharsByShopName 用户 " + shopName + " redisOrderId: " + redisOrderId + " orderId : " + translationCharsVO.getSubGid());
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
         // 根据传来的gid获取，相关订阅信息
         String subscriptionQuery = ShopifyRequestUtils.getSubscriptionQuery(translationCharsVO.getSubGid());
         String shopifyByQuery = shopifyService.getShopifyData(shopName, userByName.getAccessToken(), TranslateConstants.API_VERSION_LAST, subscriptionQuery);
-        AppInsightsUtils.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
+        TraceReporterHolder.report("PCUsersService.addCharsByShopNameAfterSubscribe", "PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
 
         // 判断和解析相关数据
         JSONObject queryValid = ShopifyUtils.isQueryValid(shopifyByQuery);
@@ -147,17 +147,17 @@ public class PCUsersService {
 
         // 获取用户订阅计划表的相关数据，与下面数据进行判断
         PCOrdersDO pcOrdersDO = pcOrdersRepo.getOrderBySubGid(translationCharsVO.getSubGid());
-        AppInsightsUtils.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅计划表 ：" + pcOrdersDO.toString());
+        TraceReporterHolder.report("PCUsersService.addCharsByShopNameAfterSubscribe", "PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅计划表 ：" + pcOrdersDO.toString());
 
         String name = queryValid.getString("name");
         String status = queryValid.getString("status");
         Integer trialDays = queryValid.getInteger("trialDays");
-        AppInsightsUtils.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status);
+        TraceReporterHolder.report("PCUsersService.addCharsByShopNameAfterSubscribe", "PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用天数 ：" + trialDays + " name: " + name + " status: " + status);
 
 
         Integer charsByPlanName = pcSubscriptionsRepo.getCharsByPlanName(name);
         if (name.equals(pcOrdersDO.getName()) && status.equals(pcOrdersDO.getStatus()) && trialDays > 0) {
-            AppInsightsUtils.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
+            TraceReporterHolder.report("PCUsersService.addCharsByShopNameAfterSubscribe", "PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 第一次免费试用 ：" + translationCharsVO.getSubGid());
             String currentPeriodEnd = queryValid.getString("currentPeriodEnd");
 
             // 修改用户过期时间  和  费用类型
@@ -196,7 +196,7 @@ public class PCUsersService {
         }
 
         // 添加额度
-        AppInsightsUtils.trackTrace("addCharsByShopNameAfterSubscribe " + shopName + " 用户 计划名 ：" + pcOrdersDO.getName() + " name: " + name + " status: " + status);
+        TraceReporterHolder.report("PCUsersService.addCharsByShopNameAfterSubscribe", "addCharsByShopNameAfterSubscribe " + shopName + " 用户 计划名 ：" + pcOrdersDO.getName() + " name: " + name + " status: " + status);
         if (name.equals(pcOrdersDO.getName()) && "ACTIVE".equals(status)) {
             // 根据用户的计划添加对应的额度
             boolean update = pcUsersRepo.updatePurchasePointsByShopName(shopName, translationCharsVO.getAccessToken(), translationCharsVO.getSubGid(), charsByPlanName);

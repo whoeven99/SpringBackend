@@ -4,9 +4,9 @@ import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IUserPrivateTranslateService;
 import com.bogda.common.entity.DO.UserPrivateTranslateDO;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +27,7 @@ public class UserPrivateTranslateService {
         String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             // 仅更新 api_model，prompt_word，token_limit ，is_selected
-            AppInsightsUtils.trackTrace("configPrivateModel " + shopName + "userKey: " + userKey);
+            TraceReporterHolder.report("UserPrivateTranslateService.configPrivateModel", "configPrivateModel " + shopName + "userKey: " + userKey);
             KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
             return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
                     .eq(UserPrivateTranslateDO::getShopName, shopName)
@@ -39,7 +39,7 @@ public class UserPrivateTranslateService {
         }
 
         //将数据存到Azure服务器里面
-        AppInsightsUtils.trackTrace("configPrivateModel " + shopName + " userKey: " + userKey);
+        TraceReporterHolder.report("UserPrivateTranslateService.configPrivateModel", "configPrivateModel " + shopName + " userKey: " + userKey);
         KeyVaultSecret keyVaultSecret = secretClient.setSecret(userKey, data.getApiKey());
 
         // 将数据存到数据库中
@@ -75,7 +75,7 @@ public class UserPrivateTranslateService {
         String userKey = getApiKey(shopName, data.getApiName());
         if (dbData != null) {
             // 仅更新 api_model，prompt_word，token_limit ，is_selected
-            AppInsightsUtils.trackTrace("configPrivateModelExceptApiKey " + shopName + " userKey: " + userKey);
+            TraceReporterHolder.report("UserPrivateTranslateService.configPrivateModelExceptApiKey", "configPrivateModelExceptApiKey " + shopName + " userKey: " + userKey);
             return iUserPrivateTranslateService.update(new LambdaUpdateWrapper<UserPrivateTranslateDO>()
                     .eq(UserPrivateTranslateDO::getShopName, shopName)
                     .eq(UserPrivateTranslateDO::getApiName, data.getApiName())

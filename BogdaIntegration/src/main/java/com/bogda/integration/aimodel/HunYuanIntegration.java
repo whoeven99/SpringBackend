@@ -1,7 +1,8 @@
 package com.bogda.integration.aimodel;
 
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.tencentcloudapi.common.Credential;
@@ -68,8 +69,8 @@ public class HunYuanIntegration {
                         try {
                             return CLIENT.ChatCompletions(req);
                         } catch (Exception e) {
-                            AppInsightsUtils.trackTrace("FatalException 每日须看 hunYuanTranslate 混元报错信息 errors ： " + e.getMessage() + " sourceText : " + sourceText + " 用户：" + shopName);
-                            AppInsightsUtils.trackException(e);
+                            TraceReporterHolder.report("HunYuanIntegration.hunYuanTranslate", "FatalException 每日须看 hunYuanTranslate 混元报错信息 errors ： " + e.getMessage() + " sourceText : " + sourceText + " 用户：" + shopName);
+                            ExceptionReporterHolder.report("HunYuanIntegration.hunYuanTranslate", e);
                             return null;
                         }
                     },
@@ -89,8 +90,7 @@ public class HunYuanIntegration {
                 int totalToken = (int) (resp.getUsage().getTotalTokens().intValue() * TranslateConstants.MAGNIFICATION);
                 long completionTokens = resp.getUsage().getCompletionTokens();
                 long promptTokens = resp.getUsage().getPromptTokens();
-                AppInsightsUtils.printTranslateCost(totalToken, (int) promptTokens, (int) completionTokens);
-                AppInsightsUtils.trackTrace("hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
+                TraceReporterHolder.report("HunYuanIntegration.hunYuanTranslate", "hunYuanTranslate 混元信息 " + shopName + " 用户 token hunyuan: " + sourceText + " targetText " + targetText + "  all: " + totalToken + " input: " + promptTokens + " output: " + completionTokens);
 
                 countUtils.addChars(totalToken);
                 return targetText;
@@ -98,11 +98,11 @@ public class HunYuanIntegration {
                 return null;
             }
         } catch (TencentCloudSDKException e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
+            ExceptionReporterHolder.report("HunYuanIntegration.hunYuanTranslate", e);
+            TraceReporterHolder.report("HunYuanIntegration.hunYuanTranslate", "FatalException hunYuanTranslate 混元报错信息 errors : " + e + " resp_id: " + e.getRequestId() + " sourceText: " + sourceText + " prompt: " + prompt);
             return null;
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
+            ExceptionReporterHolder.report("HunYuanIntegration.hunYuanTranslate", e);
             return null;
         }
     }

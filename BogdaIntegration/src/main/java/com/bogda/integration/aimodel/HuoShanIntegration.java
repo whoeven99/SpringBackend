@@ -1,7 +1,8 @@
 package com.bogda.integration.aimodel;
 
 import com.alibaba.fastjson.JSON;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.ConfigUtils;
 import com.volcengine.model.request.translate.TranslateImageRequest;
 import com.volcengine.model.response.translate.TranslateImageResponse;
@@ -23,7 +24,7 @@ public class HuoShanIntegration {
         translateService.setAccessKey(ConfigUtils.getConfig("HUOSHAN_API_KEY"));
         translateService.setSecretKey(ConfigUtils.getConfig("HUOSHAN_API_SECRET"));
 
-        AppInsightsUtils.trackTrace("huoShanImageTranslate imageUrl : " + imageUrl + " targetLanguage: " + targetLanguage);
+        TraceReporterHolder.report("HuoShanIntegration.huoShanImageTranslate", "huoShanImageTranslate imageUrl : " + imageUrl + " targetLanguage: " + targetLanguage);
         try {
             URL url = new URL(imageUrl);
             URLConnection connection = url.openConnection();
@@ -40,11 +41,12 @@ public class HuoShanIntegration {
             translateImageRequest.setImage(base64Image);
 
             TranslateImageResponse translateImageResponse = translateService.translateImage(translateImageRequest);
-            AppInsightsUtils.trackTrace("huoShanImageTranslate 返回的数据 ： " + JSON.toJSONString(translateImageResponse.getResponseMetadata()));
+            TraceReporterHolder.report("HuoShanIntegration.huoShanImageTranslate", "huoShanImageTranslate 返回的数据 ： " + JSON.toJSONString(translateImageResponse.getResponseMetadata()));
             return Base64.getDecoder().decode(translateImageResponse.getImage());
 
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException huoShanImageTranslate " + e.getMessage());
+            TraceReporterHolder.report("HuoShanIntegration.huoShanImageTranslate", "FatalException huoShanImageTranslate " + e.getMessage());
+            ExceptionReporterHolder.report("HuoShanIntegration.huoShanImageTranslate", e);
         }
         return null;
     }

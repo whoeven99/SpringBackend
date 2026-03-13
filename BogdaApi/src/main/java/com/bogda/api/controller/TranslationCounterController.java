@@ -1,6 +1,7 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslationCounterService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.common.entity.DO.TranslationCounterDO;
@@ -11,7 +12,6 @@ import com.bogda.service.logic.TranslationCounterService;
 import com.bogda.service.logic.redis.OrdersRedisService;
 import com.bogda.common.controller.request.TranslationCounterRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,13 +71,13 @@ public class TranslationCounterController {
         // 判断是否有订单标识 有的话 就直接返回true
         String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
         if (!"null".equals(orderId)) {
-            AppInsightsUtils.trackTrace("addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
+            TraceReporterHolder.report("TranslationCounterController.addCharsByShopName", "addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
         // 获取用户accessToken
         if (translationCounterService.updateOnceCharsByShopName(shopName, usersDO.getAccessToken(), addCharsVO.getGid(), addCharsVO.getChars())){
-            AppInsightsUtils.trackTrace("addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
+            TraceReporterHolder.report("TranslationCounterController.addCharsByShopName", "addCharsByShopName 用户 " + shopName + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateSuccessResponse(SERVER_SUCCESS);
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_UPDATE_ERROR);

@@ -1,7 +1,7 @@
 package com.bogda.integration.aimodel;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.http.BaseHttpIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+
 @Component
 public class RateHttpIntegration {
 
@@ -30,10 +31,10 @@ public class RateHttpIntegration {
                 ",LRD,LYD,LTL,MGA,MKD,MOP,MWK,MVR,MRU,MXN,MYR,MUR,MDL,MAD,MNT,MZN,NAD,NPR,ANG,NZD,NIO,NGN,NOK,OMR,PAB,PKR" +
                 ",PGK,PYG,PEN,PHP,PLN,QAR,RON,RUB,RWF,WST,SHP,SAR,RSD,SCR,SLL,SGD,SDG,SOS,ZAR,KRW,SSP,SBD,LKR,SRD,SZL,SEK" +
                 ",CHF,TWD,THB,TJS,TZS,TOP,TTD,TND,TRY,TMT,UGX,UAH,AED,USD,UYU,UZS,VUV,VES,VND,XOF,YER,ZMW,STD";
-        AppInsightsUtils.trackTrace("rateKey: " + rateKey);
+        TraceReporterHolder.report("RateHttpIntegration.getFixerRate", "rateKey: " + rateKey);
         String response = baseHttpIntegration.httpGet(url, Map.of("apikey", rateKey));
-        if (response == null){
-            AppInsightsUtils.trackTrace("FatalException 每日须看 getFixerRate 获取汇率失败");
+        if (response == null) {
+            TraceReporterHolder.report("RateHttpIntegration.getFixerRate", "FatalException 每日须看 getFixerRate 获取汇率失败");
             return new HashMap<>();
         }
         JSONObject jsonObject = JSONObject.parseObject(response);

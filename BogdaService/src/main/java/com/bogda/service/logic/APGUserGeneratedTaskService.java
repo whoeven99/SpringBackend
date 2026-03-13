@@ -2,6 +2,8 @@ package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IAPGUserGeneratedSubtaskService;
 import com.bogda.service.Service.IAPGUserGeneratedTaskService;
 import com.bogda.service.Service.IAPGUsersService;
@@ -13,7 +15,6 @@ import com.bogda.common.entity.VO.GenerateDescriptionsVO;
 import com.bogda.common.entity.VO.GenerateEmailVO;
 import com.bogda.common.entity.VO.GenerateProgressBarVO;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,14 +87,14 @@ public class APGUserGeneratedTaskService {
             //获取产品标题
             return generateProgressBarVO;
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException " + shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
-            AppInsightsUtils.trackException(e);
+            TraceReporterHolder.report("APGUserGeneratedTaskService.getUserData", "FatalException " + shopName + " 用户 " + userDO.getId() + " 的taskData有问题 errors ： " + e);
+            ExceptionReporterHolder.report("APGUserGeneratedTaskService.getUserData", e);
         }
         //获取
         return generateProgressBarVO;
     }
 
-    public static GenerateProgressBarVO apgUserGeneratedTaskDOToGenerateProgressBarVO(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Integer totalCount, Integer unfinishedCount){
+    public static GenerateProgressBarVO apgUserGeneratedTaskDOToGenerateProgressBarVO(APGUserGeneratedTaskDO apgUserGeneratedTaskDO, Integer totalCount, Integer unfinishedCount) {
         GenerateProgressBarVO generateProgressBarVO = new GenerateProgressBarVO();
         generateProgressBarVO.setAllCount(totalCount);
         generateProgressBarVO.setUnfinishedCount(unfinishedCount);
@@ -117,9 +118,8 @@ public class APGUserGeneratedTaskService {
                 //将json 存到APG_User_Generated_Subtask中
                 iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, json, usersDO.getId(), null));
             } catch (Exception e) {
-                AppInsightsUtils.trackTrace("FatalException " + shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
-//                AppInsightsUtils.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
-                AppInsightsUtils.trackException(e);
+                TraceReporterHolder.report("APGUserGeneratedTaskService.batchGenerateDescription", "FatalException " + shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateDescriptionVO + "  " + e);
+                ExceptionReporterHolder.report("APGUserGeneratedTaskService.batchGenerateDescription", e);
             }
         }
 
@@ -130,13 +130,12 @@ public class APGUserGeneratedTaskService {
             String email = JsonUtils.OBJECT_MAPPER.writeValueAsString(generateEmailVO);
             iapgUserGeneratedSubtaskService.save(new APGUserGeneratedSubtaskDO(null, 0, email, usersDO.getId(), null));
         } catch (JsonProcessingException e) {
-            AppInsightsUtils.trackTrace(shopName + " 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
-            AppInsightsUtils.trackException(e);
-//            AppInsightsUtils.trackTrace("用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+            TraceReporterHolder.report("APGUserGeneratedTaskService.batchGenerateDescription", shopName + " FatalException 用户 批量翻译json化失败 errors 数据为 ： " + generateEmailVO + "  " + e);
+            ExceptionReporterHolder.report("APGUserGeneratedTaskService.batchGenerateDescription", e);
         }
     }
 
-    private GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId,GenerateDescriptionsVO generateDescriptionsVO){
+    private GenerateDescriptionVO generateDescriptionsVOToGenerateDescriptionVO(String productId, GenerateDescriptionsVO generateDescriptionsVO) {
         GenerateDescriptionVO generateDescriptionVO = new GenerateDescriptionVO();
         generateDescriptionVO.setTemplateType(generateDescriptionsVO.getTemplateType());
         generateDescriptionVO.setTemplateId(generateDescriptionsVO.getTemplateId());

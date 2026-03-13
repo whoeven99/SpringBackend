@@ -3,6 +3,7 @@ package com.bogda.api;
 import com.alibaba.fastjson.JSONObject;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -14,7 +15,6 @@ import com.bogda.service.logic.redis.RateRedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -110,7 +110,7 @@ public class TestController {
 
     @GetMapping("/ping")
     public String ping() {
-        AppInsightsUtils.trackTrace("SpringBackend Ping Successful");
+        TraceReporterHolder.report("TestController.ping", "SpringBackend Ping Successful");
         return "Ping Successful!";
     }
 
@@ -141,7 +141,7 @@ public class TestController {
      */
     @PostMapping("/frontEndPrinting")
     public void frontEndPrinting(@RequestBody String data) {
-        AppInsightsUtils.trackTrace(data);
+        TraceReporterHolder.report("TestController.frontEndPrinting", data);
     }
 
     /**

@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.bogda.common.entity.DO.*;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.*;
 import com.bogda.service.integration.EmailIntegration;
 import com.bogda.common.controller.request.PurchaseSuccessRequest;
 import com.bogda.common.controller.request.TencentSendEmailRequest;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -80,7 +80,7 @@ public class OrderService {
         UserTrialsDO userTrialsDO = iUserTrialsService.getOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
         //修改用户计划表里面用户feeType
         boolean update = iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, shopName).set(UserSubscriptionsDO::getFeeType, feeType));
-        AppInsightsUtils.trackTrace("sendSubscribeSuccessEmail 用户 " + shopName + " 修改用户计划表里面用户feeType " + update + " feeType为" + feeType + " subId为" + subId);
+        TraceReporterHolder.report("OrderService.sendSubscribeSuccessEmail", "sendSubscribeSuccessEmail 用户 " + shopName + " 修改用户计划表里面用户feeType " + update + " feeType为" + feeType + " subId为" + subId);
         //根据shopName获取用户名
         UsersDO usersDO = usersService.getUserByName(shopName);
         //根据shopName获取订单信息
@@ -100,7 +100,7 @@ public class OrderService {
             templateData.put("Start date", trialStart + " UTC");
             templateData.put("End date", trialEnd + " UTC");
             emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, MailChimpConstants.PLAN_TRIALS_SUCCESSFUL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
-            AppInsightsUtils.trackTrace("sendSubscribeSuccessEmail: " + shopName + " is free trial");
+            TraceReporterHolder.report("OrderService.sendSubscribeSuccessEmail", "sendSubscribeSuccessEmail: " + shopName + " is free trial");
             return false;
         }
         Map<String, String> templateData = new HashMap<>();
@@ -136,7 +136,7 @@ public class OrderService {
                         .orderByDesc(CharsOrdersDO::getCreatedAt)
                 ).stream().filter(order -> order.getId() != null && order.getId().contains("AppSubscription"))
                 .toList();
-        if (charsOrders.isEmpty()){
+        if (charsOrders.isEmpty()) {
             // 返回null
             return null;
         }

@@ -1,5 +1,6 @@
 package com.bogda.service.logic;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IAPGCharsOrderService;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.service.Service.IAPGUserPlanService;
@@ -7,7 +8,6 @@ import com.bogda.service.Service.IAPGUsersService;
 import com.bogda.common.entity.DO.APGCharsOrderDO;
 import com.bogda.common.entity.DO.APGUserCounterDO;
 import com.bogda.common.entity.DO.APGUsersDO;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +33,7 @@ public class APGCharsOrderService {
         APGUsersDO usersDO = usersService.getUserByShopName(shopName);
 
         if (usersDO == null) {
-            AppInsightsUtils.trackTrace("APGCharsOrderService 用户 " + shopName + " usersDO is null ");
+            TraceReporterHolder.report("APGCharsOrderService.insertOrUpdateOrder", "FatalException APGCharsOrderService 用户 " + shopName + " usersDO is null ");
             return false;
         }
 

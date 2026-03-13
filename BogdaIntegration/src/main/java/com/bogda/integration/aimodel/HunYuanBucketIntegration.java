@@ -1,6 +1,7 @@
 package com.bogda.integration.aimodel;
 
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.StringUtils;
 import com.qcloud.cos.COSClient;
@@ -19,6 +20,7 @@ import com.qcloud.cos.transfer.Upload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.tools.DiagnosticCollector;
 import java.io.ByteArrayInputStream;
 
 
@@ -55,9 +57,9 @@ public class HunYuanBucketIntegration {
 
     /**
      * 进度条展示
-     * */
+     */
     private static void showTransferProgress(Transfer transfer) {
-        AppInsightsUtils.trackTrace(transfer.getDescription());
+        TraceReporterHolder.report("HunYuanBucketIntegration.showTransferProgress", transfer.getDescription());
         do {
             try {
                 Thread.sleep(2000);
@@ -68,62 +70,62 @@ public class HunYuanBucketIntegration {
             long soFar = progress.getBytesTransferred();
             long total = progress.getTotalBytesToTransfer();
             double pct = progress.getPercentTransferred();
-            AppInsightsUtils.trackTrace("[" + soFar + " / " + total + "] = " + pct);
+            TraceReporterHolder.report("HunYuanBucketIntegration.showTransferProgress", "[" + soFar + " / " + total + "] = " + pct);
         } while (transfer.isDone() == false);
-        AppInsightsUtils.trackTrace(String.valueOf(transfer.getState()));
+        TraceReporterHolder.report("HunYuanBucketIntegration.showTransferProgress", String.valueOf(transfer.getState()));
     }
 
     /**
      * 上传文件图片
      * 上传文件, 根据文件大小自动选择简单上传或者分块上传。
-     * */
+     */
     public static String uploadFile(MultipartFile file, String shopName, String imageId) {
-            TransferManager transferManager = createTransferManager();
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
+        TransferManager transferManager = createTransferManager();
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
 
-            // 获取文件后缀名
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        // 获取文件后缀名
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        // 随机生成8位随机数
+        String generate8DigitNumber = StringUtils.generate8DigitNumber();
+        String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + generate8DigitNumber + extension;
+        String afterUrl = HTTP + key;
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.getSize());
+        metadata.setContentType(file.getContentType());
+
+        try {
+            PutObjectRequest putObjectRequest = callWithTimeoutAndRetry(() -> {
+                        try {
+                            return new PutObjectRequest(BUCKET_NAME, key, file.getInputStream(), metadata);
+                        } catch (Exception e) {
+                            TraceReporterHolder.report("HunYuanBucketIntegration.uploadFile", "FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
+                            ExceptionReporterHolder.report("HunYuanBucketIntegration.uploadFile", e);
+                            return null;
+                        }
+                    },
+                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
+                    DEFAULT_MAX_RETRIES                // 最多重试3次
+            );
+            if (putObjectRequest == null) {
+                return null;
             }
-
-            // 随机生成8位随机数
-            String generate8DigitNumber = StringUtils.generate8DigitNumber();
-            String key = PATH_NAME + "/" + shopName + "/" + imageId + "/" + generate8DigitNumber + extension;
-            String afterUrl = HTTP + key;
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentLength(file.getSize());
-            metadata.setContentType(file.getContentType());
-
-            try {
-                PutObjectRequest putObjectRequest = callWithTimeoutAndRetry(() -> {
-                            try {
-                                return new PutObjectRequest(BUCKET_NAME, key, file.getInputStream(), metadata);
-                            } catch (Exception e) {
-                                AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " imageId : " + imageId + " 用户：" + shopName);
-                                AppInsightsUtils.trackException(e);
-                                return null;
-                            }
-                        },
-                        DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
-                        DEFAULT_MAX_RETRIES                // 最多重试3次
-                );
-                if (putObjectRequest == null) {
-                    return null;
-                }
 //                long startTime = System.currentTimeMillis();
-                Upload upload = transferManager.upload(putObjectRequest);
-                showTransferProgress(upload);
-                UploadResult uploadResult = upload.waitForUploadResult();
+            Upload upload = transferManager.upload(putObjectRequest);
+            showTransferProgress(upload);
+            UploadResult uploadResult = upload.waitForUploadResult();
 //                long endTime = System.currentTimeMillis();
-//                AppInsightsUtils.trackTrace("used time: " + (endTime - startTime) / 1000);
-                transferManager.shutdownNow();
-                return afterUrl; // 上传成功直接返回true
-            } catch (Exception e) {
-                AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
-            } finally {
-                transferManager.shutdownNow();
-            }
+//                TraceReporterHolder.report("used time: " + (endTime - startTime) / 1000);
+            transferManager.shutdownNow();
+            return afterUrl; // 上传成功直接返回true
+        } catch (Exception e) {
+            TraceReporterHolder.report("HunYuanBucketIntegration.uploadFile", "FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", shopName: " + shopName + " imageId: " + imageId);
+        } finally {
+            transferManager.shutdownNow();
+        }
 
         return null;
     }
@@ -132,7 +134,7 @@ public class HunYuanBucketIntegration {
      * 重新实现一个存bucket桶的方法
      * 会于上面uploadFile大部分重复，先实现后面再优化
      */
-    public static String uploadBytes(byte[] bytes, String key, String contentType){
+    public static String uploadBytes(byte[] bytes, String key, String contentType) {
         TransferManager transferManager = createTransferManager();
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(bytes.length);
@@ -144,8 +146,8 @@ public class HunYuanBucketIntegration {
                         try {
                             return new PutObjectRequest(BUCKET_NAME, key, inputStream, metadata);
                         } catch (Exception e) {
-                            AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key );
-                            AppInsightsUtils.trackException(e);
+                            TraceReporterHolder.report("HunYuanBucketIntegration.uploadBytes", "FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors ： " + e.getMessage() + " key : " + key);
+                            ExceptionReporterHolder.report("HunYuanBucketIntegration.uploadBytes", e);
                             return null;
                         }
                     },
@@ -165,7 +167,8 @@ public class HunYuanBucketIntegration {
             transferManager.shutdownNow();
             return HTTP + key; // 上传成功直接返回true
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key );
+            TraceReporterHolder.report("HunYuanBucketIntegration.uploadBytes", "FatalException 每日须看 uploadFile 腾讯上传图片报错信息 errors : " + e.getMessage() + ", key : " + key);
+            ExceptionReporterHolder.report("HunYuanBucketIntegration.uploadBytes", e);
         } finally {
             transferManager.shutdownNow();
         }

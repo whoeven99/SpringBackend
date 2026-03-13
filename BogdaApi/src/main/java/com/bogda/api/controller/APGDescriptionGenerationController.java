@@ -1,6 +1,7 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IAPGUserPlanService;
 import com.bogda.service.Service.IAPGUsersService;
 import com.bogda.common.entity.DO.APGUsersDO;
@@ -11,7 +12,6 @@ import com.bogda.common.exception.ClientException;
 import com.bogda.service.logic.GenerateDescriptionService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.CharacterCountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -42,12 +42,12 @@ public class APGDescriptionGenerationController {
         try {
             product = generateDescriptionService.getProductsQueryByProductId(generateDescriptionVO.getProductId(), usersDO.getShopName(), usersDO.getAccessToken());
             description = generateDescriptionService.generateDescription(usersDO, generateDescriptionVO, new CharacterCountUtils(), userMaxLimit, product);
-            AppInsightsUtils.trackTrace("generateDescription" + shopName + " generateDescription: " + description);
+            TraceReporterHolder.report("APGDescriptionGenerationController.generateDescription", "generateDescription" + shopName + " generateDescription: " + description);
             if (description == null) {
                 return new BaseResponse<>().CreateErrorResponse(false);
             }
         } catch (ClientException e) {
-            AppInsightsUtils.trackTrace("generateDescription shopName : " + shopName + " generateDescription errors : " + e.getMessage());
+            TraceReporterHolder.report("APGDescriptionGenerationController.generateDescription", "generateDescription shopName : " + shopName + " generateDescription errors : " + e.getMessage());
             return new BaseResponse<>().CreateErrorResponse(TranslateConstants.CHARACTER_LIMIT);
         }
         //计算相关生成数据

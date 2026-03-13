@@ -5,7 +5,8 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.controller.response.SignResponse;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -89,7 +89,8 @@ public class AidgeIntegration {
             JsonNode imageUrlNode = jsonNode.path("data").path("imageUrl");
             return imageUrlNode.asText(null);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException aidgeStandPictureTranslate " + e.getMessage());
+            ExceptionReporterHolder.report("AidgeIntegration.aidgeStandPictureTranslate", e);
+            TraceReporterHolder.report("AidgeIntegration.aidgeStandPictureTranslate", "FatalException aidgeStandPictureTranslate " + e.getMessage());
             return null;
         }
     }
@@ -129,8 +130,8 @@ public class AidgeIntegration {
                     }
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    AppInsightsUtils.trackTrace("FatalException prodTest " + e.getMessage());
+                    ExceptionReporterHolder.report("AidgeIntegration.prodTest", e);
+                    TraceReporterHolder.report("AidgeIntegration.prodTest", "FatalException prodTest " + e.getMessage());
                 }
             }
 
@@ -190,7 +191,8 @@ public class AidgeIntegration {
         try {
             result = doPost(url, data, headers, "UTF-8", 40000, 40000);
         } catch (IOException e) {
-            AppInsightsUtils.trackTrace("FatalException commonInvokeApi error: " + e.getMessage());
+            ExceptionReporterHolder.report("AidgeIntegration.commonInvokeApi", e);
+            TraceReporterHolder.report("AidgeIntegration.commonInvokeApi","FatalException commonInvokeApi error: " + e.getMessage());
         }
 
         if (ALiYunTranslateIntegration.TRANSLATE_APP.equals(appType)){
@@ -199,7 +201,7 @@ public class AidgeIntegration {
             pcUsersRepo.updateUsedPointsByShopName(shopName, PCUserPicturesService.APP_PIC_FEE);
         }
 
-        AppInsightsUtils.trackTrace("translatePic : " + result);
+        TraceReporterHolder.report("AidgeIntegration.commonInvokeApi","translatePic : " + result);
         return result;
     }
 
@@ -214,7 +216,8 @@ public class AidgeIntegration {
 
             return SignResponse.builder().signStr(signStr).appKey(accessKeyName).targetAppKey(accessKeyName).signMethod(ApiConfig.SIGN_METHOD_SHA256).timestamp(time).build();
         } catch (IOException e) {
-            AppInsightsUtils.trackTrace("FatalException getSignResponse error: " + e.getMessage());
+            ExceptionReporterHolder.report("AidgeIntegration.getSignResponse", e);
+            TraceReporterHolder.report("AidgeIntegration.getSignResponse","FatalException getSignResponse error: " + e.getMessage());
         }
         return null;
     }
@@ -325,7 +328,8 @@ public class AidgeIntegration {
 
             return url;
         } catch (Exception exception) {
-            AppInsightsUtils.trackTrace("FatalException aidge 计算sign失败：" + exception.getMessage());
+            TraceReporterHolder.report("AidgeIntegration.getSign", "FatalException aidge 计算sign失败：" + exception.getMessage());
+            ExceptionReporterHolder.report("AidgeIntegration.getSign", exception);
         }
        return null;
     }

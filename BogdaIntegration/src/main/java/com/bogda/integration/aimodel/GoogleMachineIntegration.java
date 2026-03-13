@@ -1,7 +1,8 @@
 package com.bogda.integration.aimodel;
 
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import com.google.cloud.translate.Translate;
@@ -48,11 +49,11 @@ public class GoogleMachineIntegration {
             // 将translatedText反转义下， 用json翻译返回是&quot;1&quot;:&quot;的数据
             translatedText = LiquidHtmlTranslatorUtils.isHtmlEntity(translatedText);
             int totalToken = content.length() * GOOGLE_MACHINE_COEFFICIENT;
-            AppInsightsUtils.trackTrace("googleTranslateWithSDK 翻译文本: " + translatedText + " all：" + totalToken);
+            TraceReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", "googleTranslateWithSDK 翻译文本: " + translatedText + " all：" + totalToken);
             return new Pair<>(translatedText, totalToken);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException Google Translate SDK 翻译错误：" + e.getMessage());
-            AppInsightsUtils.trackException(e);
+            TraceReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", "FatalException Google Translate SDK 翻译错误：" + e.getMessage());
+            ExceptionReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", e);
             return null;
         }
     }

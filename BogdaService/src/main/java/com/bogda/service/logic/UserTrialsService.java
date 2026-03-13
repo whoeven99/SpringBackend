@@ -3,19 +3,18 @@ package com.bogda.service.logic;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ICharsOrdersService;
 import com.bogda.service.Service.IUserTrialsService;
 import com.bogda.common.entity.DO.CharsOrdersDO;
 import com.bogda.common.entity.DO.UserTrialsDO;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-
 
 
 @Service
@@ -39,10 +38,10 @@ public class UserTrialsService {
     public BaseResponse<Object> queryUserTrialByShopName(String shopName) {
         //判断是否购买过订阅计划，如果有则返回true
         List<CharsOrdersDO> charsOrdersDOList = iCharsOrdersService.list(new QueryWrapper<CharsOrdersDO>().eq("shop_name", shopName)
-                .eq("status", "ACTIVE"))
+                        .eq("status", "ACTIVE"))
                 .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
         if (!charsOrdersDOList.isEmpty()) {
-            AppInsightsUtils.trackTrace("queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
+            TraceReporterHolder.report("UserTrialsService.queryUserTrialByShopName", "queryUserTrialByShopName " + shopName + " 返回的charsOrdersDOList 值为 ： " + charsOrdersDOList);
             return new BaseResponse<>().CreateErrorResponse(charsOrdersDOList);
         }
         Boolean flag = iUserTrialsService.queryUserTrialByShopName(shopName);
