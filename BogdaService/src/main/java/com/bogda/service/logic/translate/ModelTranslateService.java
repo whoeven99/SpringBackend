@@ -1,12 +1,12 @@
 package com.bogda.service.logic.translate;
 
+import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.KimiIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
 import com.bogda.integration.aimodel.GoogleMachineIntegration;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,8 +102,8 @@ public class ModelTranslateService {
                     resultMap.put(key, value);
                 }
             } catch (Exception e) {
-                AppInsightsUtils.trackException(e);
-                AppInsightsUtils.trackTrace("FatalException google机器翻译失败：" + value + " key: " + key);
+                ExceptionReporterHolder.report("ModelTranslateService.modelTranslate", e);
+                TraceReporterHolder.report("ModelTranslateService.modelTranslate", "FatalException google机器翻译失败：" + value + " key: " + key);
                 resultMap.put(key, value);
             }
         }

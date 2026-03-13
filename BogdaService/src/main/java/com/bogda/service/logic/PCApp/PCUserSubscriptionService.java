@@ -2,6 +2,7 @@ package com.bogda.service.logic.PCApp;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.PCUsersRepo;
 import com.bogda.common.entity.DO.PCUsersDO;
 import com.bogda.common.entity.VO.SubscriptionVO;
@@ -11,7 +12,6 @@ import com.bogda.repository.entity.PCSubscriptionsDO;
 import com.bogda.repository.entity.PCUserSubscriptionsDO;
 import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,7 @@ public class PCUserSubscriptionService {
         PCUserSubscriptionsDO pcUserSubscriptionsByShopName = pcUserSubscriptionsRepo.getPcUserSubscriptionsByShopName(shopName);
 
         if (pcUserSubscriptionsByShopName == null) {
-            AppInsightsUtils.trackTrace("PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            TraceReporterHolder.report("PCUserSubscriptionService.getUserSubscriptionPlan", "PC getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("pcUserSubscriptionsByShopName is null");
         }
 

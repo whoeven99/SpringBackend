@@ -2,6 +2,8 @@ package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUserTypeTokenService;
 import com.bogda.common.entity.DO.TranslateResourceDTO;
@@ -9,11 +11,11 @@ import com.bogda.common.entity.DO.UserTypeTokenDO;
 import com.bogda.common.controller.request.ShopifyRequest;
 import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+
 import static com.bogda.common.entity.DO.TranslateResourceDTO.TOKEN_MAP;
 import static com.bogda.service.utils.TypeConversionUtils.convertTranslateRequestToShopifyRequest;
 
@@ -29,12 +31,13 @@ public class UserTypeTokenService {
 
     /**
      * 调用方法获取数据库Translates里面的id值，根据id值从UserTypeToken表获取对应的数据
+     *
      * @param request 用户数据对象，包含用户信息（如shopName、target、source, accessToken）
      * @return UserTypeTokenDO  UserTypeTokenDO数据类型
      */
     public UserTypeTokenDO getUserTypeToken(TranslateRequest request) {
         Integer translationId = translatesService.getIdByShopNameAndTargetAndSource(request.getShopName(), request.getTarget(), request.getSource());
-        if (translationId != null){
+        if (translationId != null) {
             return userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq("translation_id", translationId));
         }
         return null;
@@ -42,13 +45,13 @@ public class UserTypeTokenService {
 
     /**
      * 调用方法向数据库UserTypeToken的插入初始化数据，根据shopName向UserTypeToken表插入对应的数据
-     * @param request 用户数据对象，包含用户信息（如shopName、target、source, accessToken）
      *
+     * @param request 用户数据对象，包含用户信息（如shopName、target、source, accessToken）
      */
     @Async
     public void getUserInitToken(TranslateRequest request) {
         UserTypeTokenDO userTypeTokenDO = userTypeTokenService.getOne(new QueryWrapper<UserTypeTokenDO>().eq(TranslateConstants.SHOP_NAME, request.getShopName()));
-        if (userTypeTokenDO == null){
+        if (userTypeTokenDO == null) {
 
             ShopifyRequest shopifyRequest = convertTranslateRequestToShopifyRequest(request);
             //将shopName初始值存储到数据库中
@@ -60,7 +63,8 @@ public class UserTypeTokenService {
                 try {
                     shopifyService.insertInitialByTranslation(shopifyRequest, key, "initial");
                 } catch (Exception e) {
-                    AppInsightsUtils.trackTrace("FatalException getUserInitToken " + shopifyRequest.getShopName() + " " + key + "模块获取失败： " + request);
+                    TraceReporterHolder.report("UserTypeTokenService.getUserInitToken", "FatalException getUserInitToken " + shopifyRequest.getShopName() + " " + key + "模块获取失败： " + request);
+                    ExceptionReporterHolder.report("UserTypeTokenService.getUserInitToken", e);
                 }
             }
 
@@ -69,6 +73,7 @@ public class UserTypeTokenService {
 
     /**
      * 调用方法向数据库UserTypeToken的插入初始化数据，根据shopName向UserTypeToken表插入对应的数据
+     *
      * @param shopName 用户的商店名
      * @return UserTypeTokenDO  UserTypeTokenDO数据类型
      */
@@ -104,8 +109,8 @@ public class UserTypeTokenService {
                 getUserTranslatedToken(request, translationId, userTypeTokenService, shopifyService);
             }
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException startTokenCount " + request.getShopName() + "错误原因 errors ： " + e.getMessage());
+            ExceptionReporterHolder.report("UserTypeTokenService.startTokenCount", e);
+            TraceReporterHolder.report("UserTypeTokenService.startTokenCount", "FatalException startTokenCount " + request.getShopName() + "错误原因 errors ： " + e.getMessage());
         }
     }
 
@@ -136,24 +141,10 @@ public class UserTypeTokenService {
                 updateWrapper.set(key, tokens);
                 userTypeTokenService.update(null, updateWrapper);
             } else {
-                AppInsightsUtils.trackTrace("getUserTranslatedToken " + shopifyRequest.getShopName() + " Invalid column name");
+                TraceReporterHolder.report("UserTypeTokenService.getUserTranslatedToken", "getUserTranslatedToken " + shopifyRequest.getShopName() + " Invalid column name");
             }
         }
         //token全部获取完之后修改，UserTypeToken的status==1
         userTypeTokenService.updateStatusByTranslationIdAndStatus(translationId, 1);
-    }
-
-
-    /**
-     * 异步测试计数功能
-     * */
-    @Async
-    public void testTokenCount(ShopifyRequest request, String key) {
-        int tokens = 0;
-        for (TranslateResourceDTO translateResourceDTO : TOKEN_MAP.get(key)) {
-            int token = shopifyService.getTotalWords(request, "tokens", translateResourceDTO);
-            tokens += token;
-        }
-        AppInsightsUtils.trackTrace(request.getShopName() + " 用户 " + key + " 模块 消耗 tokens: " + tokens);
     }
 }

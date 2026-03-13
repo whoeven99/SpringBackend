@@ -2,12 +2,11 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.common.entity.DO.APGUserCounterDO;
 import com.bogda.service.mapper.APGUserCounterMapper;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
-
 
 
 @Service
@@ -18,7 +17,7 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
         Long userId = baseMapper.selectUserIdByShopName(shopName);
         //查找数据库中是否有该条数据，如果有，不再插入，如果没有，插入一条数据
         APGUserCounterDO apgUserCounterDO = baseMapper.selectOne(new QueryWrapper<APGUserCounterDO>().eq("user_id", userId));
-        if (apgUserCounterDO == null){
+        if (apgUserCounterDO == null) {
             //连表获取User表的id
             APGUserCounterDO userCounterDO = new APGUserCounterDO();
             userCounterDO.setUserId(userId);
@@ -48,11 +47,11 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
                     return true;
                 } else {
                     retryCount++;
-                    AppInsightsUtils.trackTrace("FatalException updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
+                    TraceReporterHolder.report("APGUserCounterServiceImpl.updateUserUsedCount", "FatalException updateUserUsedCount 更新失败（返回false） errors ，准备第" + retryCount + "次重试，shopName=" + userId);
                 }
             } catch (Exception e) {
                 retryCount++;
-                AppInsightsUtils.trackTrace("FatalException updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
+                TraceReporterHolder.report("APGUserCounterServiceImpl.updateUserUsedCount", "FatalException updateUserUsedCount 更新失败（抛异常） errors ，准备第" + retryCount + "次重试，shopName=" + userId + ", 错误=" + e);
             }
 
             try {
@@ -63,7 +62,7 @@ public class APGUserCounterServiceImpl extends ServiceImpl<APGUserCounterMapper,
             }
         }
 
-        AppInsightsUtils.trackTrace("updateUserUsedCount 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
+        TraceReporterHolder.report("APGUserCounterServiceImpl.updateUserUsedCount", "Exception updateUserUsedCount 更新失败 errors ，重试" + maxRetries + "次后仍未成功，shopName=" + userId);
         return false;
 
     }

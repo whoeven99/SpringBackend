@@ -8,6 +8,7 @@ import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.DO.*;
 import com.bogda.common.entity.VO.SubscriptionVO;
 import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.model.*;
 import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
 import com.bogda.repository.repo.SubscriptionQuotaRecordRepo;
@@ -117,7 +118,9 @@ public class ShopifyService {
         }
     }
 
-    /** 按资源 ID 列表分页拉取 translatableResourcesByIds，供 {@link #rotateAllShopifyGraph} 在 resourceIds 非空时调用 */
+    /**
+     * 按资源 ID 列表分页拉取 translatableResourcesByIds，供 {@link #rotateAllShopifyGraph} 在 resourceIds 非空时调用
+     */
     private void rotateTranslatableResourcesByIds(String shopName, String accessToken, List<String> resourceIds,
                                                   String target, Consumer<ShopifyTranslationsResponse.Node> consumer,
                                                   Consumer<String> setAfterEndCursorConsumer) {
@@ -200,7 +203,9 @@ public class ShopifyService {
         return shopifyResponse.getData();
     }
 
-    /** 带变量请求 GraphQL 并更新速率限制，返回完整响应 JSON 字符串（用于解析为 Module Response 等） */
+    /**
+     * 带变量请求 GraphQL 并更新速率限制，返回完整响应 JSON 字符串（用于解析为 Module Response 等）
+     */
     private String getShopifyFullResponseWithRateLimitAndVariables(String shopName, String accessToken, String query, Map<String, Object> variables) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
         rateLimiter.acquire();
@@ -219,7 +224,9 @@ public class ShopifyService {
         return response;
     }
 
-    /** 带变量请求 GraphQL 并更新速率限制，返回响应中的 data 节点（JSONObject） */
+    /**
+     * 带变量请求 GraphQL 并更新速率限制，返回响应中的 data 节点（JSONObject）
+     */
     private JSONObject getShopifyDataWithRateLimitAndVariables(String shopName, String accessToken, String query, Map<String, Object> variables) {
         String response = getShopifyFullResponseWithRateLimitAndVariables(shopName, accessToken, query, variables);
         if (response == null) {
@@ -234,7 +241,7 @@ public class ShopifyService {
      * 使用 4 个 Module Response（ShopifyProductsResponse / ShopifyArticlesResponse / ShopifyPagesResponse / ShopifyCollectionsResponse）接收 Shopify 返回数据。
      */
     public List<String> fetchResourceIdsByQuery(String shopName, String accessToken, String resourceType,
-                                                  String queryFilter, java.time.Instant updatedAtAfter) {
+                                                String queryFilter, java.time.Instant updatedAtAfter) {
         String queryConst;
         switch (resourceType) {
             case TranslateConstants.PRODUCT:
@@ -290,7 +297,9 @@ public class ShopifyService {
         return ids;
     }
 
-    /** 根据 resourceType 将完整响应解析为对应 Module Response，并返回 data 下的 connection（edges + pageInfo） */
+    /**
+     * 根据 resourceType 将完整响应解析为对应 Module Response，并返回 data 下的 connection（edges + pageInfo）
+     */
     private ShopifyModuleConnection parseModuleConnectionFromResponse(String resourceType, String rawResponse) {
         if (rawResponse == null || rawResponse.isEmpty()) {
             return null;
@@ -308,11 +317,16 @@ public class ShopifyService {
 
     private static String getConnectionKeyByResourceType(String resourceType) {
         switch (resourceType) {
-            case TranslateConstants.PRODUCT: return "products";
-            case TranslateConstants.ARTICLE: return "articles";
-            case TranslateConstants.PAGE: return "pages";
-            case TranslateConstants.COLLECTION: return "collections";
-            default: return null;
+            case TranslateConstants.PRODUCT:
+                return "products";
+            case TranslateConstants.ARTICLE:
+                return "articles";
+            case TranslateConstants.PAGE:
+                return "pages";
+            case TranslateConstants.COLLECTION:
+                return "collections";
+            default:
+                return null;
         }
     }
 
@@ -339,7 +353,9 @@ public class ShopifyService {
         }
     }
 
-    /** 当 typed 解析为 null 时，从完整 JSON 中取出 data.{connectionKey} 再反序列化为 ShopifyModuleConnection */
+    /**
+     * 当 typed 解析为 null 时，从完整 JSON 中取出 data.{connectionKey} 再反序列化为 ShopifyModuleConnection
+     */
     private ShopifyModuleConnection parseModuleConnectionFromJsonNodeFallback(String rawResponse, String connectionKey) {
         JsonNode root = JsonUtils.readTree(rawResponse);
         if (root == null || !root.has("data")) {
@@ -436,7 +452,7 @@ public class ShopifyService {
             JsonNode root = JsonUtils.readTree(shopifyData);
 
             if (root == null || !root.has("shopLocales")) {
-                AppInsightsUtils.trackTrace("Shopify response is empty or missing 'shopLocales' field for shop: " + shopName);
+                TraceReporterHolder.report("ShopifyService.getUserShopifyLanguage", "Shopify response is empty or missing 'shopLocales' field for shop: " + shopName);
                 return Collections.emptyList();
             }
 
@@ -450,7 +466,7 @@ public class ShopifyService {
             }
 
             if (shopLanguageList.isEmpty()) {
-                AppInsightsUtils.trackTrace("No locales found for shop: " + shopName);
+                TraceReporterHolder.report("ShopifyService.getUserShopifyLanguage", "No locales found for shop: " + shopName);
                 return Collections.emptyList();
             }
 
@@ -468,8 +484,8 @@ public class ShopifyService {
                     .toList();
 
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
+            ExceptionReporterHolder.report("ShopifyService.getUserShopifyLanguage", e);
+            TraceReporterHolder.report("ShopifyService.getUserShopifyLanguage", "FatalException Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -531,8 +547,8 @@ public class ShopifyService {
         try {
             rootNode = JsonUtils.OBJECT_MAPPER.readTree(infoByShopify);
         } catch (JsonProcessingException e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("解析JSON数据失败 errors： " + translateResource);
+            ExceptionReporterHolder.report("ShopifyService.ConvertStringToJsonNode", e);
+            TraceReporterHolder.report("ShopifyService.ConvertStringToJsonNode", "解析JSON数据失败 errors： " + translateResource);
         }
         return rootNode;
     }
@@ -675,9 +691,9 @@ public class ShopifyService {
                 }
             }
         } catch (Exception e) {
-            ExceptionReporterHolder.report("RetryUtils.retryWithParam",e);
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
+            ExceptionReporterHolder.report("RetryUtils.retryWithParam", e);
+            ExceptionReporterHolder.report("ShopifyService.translatedAllDataParse", e);
+            TraceReporterHolder.report("ShopifyService.translatedAllDataParse", "FatalException clickTranslation 用户 " + shopName + " 分析数据失败 errors : " + e);
         }
         return doubleTranslateTextDTOSet;
     }
@@ -759,7 +775,7 @@ public class ShopifyService {
             infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
         } catch (Exception e) {
             // 如果出现异常，则跳过, 翻译其他的内容
-            AppInsightsUtils.trackTrace("FatalException fetchNextPage errors : " + e.getMessage());
+            TraceReporterHolder.report("ShopifyService.fetchNextPage", "FatalException fetchNextPage errors : " + e.getMessage());
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return null;
@@ -859,9 +875,9 @@ public class ShopifyService {
      * 修改shopify本地单条数据
      */
     public BaseResponse<Object> updateShopifyDataByTranslateTextRequest(RegisterTransactionRequest registerTransactionRequest) {
-        AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest);
+        TraceReporterHolder.report("ShopifyService.updateShopifyDataByTranslateTextRequest", "updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 传入的值： " + registerTransactionRequest);
         String string = updateShopifySingleData(registerTransactionRequest);
-        AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 返回的值： " + string);
+        TraceReporterHolder.report("ShopifyService.updateShopifyDataByTranslateTextRequest", "updateShopifyDataByTranslateTextRequest " + registerTransactionRequest.getShopName() + " 返回的值： " + string);
         if (string.contains("\"value\":")) {
             return new BaseResponse<>().CreateSuccessResponse(200);
         } else {
@@ -882,11 +898,11 @@ public class ShopifyService {
                     .path("message");
 
             if (!messageNode.isMissingNode()) {
-                AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
+                TraceReporterHolder.report("ShopifyService.getMessage", "updateShopifyDataByTranslateTextRequest Message: " + messageNode.asText());
                 message = messageNode.asText();
             } else {
                 message = json;
-                AppInsightsUtils.trackTrace("updateShopifyDataByTranslateTextRequest   Message not found");
+                TraceReporterHolder.report("ShopifyService.getMessage", "updateShopifyDataByTranslateTextRequest   Message not found");
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -902,7 +918,7 @@ public class ShopifyService {
                 Field field = LanguageFlagConfig.class.getField(string.toUpperCase());
                 imageInfo.put(string, field.get(null));
             } catch (NoSuchFieldException | IllegalAccessException e) {
-                AppInsightsUtils.trackException(e);
+                ExceptionReporterHolder.report("ShopifyService.getImageInfo", e);
                 throw new RuntimeException(e);
             }
         }
@@ -942,7 +958,7 @@ public class ShopifyService {
                     infoByShopify = getShopifyData(request.getShopName(), request.getAccessToken(), TranslateConstants.API_VERSION_LAST, query);
                 } catch (Exception e) {
                     //如果出现异常，则跳过, 翻译其他的内容
-                    AppInsightsUtils.trackTrace("FatalException getTranslationItemsInfo errors : " + e.getMessage());
+                    TraceReporterHolder.report("ShopifyService.getTranslationItemsInfo", "FatalException getTranslationItemsInfo errors : " + e.getMessage());
                     continue;
                 }
                 if (infoByShopify == null || infoByShopify.isEmpty()) {
@@ -966,8 +982,8 @@ public class ShopifyService {
                 result.put(request.getResourceType(), singleResult);
             }
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
-            AppInsightsUtils.trackException(e);
+            TraceReporterHolder.report("ShopifyService.getTranslationItemsInfo", "FatalException getTranslationItemsInfoAll errors : 用户:" + request.getShopName() + " 目标： " + request.getTarget() + "  " + "模块： " + request.getResourceType() + e.getMessage());
+            ExceptionReporterHolder.report("ShopifyService.getTranslationItemsInfo", e);
         }
         return result;
     }
@@ -1050,7 +1066,7 @@ public class ShopifyService {
         if (translationsNode != null) {
             // 遍历翻译内容节点，增加已翻译的字符数
             for (JsonNode contentItem : translationsNode) {
-//                AppInsightsUtils.trackTrace("translated: " + contentItem);
+//                TraceReporterHolder.report("translated: " + contentItem);
                 ObjectNode contentItemNode = (ObjectNode) contentItem;
                 if (contentItemNode != null) {
                     translatedCounter.addChars(1);
@@ -1094,7 +1110,7 @@ public class ShopifyService {
                         continue;
                     }
                 } catch (Exception e) {
-                    AppInsightsUtils.trackTrace("FatalException 失败的原因： " + e.getMessage());
+                    TraceReporterHolder.report("ShopifyService.countMetafieldData", "FatalException 失败的原因： " + e.getMessage());
                     translatedCounter.addChars(1);
                     continue;
                 }
@@ -1134,7 +1150,7 @@ public class ShopifyService {
 
     //计数非 ONLINE_STORE_THEME 类型的资源数据。
     private void countNonThemeData(JsonNode translationsNode, JsonNode translatableContentNode, CharacterCountUtils counter, CharacterCountUtils translatedCounter) {
-//        AppInsightsUtils.trackTrace("translatableContentNode: " + translatableContentNode);
+//        TraceReporterHolder.report("translatableContentNode: " + translatableContentNode);
         if (!translatableContentNode.isEmpty()) {
             counter.addChars(1);
         } else {
@@ -1226,7 +1242,7 @@ public class ShopifyService {
     public BaseResponse<Object> getUserSubscriptionPlan(String shopName) {
         UserSubscriptionsDO userSubscriptionsDO = userSubscriptionsService.getDataByShopName(shopName);
         if (userSubscriptionsDO == null) {
-            AppInsightsUtils.trackTrace("getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
+            TraceReporterHolder.report("ShopifyService.getUserSubscriptionPlan", "getUserSubscriptionPlan 用户获取的数据失败： " + shopName);
             return new BaseResponse<>().CreateErrorResponse("userSubscriptionsDO is null");
         }
 
@@ -1286,7 +1302,9 @@ public class ShopifyService {
         return new BaseResponse<>().CreateSuccessResponse(subscriptionVO);
     }
 
-    /** 根据用户订阅构建基础 VO（planType、userSubscriptionPlan） */
+    /**
+     * 根据用户订阅构建基础 VO（planType、userSubscriptionPlan）
+     */
     private SubscriptionVO buildBaseSubscriptionVO(UserSubscriptionsDO userSubscriptionsDO) {
         String planName = iSubscriptionPlansService.getDataByPlanId(userSubscriptionsDO.getPlanId()).getPlanName();
         String parsePlanType = parsePlanName(planName);
@@ -1299,7 +1317,9 @@ public class ShopifyService {
         return vo;
     }
 
-    /** 根据 Shopify 订阅 id 从 SubscriptionQuotaRecord 取最新额度发放时间并写入 VO */
+    /**
+     * 根据 Shopify 订阅 id 从 SubscriptionQuotaRecord 取最新额度发放时间并写入 VO
+     */
     private void setQuotaIssuedAtBySubscriptionId(SubscriptionVO subscriptionVO, String subscriptionId) {
         SubscriptionQuotaRecordDO latest = subscriptionQuotaRecordRepo.getLatestBySubscriptionId(subscriptionId);
 
@@ -1310,7 +1330,9 @@ public class ShopifyService {
         }
     }
 
-    /** 从 Shopify 拉取当前周期结束时间及 node 是否为空（计划取消） */
+    /**
+     * 从 Shopify 拉取当前周期结束时间及 node 是否为空（计划取消）
+     */
     private ShopifyPeriodResult fetchCurrentPeriodEndFromShopify(String shopName, CharsOrdersDO charsOrdersDO) {
         UsersDO usersDO = iUsersService.getUserByName(shopName);
         String query = ShopifyRequestUtils.getSubscriptionQuery(charsOrdersDO.getId());
@@ -1320,7 +1342,7 @@ public class ShopifyService {
                     .supplyAsync(() -> getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, query))
                     .get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException task getUserSubscriptionPlan Shopify 请求异常： " + shopName + " " + e.getMessage());
+            TraceReporterHolder.report("ShopifyService.fetchCurrentPeriodEndFromShopify", "FatalException task getUserSubscriptionPlan Shopify 请求异常： " + shopName + " " + e.getMessage());
         }
         if (infoByShopify == null || infoByShopify.isEmpty()) {
             return new ShopifyPeriodResult(null, false);
@@ -1333,7 +1355,9 @@ public class ShopifyService {
         return new ShopifyPeriodResult(node.getString("currentPeriodEnd"), false);
     }
 
-    /** 仅用于 getUserSubscriptionPlan 的 Shopify 周期结果 */
+    /**
+     * 仅用于 getUserSubscriptionPlan 的 Shopify 周期结果
+     */
     private static class ShopifyPeriodResult {
         private final String currentPeriodEnd;
         private final boolean nodeCancelled;

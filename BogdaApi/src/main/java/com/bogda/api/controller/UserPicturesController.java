@@ -1,13 +1,14 @@
 package com.bogda.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IUserPicturesService;
 import com.bogda.common.entity.DO.UserPicturesDO;
 import com.bogda.common.entity.DTO.SimpleMultipartFileDTO;
 import com.bogda.integration.aimodel.HunYuanBucketIntegration;
 import com.bogda.service.logic.PCApp.PCUserPicturesService;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.microsoft.applicationinsights.core.dependencies.apachecommons.io.FilenameUtils;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.tools.DiagnosticCollector;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -46,7 +48,7 @@ public class UserPicturesController {
         try {
             userPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            AppInsightsUtils.trackTrace("insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            TraceReporterHolder.report("UserPicturesController.insertPictureToDbAndCloud", "FatalException insertPictureToDbAndCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         //先判断是否有图片,有图片做上传和插入更新数据;没有图片,做插入和更新数据
         if (!file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
@@ -66,7 +68,7 @@ public class UserPicturesController {
             } else {
                 return new BaseResponse<>().CreateErrorResponse(false);
             }
-        }else if (file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
+        } else if (file.isEmpty() && userPicturesDO != null && userPicturesDO.getImageId() != null) {
             boolean b = iUserPicturesService.insertPictureData(userPicturesDO);
             if (b) {
                 return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
@@ -97,7 +99,7 @@ public class UserPicturesController {
 
     /**
      * 根据前端传的shop,languageCode,拿这个语言下的全部图片
-     * */
+     */
     @PostMapping("/getPictureDataByShopNameAndLanguageCode")
     public BaseResponse<Object> getPictureDataByShopNameAndLanguageCode(@RequestParam("shopName") String shopName, @RequestParam("languageCode") String languageCode) {
         List<UserPicturesDO> list = iUserPicturesService.list(new QueryWrapper<UserPicturesDO>().eq("shop_name", shopName).eq("language_code", languageCode).eq("is_delete", false));
@@ -114,11 +116,11 @@ public class UserPicturesController {
 
     /**
      * 软删除用户图片数据
-     * */
+     */
     @PostMapping("/deletePictureData")
     public BaseResponse<Object> deletePictureData(@RequestParam("shopName") String shopName, @RequestBody UserPicturesDO userPicturesDO) {
         boolean b = iUserPicturesService.deletePictureData(shopName, userPicturesDO.getImageId(), userPicturesDO.getImageBeforeUrl(), userPicturesDO.getLanguageCode());
-        if (b){
+        if (b) {
             userPicturesDO.setIsDelete(true);
             return new BaseResponse<>().CreateSuccessResponse(userPicturesDO);
         }
@@ -127,15 +129,15 @@ public class UserPicturesController {
 
     /**
      * 根据图片url的String，存到腾讯云和数据库里面
-     * */
+     */
     @PostMapping("/saveImageToCloud")
     public BaseResponse<Object> saveImageToCloud(@RequestParam("pic") String pic, @RequestParam("shopName") String shopName, @RequestParam("userPicturesDoJson") String userPicturesDoJson) {
         UserPicturesDO userPicturesDO = null;
         try {
             userPicturesDO = JsonUtils.OBJECT_MAPPER.readValue(userPicturesDoJson, UserPicturesDO.class);
         } catch (JsonProcessingException e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("saveImageToCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
+            ExceptionReporterHolder.report("UserPicturesController.saveImageToCloud", e);
+            TraceReporterHolder.report("UserPicturesController.saveImageToCloud", "saveImageToCloud " + shopName + " userPicturesDoJson 解析失败 errors " + e);
         }
         if (userPicturesDO == null) {
             return new BaseResponse<>().CreateSuccessResponse(false);
@@ -143,13 +145,13 @@ public class UserPicturesController {
 
         // 对返回的图片url做处理
         MultipartFile multipartFile = convertUrlToMultipartFile(pic);
-        if (multipartFile == null || multipartFile.isEmpty()){
+        if (multipartFile == null || multipartFile.isEmpty()) {
             return new BaseResponse<>().CreateErrorResponse(false);
         }
 
         // 存到腾讯云bucket桶里面
         String afterUrl = HunYuanBucketIntegration.uploadFile(multipartFile, shopName, userPicturesDO.getImageId());
-        if (afterUrl == null ) {
+        if (afterUrl == null) {
             return new BaseResponse<>().CreateSuccessResponse(false);
         }
         userPicturesDO.setImageAfterUrl(afterUrl);
@@ -188,8 +190,8 @@ public class UserPicturesController {
                     outputStream.toByteArray()
             );
         } catch (Exception e) {
-            AppInsightsUtils.trackException(e);
-            AppInsightsUtils.trackTrace("FatalException convertUrlToMultipartFile error: " + e.getMessage());
+            ExceptionReporterHolder.report("UserPicturesController.convertUrlToMultipartFile", e);
+            TraceReporterHolder.report("UserPicturesController.convertUrlToMultipartFile", "FatalException convertUrlToMultipartFile error: " + e.getMessage());
         }
         return null;
     }

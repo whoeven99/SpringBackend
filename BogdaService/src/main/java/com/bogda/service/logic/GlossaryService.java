@@ -1,9 +1,9 @@
 package com.bogda.service.logic;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IGlossaryService;
 import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.utils.StringUtils;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +55,7 @@ public class GlossaryService {
         }
 
         if (usedGlossaryMap == null) {
-            AppInsightsUtils.trackTrace("FatalException usedGlossaryMap is null" + glossaryMap);
+            TraceReporterHolder.report("GlossaryService.hasGlossary", "FatalException usedGlossaryMap is null" + glossaryMap);
             return false;
         }
 

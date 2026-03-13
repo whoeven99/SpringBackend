@@ -3,7 +3,7 @@ package com.bogda.repository.repo.bundle;
 import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.models.*;
 import com.azure.cosmos.util.CosmosPagedIterable;
-import com.bogda.common.utils.AppInsightsUtils;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.repository.container.ShopifyDiscountDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class ShopifyDiscountCosmos {
             discountContainer.upsertItem(data, options);
             return true;
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException saveDiscount 保存discount数据失败 " + " id: " + data.getDiscountGid()
+            TraceReporterHolder.report("ShopifyDiscountCosmos.saveDiscount", "FatalException saveDiscount 保存discount数据失败 " + " id: " + data.getDiscountGid()
                     + " shopName: " + data.getShopName() + " 原因： " + e);
             return false;
         }
@@ -45,7 +45,7 @@ public class ShopifyDiscountCosmos {
         try {
             return discountContainer.readItem(id, new PartitionKey(shopName), ShopifyDiscountDO.class).getItem();
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException findById 查询discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            TraceReporterHolder.report("ShopifyDiscountCosmos.getDiscountByIdAndShopName", "FatalException findById 查询discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
         }
         return null;
     }
@@ -58,7 +58,7 @@ public class ShopifyDiscountCosmos {
             CosmosItemRequestOptions options = new CosmosItemRequestOptions().setContentResponseOnWriteEnabled(false);
             discountContainer.deleteItem(id, new PartitionKey(shopName), options);
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException deleteByIdAndShopName 删除discount数据失败 " + " id: "
+            TraceReporterHolder.report("ShopifyDiscountCosmos.deleteByIdAndShopName", "FatalException deleteByIdAndShopName 删除discount数据失败 " + " id: "
                     + id + " shopName: " + shopName + " 原因： " + e);
             return false;
         }
@@ -99,7 +99,7 @@ public class ShopifyDiscountCosmos {
             ts.forEach(result::add);
             return result;
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException queryBySql 查询discount数据失败 " + " sql: " + sql +
+            TraceReporterHolder.report("ShopifyDiscountCosmos.queryBySql", "FatalException queryBySql 查询discount数据失败 " + " sql: " + sql +
                     " partitionKey: " + partitionKey + " 原因： " + e);
             return null;
         }
@@ -113,7 +113,7 @@ public class ShopifyDiscountCosmos {
             return true;
 
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            TraceReporterHolder.report("ShopifyDiscountCosmos.updateDiscount", "FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
             return false;
         }
     }
@@ -126,7 +126,7 @@ public class ShopifyDiscountCosmos {
             return true;
 
         } catch (Exception e) {
-            AppInsightsUtils.trackTrace("FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
+            TraceReporterHolder.report("ShopifyDiscountCosmos.updateDiscountStatus", "FatalException updateDiscount 更新discount数据失败 " + " id: " + id + " shopName: " + shopName + " 原因： " + e);
             return false;
         }
     }

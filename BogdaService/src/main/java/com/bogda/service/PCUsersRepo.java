@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.common.entity.DO.PCUsersDO;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.redis.OrdersRedisService;
 import com.bogda.service.mapper.PCUsersMapper;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.AppInsightsUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
         ordersRedisService.setOrderId(shopName, orderId);
 
         // 根据gid，判断是否符合添加额度的条件
-        AppInsightsUtils.trackTrace("PC updateCharsByShopName 用户： " + shopName + " orderId: " + orderId + " chars: " + chars + " accessToken: " + accessToken);
+        TraceReporterHolder.report("PCUsersRepo.updatePurchasePointsByShopName", "PC updateCharsByShopName 用户： " + shopName + " orderId: " + orderId + " chars: " + chars + " accessToken: " + accessToken);
 
         // 根据传来的gid获取， 判断调用那个方法，查询相关订阅信息
         String query;
@@ -55,12 +55,12 @@ public class PCUsersRepo extends ServiceImpl<PCUsersMapper, PCUsersDO> {
         }
 
         String shopifyByQuery = shopifyService.getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
-        AppInsightsUtils.trackTrace("PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
+        TraceReporterHolder.report("PCUsersRepo.updatePurchasePointsByShopName", "PC addCharsByShopNameAfterSubscribe " + shopName + " 用户 订阅信息 ：" + shopifyByQuery);
 
         // 判断和解析相关数据
         JSONObject queryValid = isQueryValid(shopifyByQuery);
         if (queryValid == null) {
-            AppInsightsUtils.trackTrace("PC updateCharsByShopName " + shopName + " 用户  errors queryValid : " + queryValid);
+            TraceReporterHolder.report("PCUsersRepo.updatePurchasePointsByShopName", "PC updateCharsByShopName " + shopName + " 用户  errors ");
             return false;
         }
 

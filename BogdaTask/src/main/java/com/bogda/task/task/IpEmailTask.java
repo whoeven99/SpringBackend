@@ -1,5 +1,6 @@
 package com.bogda.task.task;
 
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IWidgetConfigurationsService;
 import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.service.logic.TencentEmailService;
@@ -7,9 +8,7 @@ import com.bogda.service.logic.UserIpService;
 import com.bogda.repository.entity.UserIPCountDO;
 import com.bogda.repository.repo.UserIPCountRepo;
 import com.bogda.common.utils.ModuleCodeUtils;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +31,7 @@ public class IpEmailTask {
     public void sendEmailTask() {
         List<WidgetConfigurationsDO> allIpOpenByTrue = iWidgetConfigurationsService.getAllIpOpenByTrue();
         if (allIpOpenByTrue == null || allIpOpenByTrue.isEmpty()) {
-            AppInsightsUtils.trackTrace("sendEmailTask 没有要发送的ip上报邮件");
+            TraceReporterHolder.report("IpEmailTask.sendEmailTask", "sendEmailTask 没有要发送的ip上报邮件");
             return;
         }
 

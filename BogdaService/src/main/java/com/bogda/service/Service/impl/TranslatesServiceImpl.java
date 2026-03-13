@@ -5,13 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogda.common.reporter.ExceptionReporterHolder;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.service.mapper.TranslatesMapper;
 import com.bogda.common.controller.request.AutoTranslateRequest;
 import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,14 +99,14 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
                                 .set(TranslatesDO::getStatus, 6)
                 );
 
-                AppInsightsUtils.trackTrace("updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
+                TraceReporterHolder.report("TranslatesServiceImpl.updateStatus3To6", "updateStatus3To6: " + shopName + " 修改行数：" + affectedRows);
 
                 // 正常结束，无需再重试
                 return true;
             } catch (Exception e) {
-                AppInsightsUtils.trackException(e);
+                ExceptionReporterHolder.report("TranslatesServiceImpl.updateStatus3To6", e);
                 if (attempt >= maxRetries) {
-                    AppInsightsUtils.trackTrace("FatalException updateStatus3To6: " + shopName + " 最终失败");
+                    TraceReporterHolder.report("TranslatesServiceImpl.updateStatus3To6", "FatalException updateStatus3To6: " + shopName + " 最终失败");
                 }
             }
         }
@@ -178,7 +179,7 @@ public class TranslatesServiceImpl extends ServiceImpl<TranslatesMapper, Transla
     @Override
     public List<String> selectTargetByShopName(String shopName) {
         List<TranslatesDO> doList = baseMapper.selectList(new LambdaQueryWrapper<TranslatesDO>().select(TranslatesDO::getTarget).eq(TranslatesDO::getShopName, shopName));
-        if (doList.isEmpty()){
+        if (doList.isEmpty()) {
             return Collections.emptyList();
         }
         return doList.stream().map(TranslatesDO::getTarget).collect(Collectors.toList());

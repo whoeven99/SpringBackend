@@ -2,13 +2,13 @@ package com.bogda.service.Service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ICurrenciesService;
 import com.bogda.common.entity.DO.CurrenciesDO;
 import com.bogda.service.mapper.CurrenciesMapper;
 import com.bogda.common.controller.request.CurrencyRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.service.utils.CurrencyConfig;
-import com.bogda.common.utils.AppInsightsUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,7 +64,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
         CurrenciesDO[] list = baseMapper.getCurrencyByShopName(shopName);
         List<Map<String, Object>> mapList = new ArrayList<>();
         if (list.length == 0){
-            AppInsightsUtils.trackTrace("getCurrencyByShopName No currency found for shopName: " + shopName);
+            TraceReporterHolder.report("CurrenciesServiceImpl.getCurrencyByShopName", "FatalException getCurrencyByShopName No currency found for shopName: " + shopName);
             return new BaseResponse<>().CreateErrorResponse(false);
         }
         for (CurrenciesDO currenciesDO : list) {
@@ -91,11 +91,11 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
                 map.put("symbol", currencyInfo.get("symbol"));
             } else {
                 map.put("symbol", "-");
-                AppInsightsUtils.trackTrace("符号错误 ： " + currenciesDO.getShopName());
+                TraceReporterHolder.report("CurrenciesServiceImpl.getCurrencyDOS", "FatalException 符号错误 ： " + currenciesDO.getShopName());
             }
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            AppInsightsUtils.trackTrace("FatalException : " + currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
+            TraceReporterHolder.report("CurrenciesServiceImpl.getCurrencyDOS", "FatalException : " + currenciesDO.getCurrencyCode() + "currency error :  " + e.getMessage());
         }
         return map;
     }
@@ -104,7 +104,7 @@ public class CurrenciesServiceImpl extends ServiceImpl<CurrenciesMapper, Currenc
     public Map<String, Object> getCurrencyWithSymbol(CurrenciesDO request) {
         CurrenciesDO currencyByShopNameAndCurrencyCode = baseMapper.getCurrencyByShopNameAndCurrencyCode(request.getShopName(), request.getCurrencyCode());
         if (currencyByShopNameAndCurrencyCode == null) {
-            AppInsightsUtils.trackTrace("getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
+            TraceReporterHolder.report("CurrenciesServiceImpl.getCurrencyWithSymbol", "FatalException getCurrencyWithSymbol No currency found for shopName: " + request.getShopName() + " and currencyCode: " + request.getCurrencyCode());
             return null;
         }
         return new java.util.HashMap<>(getCurrencyDOS(currencyByShopNameAndCurrencyCode));
