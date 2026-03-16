@@ -1,6 +1,7 @@
 package com.bogda.common.utils;
 
 import com.vdurmont.emoji.EmojiManager;
+
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -47,6 +48,13 @@ public class PromptUtils {
             return the text unchanged. Otherwise, proceed as normal. Do not output any notes, annotations, explanations, corrections, or bilingual text. Even if you detect an error in the original, do not mention it—only output the final correct translation. The output should preserve the exact letter casing as the original text — do not capitalize words unless they are capitalized in the source.
             """;
 
+    private static final String UNIT_RULE = """
+            Localization:
+            Adapt measurements, units, number formatting, and date formats to common conventions in the target language when appropriate.
+            Use natural expressions for sizes, dimensions, and e-commerce terminology.
+            Do not modify units or numbers if they are part of official product specifications.
+            """;
+
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(
             "\\{\\{\\s*[^{}]*?\\s*\\}\\}"      // {{ ... }}
                     + "|\\{%\\s*.*?\\s*%\\}"   // {% ... %}
@@ -62,16 +70,18 @@ public class PromptUtils {
         String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
         String targetLanguage = ModuleCodeUtils.getLanguageName(target);
         boolean includeProtection = hasSpecialContent(sourceMap);
+        boolean includeUnit = hasDigit(sourceMap);
         return buildDynamicPrompt(BASE_PROMPT
                         .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                true, termRules, styleRules, includeProtection, JSON_OUTPUT_RULE);
+                true, termRules, styleRules, includeProtection, includeUnit, JSON_OUTPUT_RULE);
     }
 
     public static String buildDynamicSinglePrompt(String targetLanguage, String text,
                                                   String termRules, String styleRules) {
         String safeText = text == null ? "" : text;
         boolean includeProtection = hasSpecialContent(safeText);
+        boolean includeUnit = hasDigit(safeText);
         String prompt = """
                 You are a professional e-commerce translator.
                 Translate the text in {{SOURCE_LANGUAGE_LIST}} into {{TARGET_LANGUAGE}}.
@@ -79,11 +89,12 @@ public class PromptUtils {
         return buildDynamicPrompt(prompt
                         .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
                         .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
-                true, termRules, styleRules, includeProtection, SINGLE_OUTPUT_RULE);
+                true, termRules, styleRules, includeProtection, includeUnit, SINGLE_OUTPUT_RULE);
     }
 
     /**
      * JSON 批量翻译 — 支持外部 BasePrompt
+     *
      * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
      */
     public static String buildDynamicJsonPrompt(String target, Map<Integer, String> sourceMap,
@@ -92,15 +103,17 @@ public class PromptUtils {
         String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
         String targetLanguage = ModuleCodeUtils.getLanguageName(target);
         boolean includeProtection = hasSpecialContent(sourceMap);
+        boolean includeUnit = hasDigit(sourceMap);
         String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
         return buildDynamicPrompt(base
                         .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                true, termRules, styleRules, includeProtection, JSON_OUTPUT_RULE);
+                true, termRules, styleRules, includeProtection, includeUnit, JSON_OUTPUT_RULE);
     }
 
     /**
      * 单条翻译 — 支持外部 BasePrompt
+     *
      * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
      */
     public static String buildDynamicSinglePrompt(String targetLanguage, String text,
@@ -108,15 +121,17 @@ public class PromptUtils {
                                                   String customBasePrompt) {
         String safeText = text == null ? "" : text;
         boolean includeProtection = hasSpecialContent(safeText);
+        boolean includeUnit = hasDigit(safeText);
         String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
         return buildDynamicPrompt(base
                         .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
                         .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
-                true, termRules, styleRules, includeProtection, SINGLE_OUTPUT_RULE);
+                true, termRules, styleRules, includeProtection, includeUnit, SINGLE_OUTPUT_RULE);
     }
 
     /**
      * Handle 翻译 — 支持外部 BasePrompt
+     *
      * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
      */
     public static String buildDynamicHandlePrompt(String target, String sourceText,
@@ -126,7 +141,7 @@ public class PromptUtils {
         return buildDynamicPrompt(base
                         .replace("{{SOURCE_LANGUAGE_LIST}}", sourceText)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                false, null, null, false, HANDLE_OUTPUT_RULE);
+                false, null, null, false, hasDigit(sourceText), HANDLE_OUTPUT_RULE);
     }
 
     public static String GlossaryJsonPrompt(String target, String glossaryMapping,
@@ -152,6 +167,7 @@ public class PromptUtils {
                                              String termRules,
                                              String styleRules,
                                              boolean includeProtectionRule,
+                                             boolean includeUnitRule,
                                              String outputRule) {
         StringBuilder prompt = new StringBuilder(basePrompt.trim()).append("\n\n");
         if (includeContextRule) {
@@ -166,8 +182,30 @@ public class PromptUtils {
         if (includeProtectionRule) {
             prompt.append(PROTECTION_RULE.trim()).append("\n\n");
         }
+        if (includeUnitRule) {
+            prompt.append(UNIT_RULE.trim()).append("\n\n");
+        }
         prompt.append(outputRule.trim());
         return prompt.toString();
+    }
+
+    private static boolean hasDigit(String text) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < text.length(); i++) {
+            if (Character.isDigit(text.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasDigit(Map<Integer, String> sourceMap) {
+        if (sourceMap == null || sourceMap.isEmpty()) {
+            return false;
+        }
+        return sourceMap.values().stream().anyMatch(PromptUtils::hasDigit);
     }
 
     private static boolean hasSpecialContent(Map<Integer, String> sourceMap) {
