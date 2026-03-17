@@ -217,6 +217,7 @@ public class ShopifyService {
         if (response == null || response.isEmpty()) {
             return null;
         }
+
         JSONObject root = JSONObject.parseObject(response);
         if (root != null && root.getJSONObject("extensions") != null) {
             ShopifyExtensions extensions = JsonUtils.jsonToObjectWithNull(root.getJSONObject("extensions").toString(), ShopifyExtensions.class);

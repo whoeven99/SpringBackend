@@ -307,7 +307,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         if (result == null) {
-            feiShuRobotIntegration.sendMessage("FatalException shopName : " + ctx.getShopName() + " prompt : "
+            feiShuRobotIntegration.sendMessage("FatalException BATCH translateWithGlossary shopName : " + ctx.getShopName() + " prompt : "
                     + ctx.getPrompt() + "  module : " + ctx.getModule());
             return;
         }
@@ -392,7 +392,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         if (result == null) {
-            feiShuRobotIntegration.sendMessage("FatalException shopName : " + ctx.getShopName() + " prompt : "
+            feiShuRobotIntegration.sendMessage("FatalException BATCH translateWithAI shopName : " + ctx.getShopName() + " prompt : "
                     + ctx.getPrompt() + "  module : " + ctx.getModule());
             return;
         }
