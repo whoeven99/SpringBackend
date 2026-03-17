@@ -15,8 +15,10 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -48,46 +50,112 @@ public class BaseHttpIntegration {
                 .build();
     }
 
+    BaseHttpIntegration(CloseableHttpClient httpClient, PoolingHttpClientConnectionManager connectionManager) {
+        this.httpClient = httpClient;
+        this.connectionManager = connectionManager;
+    }
+
     public String httpPost(String url, String body) {
         return httpPost(url, body, new HashMap<>());
     }
 
     public String httpPost(String url, String body, Map<String, String> headers) {
-        HttpPost http = new HttpPost(url);
-        http.setEntity(new StringEntity(body, "UTF-8"));
-        return sendHttp(http, headers);
+        return sendHttp(() -> {
+            HttpPost http = new HttpPost(url);
+            http.setEntity(new StringEntity(body, StandardCharsets.UTF_8));
+            return http;
+        }, headers);
     }
 
     public String httpGet(String url, Map<String, String> headers) {
-        HttpGet http = new HttpGet(url);
-        return sendHttp(http, headers);
+        return sendHttp(() -> new HttpGet(url), headers);
     }
 
-    private String sendHttp(HttpRequestBase http, Map<String, String> headers) {
-        http.addHeader("Content-Type", "application/json");
-        for (Map.Entry<String, String> header : headers.entrySet()) {
-            http.addHeader(header.getKey(), header.getValue());
-        }
+    private String sendHttp(java.util.function.Supplier<HttpRequestBase> requestSupplier, Map<String, String> headers) {
+        final int maxAttempts = 3;
+        final long baseDelayMs = 200L;
+        final long maxDelayMs = 2_000L;
 
-        try {
-            CloseableHttpResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
-                try {
-                    return httpClient.execute(http);
-                } catch (Exception e) {
-                    ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp", e);
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            HttpRequestBase http = requestSupplier.get();
+            http.addHeader("Content-Type", "application/json");
+            for (Map.Entry<String, String> header : headers.entrySet()) {
+                http.addHeader(header.getKey(), header.getValue());
+            }
+
+            try {
+                CloseableHttpResponse response = TimeOutUtils.callWithTimeoutAndRetry(() -> {
+                    try {
+                        return httpClient.execute(http);
+                    } catch (Exception e) {
+                        ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp.execute", e);
+                        return null;
+                    }
+                });
+
+                if (response == null || response.getEntity() == null) {
                     return null;
                 }
-            });
-            if (response == null || response.getEntity() == null) {
+
+                try (response) {
+                    String responseContent = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    if (!isHtmlResponse(response, responseContent)) {
+                        return responseContent;
+                    }
+                }
+
+                if (attempt == maxAttempts) {
+                    return null;
+                }
+                sleepBeforeRetry(attempt, baseDelayMs, maxDelayMs);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp.interrupted", ie);
+                return null;
+            } catch (Exception e) {
+                ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp", e);
                 return null;
             }
-            String responseContent = EntityUtils.toString(response.getEntity(), "UTF-8");
-            response.close();
-            return responseContent;
-        } catch (Exception e) {
-            ExceptionReporterHolder.report("BaseHttpIntegration.sendHttp", e);
-            return null;
         }
+        return null;
+    }
+
+    protected void sleepBeforeRetry(int attempt, long baseDelayMs, long maxDelayMs) throws InterruptedException {
+        sleepWithBackoffAndJitter(attempt, baseDelayMs, maxDelayMs);
+    }
+
+    private static boolean isHtmlResponse(CloseableHttpResponse response, String responseContent) {
+        try {
+            if (response.getEntity() != null && response.getEntity().getContentType() != null) {
+                String ct = response.getEntity().getContentType().getValue();
+                if (ct != null && ct.toLowerCase().contains("text/html")) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+            // ignore: fallback to body sniffing
+        }
+        if (responseContent == null) {
+            return false;
+        }
+        String s = responseContent.stripLeading();
+        if (s.isEmpty()) {
+            return false;
+        }
+        String lower = s.length() > 256 ? s.substring(0, 256).toLowerCase() : s.toLowerCase();
+        return lower.startsWith("<!doctype html")
+                || lower.startsWith("<html")
+                || lower.contains("<html")
+                || lower.contains("<head")
+                || lower.contains("<body");
+    }
+
+    private static void sleepWithBackoffAndJitter(int attempt, long baseDelayMs, long maxDelayMs) throws InterruptedException {
+        long exp = baseDelayMs * (1L << Math.max(0, attempt - 1));
+        long delay = Math.min(maxDelayMs, exp);
+        double jitterFactor = 0.8 + ThreadLocalRandom.current().nextDouble() * 0.4; // 0.8 ~ 1.2
+        long sleepMs = Math.max(0L, (long) (delay * jitterFactor));
+        TimeUnit.MILLISECONDS.sleep(sleepMs);
     }
 
     @PreDestroy
