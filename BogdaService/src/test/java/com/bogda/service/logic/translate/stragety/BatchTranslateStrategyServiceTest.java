@@ -213,6 +213,21 @@ class BatchTranslateStrategyServiceTest {
     }
 
     @Test
+    void testParseOutput_WithUnescapedQuotesInsideString_ShouldRepairAndReturnMap() {
+        // Given: JSON 字符串值中包含未转义的双引号（AI 常见脏输出）
+        String badJson = "{\"53\":\" (tenzij uitdrukkelijk door ons vermeld) \"zoals ze zijn\" en \"zoals beschikbaar\" aangeboden voor uw\"}";
+
+        // When
+        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(badJson);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey(53));
+        assertEquals(" (tenzij uitdrukkelijk door ons vermeld) \"zoals ze zijn\" en \"zoals beschikbaar\" aangeboden voor uw", result.get(53));
+    }
+
+    @Test
     void testParseOutput_WithNullInput_ShouldReturnNull() {
         // When
         LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(null);

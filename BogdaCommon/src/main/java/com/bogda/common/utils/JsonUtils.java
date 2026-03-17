@@ -89,4 +89,72 @@ public class JsonUtils {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * 修复 JSON 字符串内部的未转义双引号。
+     * <p>
+     * 规则（启发式）：
+     * - 扫描 JSON 文本，进入字符串（遇到未转义的 "）后，遇到字符串内的 " 时：
+     *   - 若其后（跳过空白）是 ',', '}', ']', ':' 或 EOF，视为字符串结束引号，保留
+     *   - 否则视为内容引号，替换成 \"
+     *
+     * @param json 可能包含未转义双引号的 JSON 文本
+     * @return 修复后的文本（若无需修复则原样返回）
+     */
+    public static String repairUnescapedQuotesInStringValues(String json) {
+        if (json == null || json.isEmpty()) {
+            return json;
+        }
+
+        StringBuilder out = new StringBuilder(json.length() + 16);
+        boolean inString = false;
+        boolean escaped = false;
+
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+
+            if (!inString) {
+                if (c == '"') {
+                    inString = true;
+                    escaped = false;
+                }
+                out.append(c);
+                continue;
+            }
+
+            // inString == true
+            if (escaped) {
+                out.append(c);
+                escaped = false;
+                continue;
+            }
+
+            if (c == '\\') {
+                out.append(c);
+                escaped = true;
+                continue;
+            }
+
+            if (c == '"') {
+                int j = i + 1;
+                while (j < json.length() && Character.isWhitespace(json.charAt(j))) {
+                    j++;
+                }
+                char next = (j < json.length()) ? json.charAt(j) : '\0';
+
+                boolean looksLikeStringEnd = (next == ',' || next == '}' || next == ']' || next == ':' || next == '\0');
+                if (looksLikeStringEnd) {
+                    out.append('"');
+                    inString = false;
+                } else {
+                    out.append("\\\"");
+                }
+                continue;
+            }
+
+            out.append(c);
+        }
+
+        return out.toString();
+    }
 }
