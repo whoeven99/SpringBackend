@@ -16,6 +16,7 @@ import com.alibaba.dashscope.tokenizers.Tokenizer;
 import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.CharacterCountUtils;
@@ -35,6 +36,8 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 public class ALiYunTranslateIntegration {
     @Autowired
     private IAPGUserCounterService iapgUserCounterService;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     private static Tokenizer tokenizer;
     public static String TRANSLATE_APP = "TRANSLATE_APP";
@@ -87,6 +90,7 @@ public class ALiYunTranslateIntegration {
                             TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException userTranslate call errors ： " + e.getMessage() +
                                     " translateText : " + prompt);
                             ExceptionReporterHolder.report("ALiYunTranslateIntegration.userTranslate", e);
+                            feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
                             return null;
                         }
                     },
@@ -107,6 +111,7 @@ public class ALiYunTranslateIntegration {
         } catch (Exception e) {
             TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             ExceptionReporterHolder.report("ALiYunTranslateIntegration.userTranslate", e);
+            feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;
         }
     }

@@ -5,10 +5,12 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
 import kotlin.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
@@ -16,6 +18,9 @@ import org.springframework.stereotype.Component;
 public class GoogleMachineIntegration {
     private static final int GOOGLE_MACHINE_COEFFICIENT = 2;
     private final Translate translate;
+
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     /**
      * 初始化 Google Translate 客户端
@@ -54,6 +59,7 @@ public class GoogleMachineIntegration {
         } catch (Exception e) {
             TraceReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", "FatalException Google Translate SDK 翻译错误：" + e.getMessage());
             ExceptionReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", e);
+            feiShuRobotIntegration.sendMessage("FatalException Google Translate SDK 翻译错误：" + e.getMessage() + " content: " + content);
             return null;
         }
     }

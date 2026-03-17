@@ -25,18 +25,18 @@ public class TimeOutUtils {
             try {
                 // 等待任务完成（带超时）
                 return future.get(timeout, unit);
-            } catch (TimeoutException e) {
-                future.cancel(true);
-                lastException = e;
-                TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
-                        "FatalException task 调用超时（" + timeout + " " + unit + "），正在重试... [第" + attempt + "次]");
-                ExceptionReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry", e);
             } catch (Exception e) {
                 future.cancel(true);
                 lastException = e;
                 TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
                         "FatalException 调用异常: " + e.getMessage() + "，正在重试... [第" + attempt + "次]");
                 ExceptionReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry", e);
+                if (e.getMessage() != null && e.getMessage().contains("\"status\":400")) {
+                    TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
+                            "FatalException HTTP 400 错误，直接返回 null，不重试: " + e.getMessage()
+                    );
+                    return null;
+                }
             } finally {
                 executor.shutdownNow(); // 确保线程被回收
             }

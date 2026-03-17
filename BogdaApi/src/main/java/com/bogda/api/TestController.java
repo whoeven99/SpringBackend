@@ -9,6 +9,7 @@ import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.VO.UserDataReportVO;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.logic.RedisDataReportService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.RateRedisService;
@@ -22,6 +23,7 @@ import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,6 +49,8 @@ public class TestController {
     private RateHttpIntegration rateHttpIntegration;
     @Autowired
     private RateRedisService rateRedisService;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     // 由 spring-cloud-azure-starter-keyvault-secrets 自动创建，使用 bootstrap.yml 中的配置
     @Autowired
@@ -183,5 +187,17 @@ public class TestController {
     @GetMapping("/testAutoTranslate")
     public BaseResponse<Object> testAutoTranslate(@RequestParam String shopName, @RequestParam String source, @RequestParam String target) {
         return new BaseResponse<>().CreateSuccessResponse(translateV2Service.autoTranslateV2(shopName, source, target));
+    }
+
+    @GetMapping("/testFeiShuRobot")
+    public BaseResponse<Object> testFeiShuRobot(@RequestParam(required = false) String message) {
+        if (message == null || message.isEmpty()) {
+            message = "这是一条测试异常信息";
+        }
+        String response = feiShuRobotIntegration.sendMessage(message);
+        if (response != null) {
+            return new BaseResponse<>().CreateSuccessResponse(response);
+        }
+        return new BaseResponse<>().CreateErrorResponse("飞书机器人消息发送失败");
     }
 }
