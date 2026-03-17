@@ -95,7 +95,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
                 , ctx.getTargetLanguage(), value);
 
         if (pair == null) {
-            feiShuRobotIntegration.sendMessage("FatalException shopName : " + ctx.getShopName() + " prompt : "
+            feiShuRobotIntegration.sendMessage("FatalException SINGLE shopName : " + ctx.getShopName() + " prompt : "
                     + ctx.getPrompt() + "  module : " + ctx.getModule());
             return;
         }
