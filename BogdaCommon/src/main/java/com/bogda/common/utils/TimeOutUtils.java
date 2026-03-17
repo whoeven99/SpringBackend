@@ -35,7 +35,7 @@ public class TimeOutUtils {
                     TraceReporterHolder.report("TimeOutUtils.callWithTimeoutAndRetry",
                             "FatalException HTTP 400 错误，直接返回 null，不重试: " + e.getMessage()
                     );
-                    return null;
+                    return future.get(timeout, unit);
                 }
             } finally {
                 executor.shutdownNow(); // 确保线程被回收
