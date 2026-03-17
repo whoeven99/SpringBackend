@@ -9,6 +9,7 @@ import com.bogda.common.entity.DO.*;
 import com.bogda.common.entity.VO.SubscriptionVO;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.integration.model.*;
 import com.bogda.repository.entity.SubscriptionQuotaRecordDO;
 import com.bogda.repository.repo.SubscriptionQuotaRecordRepo;
@@ -77,6 +78,8 @@ public class ShopifyService {
     private ICharsOrdersService iCharsOrdersService;
     @Autowired
     private SubscriptionQuotaRecordRepo subscriptionQuotaRecordRepo;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     private static final int TRANSLATABLE_RESOURCES_BY_IDS_BATCH = 250;
 
@@ -374,29 +377,35 @@ public class ShopifyService {
 
     // 保存 Shopify 数据（带速率限制，返回完整响应包括 extensions）
     public String saveDataWithRateLimit(String shopName, String token, ShopifyTranslationsResponse.Node node) {
-        RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
-        rateLimiter.acquire();
+        try {
+            RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+            rateLimiter.acquire();
 
-        String response = shopifyHttpIntegration.saveShopifyData(shopName, token, node);
-        if (response == null) {
-            return null;
-        }
-        JSONObject jsonObject = JSONObject.parseObject(response);
-        if (jsonObject == null) {
-            return null;
-        }
-
-        if (jsonObject.getJSONObject("extensions") != null) {
-            ShopifyExtensions extensions = JsonUtils.jsonToObjectWithNull(jsonObject.getJSONObject("extensions").toString(), ShopifyExtensions.class);
-            if (extensions != null) {
-                shopifyRateLimitService.updateRateLimit(shopName, extensions);
+            String response = shopifyHttpIntegration.saveShopifyData(shopName, token, node);
+            if (response == null) {
+                return null;
             }
-        }
 
-        if (jsonObject.getJSONObject("data") == null) {
+            JSONObject jsonObject = JSONObject.parseObject(response);
+            if (jsonObject == null) {
+                return null;
+            }
+
+            if (jsonObject.getJSONObject("extensions") != null) {
+                ShopifyExtensions extensions = JsonUtils.jsonToObjectWithNull(jsonObject.getJSONObject("extensions").toString(), ShopifyExtensions.class);
+                if (extensions != null) {
+                    shopifyRateLimitService.updateRateLimit(shopName, extensions);
+                }
+            }
+
+            if (jsonObject.getJSONObject("data") == null) {
+                return null;
+            }
+            return response;
+        } catch (Exception e) {
+            feiShuRobotIntegration.sendMessage("FatalException saveDataWithRateLimit error: " + e);
             return null;
         }
-        return response;
     }
 
     public String getShopifyData(String shopName, String accessToken, String apiVersion, String query) {

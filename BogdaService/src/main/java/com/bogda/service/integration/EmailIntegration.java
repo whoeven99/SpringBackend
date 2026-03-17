@@ -6,6 +6,7 @@ import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.JsonUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.tencentcloudapi.common.AbstractModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
@@ -14,6 +15,7 @@ import com.tencentcloudapi.ses.v20201002.SesClient;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
 import com.tencentcloudapi.ses.v20201002.models.Template;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -23,6 +25,9 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 @Component
 public class EmailIntegration {
     private final SesClient sesClient;
+
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     public EmailIntegration() {
         Credential cred = new Credential(ConfigUtils.getConfig("Tencent_Cloud_KEY_ID"), ConfigUtils.getConfig("Tencent_Cloud_KEY"));
@@ -59,6 +64,7 @@ public class EmailIntegration {
         } catch (Exception e) {
             ExceptionReporterHolder.report("EmailIntegration.sendEmailByTencent", e);
             TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
+            feiShuRobotIntegration.sendMessage("FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
             return false;
         }
     }
@@ -102,6 +108,7 @@ public class EmailIntegration {
                         } catch (Exception e) {
                             TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                             ExceptionReporterHolder.report("EmailIntegration.sendEmailByTencent", e);
+                            feiShuRobotIntegration.sendMessage("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                             return null;
                         }
                     },
@@ -119,6 +126,7 @@ public class EmailIntegration {
         } catch (Exception e1) {
             ExceptionReporterHolder.report("EmailIntegration.sendEmailByTencent", e1);
             TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+            feiShuRobotIntegration.sendMessage("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         }
         //判断服务的返回值是否含有RequestId
         if (jsonString == null) {

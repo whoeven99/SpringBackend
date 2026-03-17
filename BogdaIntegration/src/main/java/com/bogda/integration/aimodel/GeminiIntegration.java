@@ -3,6 +3,7 @@ package com.bogda.integration.aimodel;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import kotlin.Pair;
@@ -19,6 +20,8 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 public class GeminiIntegration {
     @Autowired
     private Client client;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     public static String GEMINI_3_FLASH = "gemini-3-flash-preview";
     public static final int GEMINI_COEFFICIENT = 2;
@@ -40,6 +43,7 @@ public class GeminiIntegration {
                             TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException userTranslate call errors ： " + e.getMessage() +
                                     " translateText : " + prompt);
                             ExceptionReporterHolder.report("GeminiIntegration.generateText", e);
+                            feiShuRobotIntegration.sendMessage("FatalException generateText call errors ： " + e.getMessage() + " prompt : " + prompt);
                             return null;
                         }
                     },
@@ -61,6 +65,7 @@ public class GeminiIntegration {
         } catch (Exception e) {
             TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);
             ExceptionReporterHolder.report("GeminiIntegration.generateText", e);
+            feiShuRobotIntegration.sendMessage("FatalException generateText call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;
         }
     }
@@ -120,6 +125,7 @@ public class GeminiIntegration {
         } catch (Exception e) {
             TraceReporterHolder.report("GeminiIntegration.generateImage", "FatalException generateImage errors ： " + e.getMessage() + " translateText : " + prompt);
             ExceptionReporterHolder.report("GeminiIntegration.generateImage", e);
+            feiShuRobotIntegration.sendMessage("FatalException generateImage call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;
         }
     }
