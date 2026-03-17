@@ -2,6 +2,7 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.utils.JsonUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.logic.redis.ConfigRedisRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ class JsonTranslateStrategyServiceTest {
     private BatchTranslateStrategyService batchTranslateStrategyService;
     @Mock
     private ConfigRedisRepo configRedisRepo;
+    @Mock
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @InjectMocks
     private JsonTranslateStrategyService jsonTranslateStrategyService;

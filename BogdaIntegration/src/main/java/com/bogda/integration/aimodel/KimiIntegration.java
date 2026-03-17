@@ -2,10 +2,12 @@ package com.bogda.integration.aimodel;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.TimeOutUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import kotlin.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +34,9 @@ public class KimiIntegration {
     public static final int KIMI_COEFFICIENT = 2;
 
     private HttpClient httpClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @PostConstruct
     public void init() {
@@ -55,7 +59,7 @@ public class KimiIntegration {
                     "temperature", 0.6,
                     "thinking", Map.of("type", "disabled")
             );
-            String json = objectMapper.writeValueAsString(requestBody);
+            String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(requestBody);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL))
@@ -73,6 +77,7 @@ public class KimiIntegration {
                             TraceReporterHolder.report("KimiIntegration.chat", "FatalException KimiIntegration call error: " + e.getMessage()
                                     + " prompt: " + prompt);
                             ExceptionReporterHolder.report("KimiIntegration.chat", e);
+                            feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error: " + e.getMessage() + " prompt: " + prompt);
                             return null;
                         }
                     },
@@ -85,10 +90,11 @@ public class KimiIntegration {
                 TraceReporterHolder.report("KimiIntegration.chat", "FatalException KimiIntegration HTTP error, status: "
                         + (response != null ? response.statusCode() : "null") + " body: " + errorBody
                         + " prompt: " + prompt);
+                feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error prompt: " + prompt);
                 return null;
             }
 
-            JsonNode root = objectMapper.readTree(response.body());
+            JsonNode root = JsonUtils.OBJECT_MAPPER.readTree(response.body());
             String content = root.at("/choices/0/message/content").asText();
             int inputTokens = root.at("/usage/prompt_tokens").asInt(0);
             int outputTokens = root.at("/usage/completion_tokens").asInt(0);
@@ -104,6 +110,7 @@ public class KimiIntegration {
             TraceReporterHolder.report("KimiIntegration.chat", "FatalException KimiIntegration chat error: " + e.getMessage()
                     + " prompt: " + prompt);
             ExceptionReporterHolder.report("KimiIntegration.chat", e);
+            feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error: " + e.getMessage() + " prompt: " + prompt);
             return null;
         }
     }

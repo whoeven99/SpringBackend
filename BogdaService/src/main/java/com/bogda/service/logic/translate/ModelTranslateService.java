@@ -92,8 +92,7 @@ public class ModelTranslateService {
             }
 
             try {
-                Pair<String, Integer> translated =
-                        googleMachineIntegration.googleTranslateWithSDK(value, target);
+                Pair<String, Integer> translated = googleMachineIntegration.googleTranslateWithSDK(value, target);
 
                 if (translated != null) {
                     resultMap.put(key, translated.getFirst());
@@ -103,7 +102,7 @@ public class ModelTranslateService {
                 }
             } catch (Exception e) {
                 ExceptionReporterHolder.report("ModelTranslateService.modelTranslate", e);
-                TraceReporterHolder.report("ModelTranslateService.modelTranslate", "FatalException google机器翻译失败：" + value + " key: " + key);
+                TraceReporterHolder.report("ModelTranslateService.modelTranslate", "FatalException google机器翻译失败 ：" + value + " key: " + key);
                 resultMap.put(key, value);
             }
         }

@@ -13,6 +13,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class TranslateContext {
     private String module; // 用户翻译模块
+    private String shopName; // 用户翻译店铺
 
     // Start
     private String content;

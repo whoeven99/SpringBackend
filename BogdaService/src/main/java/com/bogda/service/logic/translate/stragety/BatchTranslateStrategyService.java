@@ -3,6 +3,7 @@ package com.bogda.service.logic.translate.stragety;
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
@@ -34,6 +35,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private PromptConfigService promptConfigService;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @Override
     public String getType() {
@@ -304,6 +307,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         if (result == null) {
+            feiShuRobotIntegration.sendMessage("FatalException shopName : " + ctx.getShopName() + " prompt : "
+                    + ctx.getPrompt() + "  module : " + ctx.getModule());
             return;
         }
 
@@ -387,6 +392,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         if (result == null) {
+            feiShuRobotIntegration.sendMessage("FatalException shopName : " + ctx.getShopName() + " prompt : "
+                    + ctx.getPrompt() + "  module : " + ctx.getModule());
             return;
         }
 

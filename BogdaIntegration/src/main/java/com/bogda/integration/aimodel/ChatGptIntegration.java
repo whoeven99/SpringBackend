@@ -10,7 +10,9 @@ import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import kotlin.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +32,9 @@ public class ChatGptIntegration {
 
     @Value("${azure.openai.key.vault}")
     private String gptKey;
+
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @PostConstruct
     public void init() {
@@ -75,6 +80,7 @@ public class ChatGptIntegration {
             TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage()
                     + " model: " + modelName + " prompt: " + prompt);
             ExceptionReporterHolder.report("ChatGptIntegration.chatWithGpt", e);
+            feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " model: " + modelName + " prompt: " + prompt);
             return null;
         }
     }

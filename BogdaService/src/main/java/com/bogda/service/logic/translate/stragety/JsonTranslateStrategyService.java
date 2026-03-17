@@ -4,6 +4,7 @@ import com.bogda.common.TranslateContext;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.utils.StringUtils;
 import com.bogda.common.utils.JsonUtils;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.bogda.service.logic.redis.ConfigRedisRepo;
@@ -28,6 +29,8 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
 
     @Autowired
     private BatchTranslateStrategyService batchTranslateStrategyService;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @Autowired(required = false)
     private ConfigRedisRepo configRedisRepo;
@@ -284,6 +287,7 @@ public class JsonTranslateStrategyService implements ITranslateStrategyService {
             return rules.isEmpty() ? defaultRules : rules;
         } catch (Exception e) {
             ExceptionReporterHolder.report("JsonTranslateStrategyService.loadJsonExtractRules", e);
+            feiShuRobotIntegration.sendMessage("FatalException loadJsonExtractRules errors : " +  e);
             return defaultRules;
         }
     }

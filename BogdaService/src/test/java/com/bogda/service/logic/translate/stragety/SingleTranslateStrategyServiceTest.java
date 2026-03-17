@@ -3,6 +3,7 @@ package com.bogda.service.logic.translate.stragety;
 import com.bogda.common.TranslateContext;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
@@ -39,6 +40,9 @@ class SingleTranslateStrategyServiceTest {
 
     @Mock
     private PromptConfigService promptConfigService;
+
+    @Mock
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @InjectMocks
     private SingleTranslateStrategyService singleTranslateStrategyService;

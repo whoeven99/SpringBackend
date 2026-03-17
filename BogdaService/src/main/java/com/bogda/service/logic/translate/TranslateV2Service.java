@@ -4,6 +4,7 @@ import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.KimiIntegration;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.integration.model.*;
 import com.bogda.repository.entity.DeleteTasksDO;
 import com.bogda.repository.repo.DeleteTasksRepo;
@@ -99,6 +100,8 @@ public class TranslateV2Service {
     private KimiIntegration kimiIntegration;
     @Autowired
     private AiModelConfigService aiModelConfigService;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选（降级逻辑）
     private static final String METAFIELD_JSON_TRANSLATE_RULE = "METAFIELD_JSON_TRANSLATE_RULE";
 
@@ -165,6 +168,7 @@ public class TranslateV2Service {
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
                 request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()),
                 aiModel, request.getResourceType());
+        context.setShopName(shopName);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
         service.finishAndGetJsonRecord(context);
@@ -356,6 +360,7 @@ public class TranslateV2Service {
                     List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
                     if (list == null) {
                         TraceReporterHolder.report("TranslateV2Service.createInitialTask", "FatalException createInitialTask Warning: Unknown module: " + module);
+                        feiShuRobotIntegration.sendMessage("FatalException "  + " shopName: " + shopName + " createInitialTask Warning: Unknown module: " + module);
                         return Stream.empty();
                     }
                     return list.stream();
@@ -711,6 +716,7 @@ public class TranslateV2Service {
                             translateTaskMonitorV2RedisService.incrementEstimatedCredits(initialTaskV2DO.getId(), translatableContent.getValue().length());
                         } catch (Exception e) {
                             ExceptionReporterHolder.report("TranslateV2Service.initialToTranslateTask", e);
+                            feiShuRobotIntegration.sendMessage("FatalException initialToTranslateTask errors " + e);
                         }
                     }
                 });
@@ -838,6 +844,7 @@ public class TranslateV2Service {
             if (JsonUtils.isJson(randomDo.getSourceValue())) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 context.setModule(randomDo.getModule());
+                context.setShopName(shopName);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("JSON");
                 service.translate(context);
 
@@ -851,6 +858,7 @@ public class TranslateV2Service {
             } else if (isHtml) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 context.setModule(randomDo.getModule());
+                context.setShopName(shopName);
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
                 service.translate(context);
 
@@ -882,6 +890,7 @@ public class TranslateV2Service {
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
+                context.setShopName(shopName);
                 context.setModule(randomDo.getModule());
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
                 service.translate(context);
@@ -893,6 +902,7 @@ public class TranslateV2Service {
                     // 3.3 回写数据库 todo 批量
                     if (targetValue == null) {
                         TraceReporterHolder.report("TranslateV2Service.translateEachTask", "FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        feiShuRobotIntegration.sendMessage("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
                     translateTaskV2Repo.updateTargetValueAndHasTargetValue(targetValue, true, updatedDo.getId());
@@ -970,6 +980,11 @@ public class TranslateV2Service {
             if (strResponse != null) {
                 TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
+
+                if (!strResponse.contains("\"userErrors\":[]")){
+                    feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
+                }
+
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
                 for (TranslateTaskV2DO taskDO : taskList) {
@@ -1157,7 +1172,6 @@ public class TranslateV2Service {
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 获取用户本地语言数据: " + shopName + " 数据为： " + shopifyByQuery);
         if (shopifyByQuery == null) {
-            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 FatalException 获取用户本地语言数据失败 用户: " + shopName + " ");
             return false;
         }
 

@@ -2,14 +2,13 @@ package com.bogda.task.task;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
-import com.bogda.task.annotation.EnableScheduledTask;
-import com.microsoft.applicationinsights.TelemetryClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -32,6 +31,8 @@ public class TranslateTask {
     private InitialTaskV2Repo initialTaskV2Repo;
     @Autowired
     private ITranslatesService translatesService;
+    @Autowired
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
     private final Set<String> initializingShops = new HashSet<>();
@@ -77,6 +78,7 @@ public class TranslateTask {
                 } catch (Exception e) {
                     TraceReporterHolder.report("TranslateTask.process", "FatalException TaskRunFailed " + taskName + " " + e.getMessage());
                     ExceptionReporterHolder.report("TranslateTask.process", e);
+                    feiShuRobotIntegration.sendMessage("FatalException "  + " group: " + groupKey + " taskName: " + taskName + " 异常信息： " + e);
                 } finally {
                     shopsSet.remove(groupKey);
                 }
