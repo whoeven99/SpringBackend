@@ -960,7 +960,7 @@ public class TranslateV2Service {
         while (randomDo != null) {
             TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
-            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
+            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId, randomDo.getModule());
 
             // 填回shopify
             ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
@@ -979,14 +979,12 @@ public class TranslateV2Service {
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
             if (strResponse == null){
                 // 写入失败 fatalException
-                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
-                        " randomDo: " + randomDo.getId());
+                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed null : " + shopName +
+                        " randomDo: " + randomDo.getId() + " token: " + token + " module : " + randomDo.getModule());
             }
 
             if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")){
-                    TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
-                            " randomDo: " + randomDo.getId());
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                 }
 
