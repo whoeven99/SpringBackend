@@ -259,8 +259,8 @@ public class UserService {
             return new BaseResponse<>().CreateErrorResponse("Theme data is null");
         }
 
-        String themeName = jsonNode.get("name").asText(null);
-        String themeId = jsonNode.get("admin_graphql_api_id").asText(null);
+        String themeName = jsonNode.path("name").asText(null);
+        String themeId = jsonNode.path("admin_graphql_api_id").asText(null);
         if (themeName == null || themeId == null) {
             TraceReporterHolder.report("UserService.webhookDefaultTheme", "FatalException webhookDefaultTheme themeData is null : " + data);
             return new BaseResponse<>().CreateErrorResponse("Theme data is null");
@@ -297,7 +297,7 @@ public class UserService {
             return new BaseResponse<>().CreateErrorResponse("Language data is null");
         }
 
-        String defaultLanguageData = jsonNode.get("primary_locale").asText(null);
+        String defaultLanguageData = jsonNode.path("primary_locale").asText(null);
         String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
 
         if (defaultLanguageData == null || "null".equals(userDefaultLanguage)) {

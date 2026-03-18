@@ -900,7 +900,7 @@ public class TranslateV2Service {
                     String targetValue = translatedValueMap.get(updatedDo.getId());
 
                     // 3.3 回写数据库 todo 批量
-                    if (targetValue == null) {
+                    if (targetValue == null || targetValue.isEmpty()) {
                         TraceReporterHolder.report("TranslateV2Service.translateEachTask", "FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         feiShuRobotIntegration.sendMessage("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
@@ -977,24 +977,27 @@ public class TranslateV2Service {
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
-            if (strResponse != null) {
-                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving success: " + shopName +
-                        " randomDo: " + randomDo.getId() + " response: " + strResponse);
+            if (strResponse == null){
+                // 写入失败 fatalException
+                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
+                        " randomDo: " + randomDo.getId());
+            }
 
+            if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")){
+                    TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
+                            " randomDo: " + randomDo.getId());
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                 }
 
+                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving success: " + shopName +
+                        " randomDo: " + randomDo.getId() + " response: " + strResponse);
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
                 for (TranslateTaskV2DO taskDO : taskList) {
                     translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
                 }
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
-            } else {
-                // 写入失败 fatalException
-                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
-                        " randomDo: " + randomDo.getId() + " response: " + strResponse);
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
             TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
