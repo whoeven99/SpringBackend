@@ -12,20 +12,9 @@ import java.util.List;
 
 @Service
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
-    public TranslateTaskV2DO selectLastTranslateOne(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP 1 module")
-                .eq("initial_task_id", initialTaskId)
-                .eq("has_target_value", true)
-                .eq("is_deleted", false)
-                .orderByDesc("created_at");
-        List<TranslateTaskV2DO> list = baseMapper.selectList(wrapper);
-        return list.isEmpty() ? null : list.get(0);
-    }
-
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP 1 id, resource_id")
+        wrapper.select("TOP 1 id, resource_id, module")
                 .eq("initial_task_id", initialTaskId)
                 .eq("has_target_value", true)
                 .eq("saved_to_shopify", false)
@@ -42,13 +31,6 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
                 .eq("has_target_value", true)
                 .eq("saved_to_shopify", false)
                 .eq("is_deleted", false);
-        return baseMapper.selectList(wrapper);
-    }
-
-    public List<TranslateTaskV2DO> selectByInitialTaskIdWithLimit(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP " + 20 + " *")
-                .eq("initial_task_id", initialTaskId);
         return baseMapper.selectList(wrapper);
     }
 

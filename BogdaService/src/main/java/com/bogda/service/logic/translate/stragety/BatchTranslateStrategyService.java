@@ -2,7 +2,6 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
-import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.GlossaryService;
@@ -308,7 +307,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         if (result == null) {
             feiShuRobotIntegration.sendMessage("FatalException BATCH translateWithGlossary shopName : " + ctx.getShopName() + " prompt : "
-                    + ctx.getPrompt() + "  module : " + ctx.getModule());
+                    + prompt + "  module : " + ctx.getModule());
             return;
         }
 
@@ -393,7 +392,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         if (result == null) {
             feiShuRobotIntegration.sendMessage("FatalException BATCH translateWithAI shopName : " + ctx.getShopName() + " prompt : "
-                    + ctx.getPrompt() + "  module : " + ctx.getModule());
+                    + prompt + "  module : " + ctx.getModule());
             return;
         }
 
@@ -592,6 +591,13 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
                 new TypeReference<LinkedHashMap<Integer, String>>() {
                 }
         );
+        if (resultMap == null) {
+            // 容错：当 AI 输出的字符串值中包含未转义的双引号时，先修复后再尝试解析一次
+            String repaired = JsonUtils.repairUnescapedQuotesInStringValues(jsonPart);
+            if (repaired != null && !repaired.equals(jsonPart)) {
+                resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {});
+            }
+        }
         if (resultMap == null) {
             return null;
         }
