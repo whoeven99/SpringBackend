@@ -2,16 +2,13 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.common.utils.JsonUtils;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
-import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.ModelTranslateService;
 import com.bogda.service.logic.translate.PromptConfigService;
-import com.bogda.common.utils.JsonUtils;
-import com.bogda.common.utils.StringUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,9 +18,14 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.HashMap;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -53,17 +55,40 @@ class BatchTranslateStrategyServiceTest {
     private TranslateContext context;
     private String testTarget;
     private String testAiModel;
+    private String testModule;
+    private String testShopName;
 
     @BeforeEach
     void setUp() {
         testTarget = "zh";
         testAiModel = "gemini-3-flash";
+        testModule = "product";
+        testShopName = "unit-test-shop";
 
         Map<Integer, String> originalTextMap = new HashMap<>();
         originalTextMap.put(1, "Hello");
         originalTextMap.put(2, "World");
 
         context = new TranslateContext(originalTextMap, testTarget, new HashMap<>(), testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+    }
+
+    private static Object invokePrivate(
+            Object target,
+            String methodName,
+            Class<?>[] paramTypes,
+            Object... args
+    ) throws Exception {
+        Method m = target.getClass().getDeclaredMethod(methodName, paramTypes);
+        m.setAccessible(true);
+        return m.invoke(target, args);
+    }
+
+    private static Object getField(Object obj, String fieldName) throws Exception {
+        Field f = obj.getClass().getDeclaredField(fieldName);
+        f.setAccessible(true);
+        return f.get(obj);
     }
 
     @Test
@@ -76,57 +101,203 @@ class BatchTranslateStrategyServiceTest {
     }
 
     @Test
-    void testTranslate_WithCachedValues_ShouldUseCache() {
-        // Given
-        when(redisProcessService.getCacheData(testTarget, "Hello")).thenReturn("你好");
-        when(redisProcessService.getCacheData(testTarget, "World")).thenReturn(null);
-        context.setGlossaryMap(new HashMap<>());
+    void testDeduplicateTexts_ShouldDeduplicateByFirstOccurrence_AndBuildMappingAndOccurrences() throws Exception {
+        // Given: 注意 LinkedHashMap 保证遍历顺序
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(10, "A");
+        original.put(11, "B");
+        original.put(12, "A"); // duplicate
+        original.put(13, "");  // empty -> ignored in dedup + mapping
+        original.put(14, null); // null -> ignored in dedup + mapping
+        original.put(15, "C");
+        original.put(16, "B"); // duplicate
 
-        try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class);
-             MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
-            mockedGlossary.when(() -> GlossaryService.match(anyString(), anyMap())).thenReturn(null);
-            mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
-            
-            // Mock calculateBaiLianToken 方法，避免 tokenizer 为 null 的 NPE
-            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
-            when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
+        // When
+        Object dedupResult = invokePrivate(
+                batchTranslateStrategyService,
+                "deduplicateTexts",
+                new Class<?>[]{Map.class},
+                original
+        );
 
-            // When
-            batchTranslateStrategyService.translate(context);
+        // Then
+        @SuppressWarnings("unchecked")
+        Map<Integer, String> actuallyTranslateMap = (Map<Integer, String>) getField(dedupResult, "actuallyTranslateMap");
+        @SuppressWarnings("unchecked")
+        Map<Integer, Integer> translateMappingMap = (Map<Integer, Integer>) getField(dedupResult, "translateMappingMap");
+        @SuppressWarnings("unchecked")
+        Map<String, Long> textOccurrences = (Map<String, Long>) getField(dedupResult, "textOccurrences");
 
-            // Then
-            assertEquals("你好", context.getTranslatedTextMap().get(1));
-            assertEquals(1, context.getCachedCount());
-            verify(translateTaskMonitorV2RedisService).addCacheCount("Hello");
-        }
+        // seq 从 1 开始，且按首次出现顺序 A,B,C
+        assertEquals(Map.of(1, "A", 2, "B", 3, "C"), actuallyTranslateMap);
+
+        // mapping：只映射非空文本，且同文映射到同一 seq
+        assertEquals(1, translateMappingMap.get(10));
+        assertEquals(2, translateMappingMap.get(11));
+        assertEquals(1, translateMappingMap.get(12));
+        assertFalse(translateMappingMap.containsKey(13));
+        assertFalse(translateMappingMap.containsKey(14));
+        assertEquals(3, translateMappingMap.get(15));
+        assertEquals(2, translateMappingMap.get(16));
+
+        // occurrences：只统计非空，A=2,B=2,C=1
+        assertEquals(2L, textOccurrences.get("A"));
+        assertEquals(2L, textOccurrences.get("B"));
+        assertEquals(1L, textOccurrences.get("C"));
+        assertFalse(textOccurrences.containsKey(""));
     }
 
     @Test
-    void testTranslate_WithGlossaryMatch_ShouldUseGlossary() {
+    void testFillTranslatedResults_ShouldFillByMapping_PreserveNullAndEmpty_AndFallbackToOriginalWhenMissing() throws Exception {
+        // Given
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(1, "Hello");
+        original.put(2, "Hello"); // duplicate -> same seq
+        original.put(3, "World"); // seq but missing translation -> fallback
+        original.put(4, "");      // empty -> keep empty
+        original.put(5, null);    // null -> keep null
+
+        context = new TranslateContext(original, testTarget, new HashMap<>(), testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+
+        Map<Integer, Integer> mapping = new HashMap<>();
+        mapping.put(1, 1);
+        mapping.put(2, 1);
+        mapping.put(3, 2);
+
+        Map<Integer, String> translatedResultMap = new HashMap<>();
+        translatedResultMap.put(1, "你好");
+        // seq=2 缺失，模拟翻译失败/未返回
+
+        // When
+        invokePrivate(
+                batchTranslateStrategyService,
+                "fillTranslatedResults",
+                new Class<?>[]{TranslateContext.class, Map.class, Map.class},
+                context,
+                mapping,
+                translatedResultMap
+        );
+
+        // Then
+        assertEquals("你好", context.getTranslatedTextMap().get(1));
+        assertEquals("你好", context.getTranslatedTextMap().get(2));
+        assertEquals("World", context.getTranslatedTextMap().get(3)); // fallback original
+        assertEquals("", context.getTranslatedTextMap().get(4));
+        assertNull(context.getTranslatedTextMap().get(5));
+    }
+
+    @Test
+    void testExecuteBatchTranslation_WhenSuccess_ShouldCallPromptAndModelTranslate_AndFillTranslatedAndCacheAndToken() throws Exception {
+        // Given
+        Map<Integer, String> batchTexts = new LinkedHashMap<>();
+        batchTexts.put(1, "Hello");
+        batchTexts.put(2, "World");
+
+        Map<Integer, String> actuallyTranslateMap = new HashMap<>();
+        actuallyTranslateMap.put(1, "Hello");
+        actuallyTranslateMap.put(2, "World");
+
+        Map<Integer, String> translatedResultMap = new HashMap<>();
+
+        when(promptConfigService.buildPlainJsonPrompt(eq(testModule), eq(testTarget), same(batchTexts)))
+                .thenReturn("plain-prompt");
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("plain-prompt"), eq(testTarget), same(batchTexts)))
+                .thenReturn(new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 77));
+
+        // When
+        invokePrivate(
+                batchTranslateStrategyService,
+                "executeBatchTranslation",
+                new Class<?>[]{TranslateContext.class, Map.class, Map.class, Map.class},
+                context,
+                batchTexts,
+                translatedResultMap,
+                actuallyTranslateMap
+        );
+
+        // Then: 结果写入 translatedResultMap
+        assertEquals("你好", translatedResultMap.get(1));
+        assertEquals("世界", translatedResultMap.get(2));
+
+        // Then: token 累计
+        assertEquals(77, context.getUsedToken());
+
+        // Then: 缓存写入（target, translation, originalText）
+        verify(redisProcessService).setCacheData(testTarget, "你好", "Hello");
+        verify(redisProcessService).setCacheData(testTarget, "世界", "World");
+
+        verify(feiShuRobotIntegration, never()).sendMessage(contains("FatalException BATCH translateWithAI"));
+    }
+
+    @Test
+    void testExecuteBatchTranslation_WhenBatchTranslateReturnsNull_ShouldSendFeishuAndNotMutateResults() throws Exception {
+        // Given
+        Map<Integer, String> batchTexts = new LinkedHashMap<>();
+        batchTexts.put(1, "Hello");
+
+        Map<Integer, String> actuallyTranslateMap = Map.of(1, "Hello");
+        Map<Integer, String> translatedResultMap = new HashMap<>();
+
+        when(promptConfigService.buildPlainJsonPrompt(eq(testModule), eq(testTarget), same(batchTexts)))
+                .thenReturn("plain-prompt");
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("plain-prompt"), eq(testTarget), same(batchTexts)))
+                .thenReturn(null);
+
+        // When
+        invokePrivate(
+                batchTranslateStrategyService,
+                "executeBatchTranslation",
+                new Class<?>[]{TranslateContext.class, Map.class, Map.class, Map.class},
+                context,
+                batchTexts,
+                translatedResultMap,
+                actuallyTranslateMap
+        );
+
+        // Then
+        assertTrue(translatedResultMap.isEmpty());
+        assertEquals(0, context.getUsedToken());
+        verify(redisProcessService, never()).setCacheData(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void testTranslate_WithCachedValues_ShouldUseCache() {
+        // Given
+        when(redisProcessService.getCacheData(testTarget, "Hello")).thenReturn("你好");
+        when(redisProcessService.getCacheData(testTarget, "World")).thenReturn("世界");
+        context.setGlossaryMap(new HashMap<>());
+
+        // When
+        batchTranslateStrategyService.translate(context);
+
+        // Then
+        assertEquals("你好", context.getTranslatedTextMap().get(1));
+        assertEquals("世界", context.getTranslatedTextMap().get(2));
+        assertEquals(2, context.getCachedCount());
+        verify(translateTaskMonitorV2RedisService).addCacheCount("Hello");
+        verify(translateTaskMonitorV2RedisService).addCacheCount("World");
+    }
+
+    @Test
+    void testTranslate_WithGlossaryMatch_ShouldUseGlossary_AndGlossaryPriorityOverCache() {
         // Given
         Map<String, GlossaryDO> glossaryMap = new HashMap<>();
         glossaryMap.put("Hello", new GlossaryDO("Hello", "你好", 0));
 
         context.setGlossaryMap(glossaryMap);
-        when(redisProcessService.getCacheData(anyString(), anyString())).thenReturn(null);
+        // 如果 glossary 完全匹配，应该直接用词汇表结果，不走缓存
+        when(redisProcessService.getCacheData(testTarget, "World")).thenReturn("世界");
 
-        try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class);
-             MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
-            mockedGlossary.when(() -> GlossaryService.match("Hello", glossaryMap)).thenReturn("你好");
-            mockedGlossary.when(() -> GlossaryService.match("World", glossaryMap)).thenReturn(null);
-            mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
+        // When
+        batchTranslateStrategyService.translate(context);
 
-            // Mock calculateBaiLianToken 方法，避免 tokenizer 为 null 的 NPE
-            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
-            when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
-
-            // When
-            batchTranslateStrategyService.translate(context);
-
-            // Then
-            assertEquals("你好", context.getTranslatedTextMap().get(1));
-            assertEquals(1, context.getGlossaryCount());
-        }
+        // Then
+        assertEquals("你好", context.getTranslatedTextMap().get(1));
+        assertEquals("世界", context.getTranslatedTextMap().get(2));
+        assertEquals(1, context.getGlossaryCount());
+        verify(redisProcessService, never()).getCacheData(testTarget, "Hello");
     }
 
     @Test
@@ -135,29 +306,203 @@ class BatchTranslateStrategyServiceTest {
         when(redisProcessService.getCacheData(anyString(), anyString())).thenReturn(null);
         context.setGlossaryMap(new HashMap<>());
 
-        try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class)) {
-            mockedGlossary.when(() -> GlossaryService.match(anyString(), anyMap())).thenReturn(null);
-            mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
+        when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
+                .thenReturn(new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 100));
 
-            Map<Integer, String> translatedMap = new HashMap<>();
-            translatedMap.put(1, "你好");
-            translatedMap.put(2, "世界");
-            Pair<String, Integer> mockPair = new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 100);
+        try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
+            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
 
-            when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
-            when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
-                    .thenReturn(mockPair);
+            // When
+            batchTranslateStrategyService.translate(context);
 
-            try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
-                mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
+            // Then
+            assertEquals("你好", context.getTranslatedTextMap().get(1));
+            assertEquals("世界", context.getTranslatedTextMap().get(2));
+            assertEquals(100, context.getUsedToken());
+            verify(modelTranslateService, atLeastOnce()).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
+            verify(redisProcessService, atLeastOnce()).setCacheData(eq(testTarget), anyString(), anyString());
+        }
+    }
 
-                // When
-                batchTranslateStrategyService.translate(context);
+    @Test
+    void testTranslate_ShouldDeduplicate_KeepNullAndEmpty_AndFillBackInOriginalOrder() {
+        // Given
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(1, "Hello");
+        original.put(2, "Hello"); // duplicate
+        original.put(3, "");      // empty
+        original.put(4, null);    // null
+        original.put(5, "World");
 
-                // Then
-                verify(modelTranslateService, atLeastOnce()).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
-                verify(redisProcessService, atLeastOnce()).setCacheData(eq(testTarget), anyString(), anyString());
-            }
+        context = new TranslateContext(original, testTarget, new HashMap<>(), testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+
+        when(redisProcessService.getCacheData(anyString(), anyString())).thenReturn(null);
+        when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
+                .thenReturn(new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 50));
+
+        try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
+            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(10);
+
+            // When
+            batchTranslateStrategyService.translate(context);
+
+            // Then: duplicate 回填成相同译文；空与null保持原样
+            assertEquals("你好", context.getTranslatedTextMap().get(1));
+            assertEquals("你好", context.getTranslatedTextMap().get(2));
+            assertEquals("", context.getTranslatedTextMap().get(3));
+            assertNull(context.getTranslatedTextMap().get(4));
+            assertEquals("世界", context.getTranslatedTextMap().get(5));
+
+            // 只需要翻译两条唯一文本 -> 至少一次 modelTranslate（可能一次批次）
+            verify(modelTranslateService, times(1)).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
+        }
+    }
+
+    @Test
+    void testTranslate_WithCacheHit_ShouldIncrementCountsByOccurrences() {
+        // Given: Hello 出现 2 次，缓存命中应计数 2 次
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(1, "Hello");
+        original.put(2, "Hello");
+        original.put(3, "World");
+
+        context = new TranslateContext(original, testTarget, new HashMap<>(), testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+
+        when(redisProcessService.getCacheData(testTarget, "Hello")).thenReturn("你好");
+        when(redisProcessService.getCacheData(testTarget, "World")).thenReturn("世界");
+
+        // When
+        batchTranslateStrategyService.translate(context);
+
+        // Then
+        assertEquals("你好", context.getTranslatedTextMap().get(1));
+        assertEquals("你好", context.getTranslatedTextMap().get(2));
+        assertEquals("世界", context.getTranslatedTextMap().get(3));
+        assertEquals(3, context.getCachedCount());
+        verify(translateTaskMonitorV2RedisService, times(2)).addCacheCount("Hello");
+        verify(translateTaskMonitorV2RedisService).addCacheCount("World");
+    }
+
+    @Test
+    void testTranslate_WithGlossaryContained_ShouldTranslateWithGlossaryPrompt_AndCacheResult() {
+        // Given: 文本包含术语 Apple（非完全匹配），应走“带词汇表批量翻译”路径
+        Map<String, GlossaryDO> glossaryMap = new HashMap<>();
+        glossaryMap.put("Apple", new GlossaryDO("Apple", "苹果", 0));
+
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(1, "I like Apple");
+
+        context = new TranslateContext(original, testTarget, glossaryMap, testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+
+        when(promptConfigService.buildGlossaryJsonPrompt(eq(testModule), eq(testTarget), anyString(), anyMap()))
+                .thenReturn("glossary-json-prompt");
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("glossary-json-prompt"), eq(testTarget), anyMap()))
+                .thenReturn(new Pair<>("{\"1\":\"我喜欢苹果\"}", 12));
+
+        // When
+        batchTranslateStrategyService.translate(context);
+
+        // Then
+        assertEquals("我喜欢苹果", context.getTranslatedTextMap().get(1));
+        assertEquals(12, context.getUsedToken());
+        assertEquals(1, context.getGlossaryCount());
+        verify(redisProcessService).setCacheData(testTarget, "我喜欢苹果", "I like Apple");
+    }
+
+    @Test
+    void testTranslate_WithAI_ShouldSplitIntoBatchesByTokenLimit() {
+        // Given: 3 条文本都需纯AI翻译；通过 mock token 计数触发 2 个批次
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(1, "t1");
+        original.put(2, "t2");
+        original.put(3, "t3");
+
+        context = new TranslateContext(original, testTarget, new HashMap<>(), testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+
+        when(redisProcessService.getCacheData(anyString(), anyString())).thenReturn(null);
+
+        // prompt 根据 map keys 变化，便于区分不同批次
+        when(promptConfigService.buildPlainJsonPrompt(eq(testModule), eq(testTarget), anyMap()))
+                .thenAnswer(invocation -> {
+                    Map<Integer, String> map = invocation.getArgument(2);
+                    List<Integer> keys = new ArrayList<>(map.keySet());
+                    keys.sort(Integer::compareTo);
+                    return "plain:" + keys;
+                });
+
+        // modelTranslate 按 prompt 返回对应的 JSON（直接用 seq -> 译文），并记录每次调用拿到的 batch（注意：生产代码会复用并 clear 同一个 Map 引用）
+        List<Map<Integer, String>> capturedBatches = new ArrayList<>();
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
+                .thenAnswer(invocation -> {
+                    Map<Integer, String> src = invocation.getArgument(3);
+                    capturedBatches.add(new LinkedHashMap<>(src));
+                    LinkedHashMap<Integer, String> out = new LinkedHashMap<>();
+                    for (Map.Entry<Integer, String> e : src.entrySet()) {
+                        out.put(e.getKey(), "tr_" + e.getValue());
+                    }
+                    return new Pair<>(JsonUtils.objectToJson(out), 3);
+                });
+
+        try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
+            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken("t1")).thenReturn(400);
+            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken("t2")).thenReturn(250); // 触发阈值 650 >= 600
+            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken("t3")).thenReturn(100);
+
+            // When
+            batchTranslateStrategyService.translate(context);
+
+            // Then: 翻译结果回填
+            assertEquals("tr_t1", context.getTranslatedTextMap().get(1));
+            assertEquals("tr_t2", context.getTranslatedTextMap().get(2));
+            assertEquals("tr_t3", context.getTranslatedTextMap().get(3));
+
+            verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
+
+            assertEquals(2, capturedBatches.size());
+            Set<Integer> keys0 = capturedBatches.get(0).keySet();
+            Set<Integer> keys1 = capturedBatches.get(1).keySet();
+            assertTrue(
+                    (keys0.equals(Set.of(1, 2)) && keys1.equals(Set.of(3)))
+                            || (keys0.equals(Set.of(3)) && keys1.equals(Set.of(1, 2))),
+                    "批次切分不符合预期，实际批次 keys 分别为: " + keys0 + " / " + keys1
+            );
+        }
+    }
+
+    @Test
+    void testTranslate_WhenModelTranslateReturnsNull_ShouldSendFeishuAndFallbackToOriginal() {
+        // Given
+        Map<Integer, String> original = new LinkedHashMap<>();
+        original.put(1, "Hello");
+        original.put(2, "World");
+
+        context = new TranslateContext(original, testTarget, new HashMap<>(), testAiModel);
+        context.setModule(testModule);
+        context.setShopName(testShopName);
+
+        when(redisProcessService.getCacheData(anyString(), anyString())).thenReturn(null);
+        when(promptConfigService.buildPlainJsonPrompt(eq(testModule), eq(testTarget), anyMap())).thenReturn("plain-prompt");
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap())).thenReturn(null);
+
+        try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
+            mockedAliyun.when(() -> ALiYunTranslateIntegration.calculateBaiLianToken(anyString())).thenReturn(700); // 立即触发执行批次
+
+            // When
+            batchTranslateStrategyService.translate(context);
+
+            // Then: AI失败则回填原文
+            assertEquals("Hello", context.getTranslatedTextMap().get(1));
+            assertEquals("World", context.getTranslatedTextMap().get(2));
         }
     }
 
@@ -189,27 +534,14 @@ class BatchTranslateStrategyServiceTest {
         // Given
         String input = "{\"1\":\"你好\",\"2\":\"世界\"}";
 
-        try (MockedStatic<StringUtils> mockedStringUtils = mockStatic(StringUtils.class);
-             MockedStatic<JsonUtils> mockedJsonUtils = mockStatic(JsonUtils.class)) {
+        // When
+        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
 
-            mockedStringUtils.when(() -> StringUtils.extractJsonBlock(input)).thenReturn(input);
-
-            LinkedHashMap<Integer, String> expectedMap = new LinkedHashMap<>();
-            expectedMap.put(1, "你好");
-            expectedMap.put(2, "世界");
-
-            mockedJsonUtils.when(() -> JsonUtils.jsonToObjectWithNull(eq(input), any(TypeReference.class)))
-                    .thenReturn(expectedMap);
-
-            // When
-            LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
-
-            // Then
-            assertNotNull(result);
-            assertEquals(2, result.size());
-            assertEquals("你好", result.get(1));
-            assertEquals("世界", result.get(2));
-        }
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("你好", result.get(1));
+        assertEquals("世界", result.get(2));
     }
 
     @Test
@@ -241,15 +573,11 @@ class BatchTranslateStrategyServiceTest {
         // Given
         String input = "invalid json";
 
-        try (MockedStatic<StringUtils> mockedStringUtils = mockStatic(StringUtils.class)) {
-            mockedStringUtils.when(() -> StringUtils.extractJsonBlock(input)).thenReturn(null);
+        // When
+        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
 
-            // When
-            LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
-
-            // Then
-            assertNull(result);
-        }
+        // Then
+        assertNull(result);
     }
 
     @Test
@@ -257,28 +585,14 @@ class BatchTranslateStrategyServiceTest {
         // Given
         String input = "{\"1\":\"你好\",\"2\":\"\",\"3\":\"   \"}";
 
-        try (MockedStatic<StringUtils> mockedStringUtils = mockStatic(StringUtils.class);
-             MockedStatic<JsonUtils> mockedJsonUtils = mockStatic(JsonUtils.class)) {
+        // When
+        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
 
-            mockedStringUtils.when(() -> StringUtils.extractJsonBlock(input)).thenReturn(input);
-
-            LinkedHashMap<Integer, String> mapWithEmpty = new LinkedHashMap<>();
-            mapWithEmpty.put(1, "你好");
-            mapWithEmpty.put(2, "");
-            mapWithEmpty.put(3, "   ");
-
-            mockedJsonUtils.when(() -> JsonUtils.jsonToObjectWithNull(eq(input), any(TypeReference.class)))
-                    .thenReturn(mapWithEmpty);
-
-            // When
-            LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
-
-            // Then
-            assertNotNull(result);
-            assertEquals(1, result.size());
-            assertTrue(result.containsKey(1));
-            assertEquals("你好", result.get(1));
-        }
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey(1));
+        assertEquals("你好", result.get(1));
     }
 }
 

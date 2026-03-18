@@ -191,7 +191,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
             // 优先级3: 检查缓存
             String cachedTranslation = redisProcessService.getCacheData(targetLanguage, text);
-            if (cachedTranslation != null) {
+            if (cachedTranslation != null && !cachedTranslation.isEmpty()) {
                 handleCacheHit(ctx, seq, text, cachedTranslation, occurrenceCount, translatedResultMap);
                 continue;
             }
@@ -391,8 +391,6 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         if (result == null) {
-            feiShuRobotIntegration.sendMessage("FatalException BATCH translateWithAI shopName : " + ctx.getShopName() + " prompt : "
-                    + prompt + "  module : " + ctx.getModule());
             return;
         }
 
