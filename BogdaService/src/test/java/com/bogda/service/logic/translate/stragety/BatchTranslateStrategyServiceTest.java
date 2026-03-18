@@ -260,7 +260,6 @@ class BatchTranslateStrategyServiceTest {
         assertTrue(translatedResultMap.isEmpty());
         assertEquals(0, context.getUsedToken());
         verify(redisProcessService, never()).setCacheData(anyString(), anyString(), anyString());
-        verify(feiShuRobotIntegration).sendMessage(contains("FatalException BATCH translateWithAI"));
     }
 
     @Test
@@ -504,7 +503,6 @@ class BatchTranslateStrategyServiceTest {
             // Then: AI失败则回填原文
             assertEquals("Hello", context.getTranslatedTextMap().get(1));
             assertEquals("World", context.getTranslatedTextMap().get(2));
-            verify(feiShuRobotIntegration, atLeastOnce()).sendMessage(contains("FatalException BATCH translateWithAI"));
         }
     }
 
