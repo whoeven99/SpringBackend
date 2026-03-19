@@ -1291,9 +1291,19 @@ public class TranslateV2Service {
             }
 
             // TODO: 暂时先硬编码下（解决下问题）， 后面再改为config配置
-            for (String blackValue : JudgeTranslateUtils.BLACKLIST_WORDS
-                 ) {
+            for (String blackValue : JudgeTranslateUtils.BLACKLIST_WORDS) {
                 if (blackValue.equals(value)){
+                    return false;
+                }
+            }
+
+            // 对ONLINE_STORE_THEME_LOCALE_CONTENT 模块的key值进行判断，如果包含gempage、pagefly、ecom、beae、error 不翻译，大小写不敏感
+            if (TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT.equals(module)) {
+                String lowerKey = key.toLowerCase(Locale.ROOT);
+                if (lowerKey.contains("gempage") || lowerKey.contains("pagefly") || lowerKey.contains("ecom")
+                        || lowerKey.contains("beae") || lowerKey.contains("error")) {
+                    JudgeTranslateUtils.printTranslateReason(
+                            "key : " + key + " 命中 ONLINE_STORE_THEME_LOCALE_CONTENT 黑名单关键词，value是： " + value);
                     return false;
                 }
             }
@@ -1360,6 +1370,11 @@ public class TranslateV2Service {
             }
         }
 
+        if (TranslateConstants.METAOBJECT.equals(module)) {
+            if (value.contains("grp__")){
+                return false;
+            }
+        }
         return true;
     }
 
