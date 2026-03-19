@@ -873,6 +873,7 @@ public class TranslateV2Service {
                 List<TranslateTaskV2DO> originTaskList =
                         translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(initialTaskId, 30);
 
+                TraceReporterHolder.report("originTaskList","originTaskList : " + originTaskList.toString());
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
@@ -888,11 +889,15 @@ public class TranslateV2Service {
 
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
+
+                TraceReporterHolder.report("originTaskList", "idToSourceValueMap : " + idToSourceValueMap.toString());
+                if (idToSourceValueMap.isEmpty()) {
+                    continue;
+                }
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
-                TraceReporterHolder.report("TranslateV2Service.translateEachTask", " idToSourceValueMap: " + idToSourceValueMap + " content: " + context.getContent());
                 context.setShopName(shopName);
                 context.setModule(randomDo.getModule());
-                ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("BATCH");
                 service.translate(context);
 
                 Map<Integer, String> translatedValueMap = context.getTranslatedTextMap();
