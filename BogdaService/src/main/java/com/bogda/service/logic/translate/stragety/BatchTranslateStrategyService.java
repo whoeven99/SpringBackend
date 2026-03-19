@@ -583,6 +583,12 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             return null;
         }
 
+        // 步骤1.5: 若存在被双重转义的 unicode 序列（例如 \\u0022），先还原一层再解析
+        String decodedUnicode = JsonUtils.decodeDoubleEscapedUnicode(jsonPart);
+        if (decodedUnicode != null) {
+            jsonPart = decodedUnicode;
+        }
+
         // 步骤2: 将JSON字符串解析为Map对象
         LinkedHashMap<Integer, String> resultMap = JsonUtils.jsonToObjectWithNull(
                 jsonPart,

@@ -9,11 +9,13 @@ import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.task.annotation.EnableScheduledTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,6 +53,7 @@ public class TranslateTask {
         } else {
             tasks = initialTaskV2Repo.selectByStatus(status);
         }
+
         if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
