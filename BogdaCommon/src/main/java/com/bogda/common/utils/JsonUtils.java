@@ -6,6 +6,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.regex.Pattern;
+
 public class JsonUtils {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static JsonNode readTree(String str) {
@@ -156,5 +158,22 @@ public class JsonUtils {
         }
 
         return out.toString();
+    }
+
+    /**
+     * 将 JSON 文本中“被双重转义”的 unicode 序列还原一层。
+     * <p>
+     * 场景：上游为了避免内容里的双引号干扰 prompt，会把 " 替换为“反斜杠 + u0022”这 6 个字符；
+     * 这会导致 JSON 文本里出现“两个反斜杠 + uXXXX”的形式，Jackson 解析后只会得到字面量“反斜杠 + uXXXX”。
+     * 在反序列化前，先把“两个反斜杠 + uXXXX”->“一个反斜杠 + uXXXX”还原，让 Jackson 在解析时解码为真实字符。
+     */
+    public static String decodeDoubleEscapedUnicode(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        // 注意：避免在源码里直接出现 反斜杠+uXXXX 触发 Java unicode 转义
+        Pattern p = Pattern.compile("\\\\\\\\" + "u([0-9a-fA-F]{4})");
+        String replaced = p.matcher(text).replaceAll("\\\\" + "u$1");
+        return replaced;
     }
 }

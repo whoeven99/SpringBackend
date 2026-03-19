@@ -979,14 +979,14 @@ public class TranslateV2Service {
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
             if (strResponse == null){
                 // 写入失败 fatalException
-                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
+                TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed null : " + shopName +
                         " randomDo: " + randomDo.getId());
             }
 
             if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")){
                     TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed: " + shopName +
-                            " randomDo: " + randomDo.getId());
+                            " randomDo: " + randomDo.getId() + " response: " + strResponse);
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                 }
 
