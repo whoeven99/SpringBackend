@@ -891,6 +891,9 @@ public class TranslateV2Service {
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
                 TraceReporterHolder.report("originTaskList", "idToSourceValueMap : " + idToSourceValueMap.toString());
+                if (idToSourceValueMap.isEmpty()) {
+                    continue;
+                }
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
                 context.setShopName(shopName);
                 context.setModule(randomDo.getModule());
