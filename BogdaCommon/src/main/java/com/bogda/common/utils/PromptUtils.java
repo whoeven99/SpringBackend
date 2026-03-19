@@ -2,6 +2,7 @@ package com.bogda.common.utils;
 
 import com.vdurmont.emoji.EmojiManager;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -35,7 +36,7 @@ public class PromptUtils {
 
     private static final String JSON_OUTPUT_RULE = """
             Output:
-            Translate values only and return the result in the EXACT same JSON structure.
+            Translate values only and return the result in the EXACT same JSON structure with unicode.
             """;
 
     private static final String SINGLE_OUTPUT_RULE = """
@@ -65,32 +66,6 @@ public class PromptUtils {
                     + "|www\\.\\S+"
     );
 
-    public static String buildDynamicJsonPrompt(String target, Map<Integer, String> sourceMap,
-                                                String termRules, String styleRules) {
-        String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
-        String targetLanguage = ModuleCodeUtils.getLanguageName(target);
-        boolean includeProtection = hasSpecialContent(sourceMap);
-        boolean includeUnit = hasDigit(sourceMap);
-        return buildDynamicPrompt(BASE_PROMPT
-                        .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
-                        .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                true, termRules, styleRules, includeProtection, includeUnit, JSON_OUTPUT_RULE);
-    }
-
-    public static String buildDynamicSinglePrompt(String targetLanguage, String text,
-                                                  String termRules, String styleRules) {
-        String safeText = text == null ? "" : text;
-        boolean includeProtection = hasSpecialContent(safeText);
-        boolean includeUnit = hasDigit(safeText);
-        String prompt = """
-                You are a professional e-commerce translator.
-                Translate the text in {{SOURCE_LANGUAGE_LIST}} into {{TARGET_LANGUAGE}}.
-                """;
-        return buildDynamicPrompt(prompt
-                        .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
-                        .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
-                true, termRules, styleRules, includeProtection, includeUnit, SINGLE_OUTPUT_RULE);
-    }
 
     /**
      * JSON 批量翻译 — 支持外部 BasePrompt
@@ -100,7 +75,8 @@ public class PromptUtils {
     public static String buildDynamicJsonPrompt(String target, Map<Integer, String> sourceMap,
                                                 String termRules, String styleRules,
                                                 String customBasePrompt) {
-        String sourceLanguageList = JsonUtils.objectToJson(sourceMap);
+        Map<Integer, String> encodedSourceMap = encodeQuotesToUnicodeBeforeJson(sourceMap);
+        String sourceLanguageList = JsonUtils.objectToJson(encodedSourceMap);
         String targetLanguage = ModuleCodeUtils.getLanguageName(target);
         boolean includeProtection = hasSpecialContent(sourceMap);
         boolean includeUnit = hasDigit(sourceMap);
@@ -109,6 +85,30 @@ public class PromptUtils {
                         .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
                 true, termRules, styleRules, includeProtection, includeUnit, JSON_OUTPUT_RULE);
+    }
+
+    /**
+     * 在 JSON 序列化前，将字符串值里的双引号替换为“反斜杠 + u0022”这 6 个字符的字面量。
+     * <p>
+     * 注意：Java 源码（包括注释）里不能出现连续的“反斜杠 + u”字符序列，否则会触发编译期 unicode 转义。
+     */
+    private static Map<Integer, String> encodeQuotesToUnicodeBeforeJson(Map<Integer, String> sourceMap) {
+        if (sourceMap == null || sourceMap.isEmpty()) {
+            return sourceMap;
+        }
+        String quoteUnicode = "\\" + "u0022"; // 避免在源码里直接出现 反斜杠+uXXXX 触发 Java unicode 转义
+
+        boolean changed = false;
+        Map<Integer, String> out = new LinkedHashMap<>(sourceMap.size());
+        for (Map.Entry<Integer, String> entry : sourceMap.entrySet()) {
+            String v = entry.getValue();
+            if (v != null && v.indexOf('"') >= 0) {
+                v = v.replace("\"", quoteUnicode);
+                changed = true;
+            }
+            out.put(entry.getKey(), v);
+        }
+        return changed ? out : sourceMap;
     }
 
     /**
@@ -144,30 +144,8 @@ public class PromptUtils {
                 false, null, null, false, hasDigit(sourceText), HANDLE_OUTPUT_RULE);
     }
 
-    public static String GlossaryJsonPrompt(String target, String glossaryMapping,
-                                            Map<Integer, String> glossaryTextMap) {
-        return buildDynamicJsonPrompt(target, glossaryTextMap, glossaryMapping, null);
-    }
-
-    public static String JsonPrompt(String target, Map<Integer, String> originalTextMap) {
-        return buildDynamicJsonPrompt(target, originalTextMap, null, null);
-    }
-
-    public static String GlossarySinglePrompt(String targetLanguage, String text,
-                                              String glossaryMapping) {
-        return buildDynamicSinglePrompt(targetLanguage, text, glossaryMapping, null);
-    }
-
-    public static String SinglePrompt(String targetLanguage, String text) {
-        return buildDynamicSinglePrompt(targetLanguage, text, null, null);
-    }
-
-    private static String buildDynamicPrompt(String basePrompt,
-                                             boolean includeContextRule,
-                                             String termRules,
-                                             String styleRules,
-                                             boolean includeProtectionRule,
-                                             boolean includeUnitRule,
+    private static String buildDynamicPrompt(String basePrompt, boolean includeContextRule, String termRules,
+                                             String styleRules, boolean includeProtectionRule, boolean includeUnitRule,
                                              String outputRule) {
         StringBuilder prompt = new StringBuilder(basePrompt.trim()).append("\n\n");
         if (includeContextRule) {

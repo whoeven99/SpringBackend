@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,6 +53,7 @@ public class TranslateTask {
         } else {
             tasks = initialTaskV2Repo.selectByStatus(status);
         }
+
         if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
