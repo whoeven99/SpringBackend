@@ -23,7 +23,18 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId) {
+    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId, String module) {
+        if ("EMAIL_TEMPLATE".equals(module)) {
+            QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+            wrapper.select("TOP " + 1 + " *")
+                    .eq("initial_task_id", initialTaskId)
+                    .eq("resource_id", resourceId)
+                    .eq("has_target_value", true)
+                    .eq("saved_to_shopify", false)
+                    .eq("is_deleted", false);
+            return baseMapper.selectList(wrapper);
+        }
+
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP " + 10 + " *")
                 .eq("initial_task_id", initialTaskId)
@@ -64,7 +75,7 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
     public boolean updateTargetValueAndHasTargetValue(String targetValue, boolean hasTargetValue, int id) {
         return baseMapper.update(new LambdaUpdateWrapper<TranslateTaskV2DO>().set(TranslateTaskV2DO::getTargetValue, targetValue)
                 .set(TranslateTaskV2DO::isHasTargetValue, hasTargetValue).set(TranslateTaskV2DO::getUpdatedAt,
-                new Timestamp(System.currentTimeMillis())).eq(TranslateTaskV2DO::getId, id)) > 0;
+                        new Timestamp(System.currentTimeMillis())).eq(TranslateTaskV2DO::getId, id)) > 0;
     }
 
     public boolean updateSavedToShopify(int taskId) {
