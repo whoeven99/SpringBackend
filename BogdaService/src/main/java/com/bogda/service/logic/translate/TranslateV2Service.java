@@ -712,6 +712,7 @@ public class TranslateV2Service {
                         taskDo.setType(translatableContent.getType());
                         taskDo.setDigest(translatableContent.getDigest());
                         taskDo.setSingleHtml(JsoupUtils.isHtml(translatableContent.getValue()));
+                        taskDo.setSingleJson(JsonUtils.isJson(translatableContent.getValue()));
                         taskDo.setId(null);
                         try {
                             translateTaskV2Repo.insert(taskDo);
@@ -844,6 +845,7 @@ public class TranslateV2Service {
 
             // 随机找一条，如果是html就单条翻译，不是就直接批量
             boolean isHtml = randomDo.isSingleHtml();
+            TraceReporterHolder.report("debug", "TranslateTaskV2 isHtml: " + isHtml + " randomDo: " + randomDo.getId() + " content: " + randomDo.getSourceValue());
             if (JsonUtils.isJson(randomDo.getSourceValue())) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 context.setModule(randomDo.getModule());
@@ -876,6 +878,7 @@ public class TranslateV2Service {
                 List<TranslateTaskV2DO> originTaskList =
                         translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(initialTaskId, 30);
 
+                TraceReporterHolder.report("debug","originTaskList : " + originTaskList.toString());
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
@@ -892,6 +895,10 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
+                TraceReporterHolder.report("originTaskList", "idToSourceValueMap : " + idToSourceValueMap.toString());
+                if (idToSourceValueMap.isEmpty()) {
+                    continue;
+                }
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
                 context.setShopName(shopName);
                 context.setModule(randomDo.getModule());

@@ -13,6 +13,8 @@ CREATE TABLE dbo.Translate_Tasks_V2
     saved_to_shopify Bit            NOT NULL default 0,
     is_handle        BIT            NOT NULL default 0,
     is_deleted       BIT            NOT NULL DEFAULT 0,
+    is_single_html   BIT            NOT NULL DEFAULT 0,
+    is_single_json   BIT            NOT NULL DEFAULT 0,
     updated_at       DATETIME                DEFAULT GETUTCDATE(),
     created_at       DATETIME                DEFAULT GETUTCDATE()
 )

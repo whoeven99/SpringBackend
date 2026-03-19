@@ -30,4 +30,6 @@ public class TranslateTaskV2DO extends BaseDO {
     private boolean savedToShopify;
     @TableField("is_single_html")
     private boolean isSingleHtml;
+    @TableField("is_single_json")
+    private boolean isSingleJson;
 }
