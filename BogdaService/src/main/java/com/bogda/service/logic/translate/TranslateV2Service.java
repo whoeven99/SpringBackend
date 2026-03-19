@@ -888,8 +888,8 @@ public class TranslateV2Service {
 
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
-
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
+                TraceReporterHolder.report("TranslateV2Service.translateEachTask", " idToSourceValueMap: " + idToSourceValueMap + " content: " + context.getContent());
                 context.setShopName(shopName);
                 context.setModule(randomDo.getModule());
                 ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
