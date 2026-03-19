@@ -170,7 +170,10 @@ public class TranslateV2Service {
                 aiModel, request.getResourceType());
         context.setShopName(shopName);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
+        System.out.println("type: " + service.getType() + " model: " + context.getAiModel());
         service.translate(context);
+        System.out.println("context.target: " + context.getTranslatedContent());
+        System.out.println("context.target2: " + context.getTranslatedTextMap());
         service.finishAndGetJsonRecord(context);
         userTokenService.addUsedToken(shopName, context.getUsedToken());
 
@@ -985,7 +988,7 @@ public class TranslateV2Service {
 
             if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")){
-                    feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
+                    feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " module : " + randomDo.getModule() + " response: " + strResponse);
                 }
 
                 TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving success: " + shopName +
@@ -998,7 +1001,6 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             }
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
-            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
 
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);

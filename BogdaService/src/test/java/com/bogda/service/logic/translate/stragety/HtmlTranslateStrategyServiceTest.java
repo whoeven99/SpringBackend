@@ -149,6 +149,34 @@ class HtmlTranslateStrategyServiceTest {
     }
 
     @Test
+    void testTranslate_WhenTranslateBodyTagOnly_ShouldReturnSameBodyTag() {
+        // Given
+        String htmlContent = "<body></body>";
+        context = new TranslateContext(htmlContent, testTarget, new HashMap<>(), testAiModel);
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(htmlContent)).thenReturn(htmlContent);
+
+            // hasHtmlTag=false; body 为空且没有任何 textNodes，触发回退到 rawValue
+            Document mockDoc = createMockDocumentForEmptyBody();
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.parseHtml(eq(htmlContent), eq(testTarget), eq(false))).thenReturn(mockDoc);
+
+            doNothing().when(batchTranslateStrategyService).translate(any(TranslateContext.class));
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertEquals("<body></body>", context.getTranslatedContent());
+            assertEquals("HTML的json翻译", context.getStrategy());
+            assertNull(context.getDoc());
+            assertTrue(context.getNodeMap().isEmpty());
+        }
+    }
+
+    @Test
     void testFinishAndGetJsonRecord_ShouldSetVariables() {
         // Given
         context.setStrategy("HTML的json翻译");
@@ -219,6 +247,17 @@ class HtmlTranslateStrategyServiceTest {
         when(textNode.text()).thenReturn("Hello World");
         when(textNode.getWholeText()).thenReturn("Hello World");
         
+        return doc;
+    }
+
+    private Document createMockDocumentForEmptyBody() {
+        Document doc = mock(Document.class);
+        Element body = mock(Element.class);
+        when(doc.body()).thenReturn(body);
+        when(body.childNodes()).thenReturn(new java.util.ArrayList<>());
+
+        // 没有任何元素/文本节点，确保 originalTextMap 为空
+        when(doc.getAllElements()).thenReturn(new Elements());
         return doc;
     }
 }
