@@ -223,7 +223,7 @@ public class TranslateV2Service {
 
     /**
      * 处理kimi逻辑
-     * */
+     */
     private Map<String, Object> handleKimi(String prompt, String target) {
         Pair<String, Integer> pair = kimiIntegration.chat(prompt, target);
         if (pair == null) {
@@ -360,7 +360,7 @@ public class TranslateV2Service {
                     List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
                     if (list == null) {
                         TraceReporterHolder.report("TranslateV2Service.createInitialTask", "FatalException createInitialTask Warning: Unknown module: " + module);
-                        feiShuRobotIntegration.sendMessage("FatalException "  + " shopName: " + shopName + " createInitialTask Warning: Unknown module: " + module);
+                        feiShuRobotIntegration.sendMessage("FatalException " + " shopName: " + shopName + " createInitialTask Warning: Unknown module: " + module);
                         return Stream.empty();
                     }
                     return list.stream();
@@ -591,7 +591,7 @@ public class TranslateV2Service {
                 if (task.getStatus().equals(InitialTaskStatus.INIT_STOPPED.getStatus()) ||
                         redisStoppedRepository.isStoppedByTokenLimit(shopName, task.getId())) {
                     progress.setStatus(3);
-                }  else {
+                } else {
                     progress.setStatus(7);
                 }
 
@@ -709,6 +709,7 @@ public class TranslateV2Service {
                         taskDo.setType(translatableContent.getType());
                         taskDo.setDigest(translatableContent.getDigest());
                         taskDo.setSingleHtml(JsoupUtils.isHtml(translatableContent.getValue()));
+                        taskDo.setSingleJson(JsonUtils.isJson(translatableContent.getValue()));
                         taskDo.setId(null);
                         try {
                             translateTaskV2Repo.insert(taskDo);
@@ -826,7 +827,7 @@ public class TranslateV2Service {
                 // 记录是因为token limit中断的
                 // 获取没有翻译的任务，修改该用户任务的停止标识
                 List<InitialTaskV2DO> initialTaskV2DOS = initialTaskV2Repo.selectByShopNameAndNotDeleted(shopName);
-                if (!initialTaskV2DOS.isEmpty()){
+                if (!initialTaskV2DOS.isEmpty()) {
                     for (InitialTaskV2DO task : initialTaskV2DOS) {
                         redisStoppedRepository.tokenLimitStopped(shopName, task.getId());
                     }
@@ -841,6 +842,7 @@ public class TranslateV2Service {
 
             // 随机找一条，如果是html就单条翻译，不是就直接批量
             boolean isHtml = randomDo.isSingleHtml();
+            TraceReporterHolder.report("debug", "TranslateTaskV2 isHtml: " + isHtml + " randomDo: " + randomDo.getId() + " content: " + randomDo.getSourceValue());
             if (JsonUtils.isJson(randomDo.getSourceValue())) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 context.setModule(randomDo.getModule());
@@ -873,6 +875,7 @@ public class TranslateV2Service {
                 List<TranslateTaskV2DO> originTaskList =
                         translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(initialTaskId, 30);
 
+                TraceReporterHolder.report("debug", "originTaskList : " + originTaskList.toString());
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
@@ -889,6 +892,12 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
+                TraceReporterHolder.report("debug", "idToSourceValueMap : " + idToSourceValueMap.toString());
+                if (idToSourceValueMap.isEmpty()) {
+                    maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
+                    randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
+                    continue;
+                }
                 TranslateContext context = new TranslateContext(idToSourceValueMap, target, glossaryMap, aiModel);
                 context.setShopName(shopName);
                 context.setModule(randomDo.getModule());
@@ -977,14 +986,14 @@ public class TranslateV2Service {
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
-            if (strResponse == null){
+            if (strResponse == null) {
                 // 写入失败 fatalException
                 TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed null : " + shopName +
                         " randomDo: " + randomDo.getId() + " token: " + token + " module : " + randomDo.getModule());
             }
 
             if (strResponse != null) {
-                if (!strResponse.contains("\"userErrors\":[]")){
+                if (!strResponse.contains("\"userErrors\":[]")) {
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                 }
 
@@ -1292,7 +1301,7 @@ public class TranslateV2Service {
 
             // TODO: 暂时先硬编码下（解决下问题）， 后面再改为config配置
             for (String blackValue : JudgeTranslateUtils.BLACKLIST_WORDS) {
-                if (blackValue.equals(value)){
+                if (blackValue.equals(value)) {
                     return false;
                 }
             }
@@ -1371,7 +1380,7 @@ public class TranslateV2Service {
         }
 
         if (TranslateConstants.METAOBJECT.equals(module)) {
-            if (value.contains("grp__")){
+            if (value.contains("grp__")) {
                 return false;
             }
         }
@@ -1380,14 +1389,14 @@ public class TranslateV2Service {
 
     /**
      * 基于配置判断 Metafield 的 JSON 值是否需要翻译。
-     *
+     * <p>
      * 判定顺序（优先走新配置，失败时可降级）：
      * 1. 读取配置 `METAFIELD_JSON_TRANSLATE_RULE.needTranslateJudge`；
      * 2. 校验 `allowedShopifyTypes`（如果配置了该字段）；
      * 3. 校验 `jsonMustContainAny`（如果配置了该字段）；
      * 4. 按 `requireOwnerCheck` 决定是否追加 owner 存在性校验；
      * 5. 任一步配置结构无效时，根据 `fallbackToLegacyWhenInvalid` 决定是否回退旧逻辑。
-     *
+     * <p>
      * 注意：
      * - 该方法只负责“是否可翻译”的策略判定，不改动原始内容；
      * - 异常场景统一兜底到旧逻辑，避免因配置问题导致线上翻译能力突然失效。
