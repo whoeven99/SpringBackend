@@ -22,6 +22,9 @@ import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.*;
 public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     // 判断是否有 <html> 标签的模式
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
+    // 匹配 <html ... lang="ko"> / <html lang=ko> 等写法
+    private static final Pattern HTML_LANG_ATTRIBUTE_PATTERN =
+            Pattern.compile("(?i)(<\\s*html\\b[^>]*?\\blang\\s*=\\s*)(\"[^\"]*\"|'[^']*'|[^\\s>]+)");
     private static final Pattern LIQUID_EMAIL_TITLE_CAPTURE_PATTERN =
             Pattern.compile("(?s)\\{%\\s*capture\\s+email_title\\s*%\\}.*?\\{%\\s*endcapture\\s*%\\}");
     private static final Pattern LIQUID_TAG_PATTERN = Pattern.compile("(?s)\\{%.*?%\\}");
@@ -105,6 +108,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
 
     private void translateLiquidHtmlForEmailTemplate(TranslateContext ctx) {
         String originalCode = ctx.getContent();
+        originalCode = replaceHtmlLangValue(originalCode, ctx.getTargetLanguage());
         List<String> originalTexts = getLiquidTranslatableTexts(originalCode);
 
         int index = 0;
@@ -130,6 +134,37 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         ctx.setTranslatedContent(isHtmlEntity(replacedCode));
         ctx.setDoc(null);
         ctx.getNodeMap().clear();
+    }
+
+    private String replaceHtmlLangValue(String originalCode, String targetLanguage) {
+        if (originalCode == null || targetLanguage == null || targetLanguage.isEmpty()) {
+            return originalCode;
+        }
+
+        Matcher matcher = HTML_LANG_ATTRIBUTE_PATTERN.matcher(originalCode);
+        if (!matcher.find()) {
+            return originalCode;
+        }
+
+        StringBuilder stringBuilder = new StringBuilder();
+        matcher.reset();
+        while (matcher.find()) {
+            String prefix = matcher.group(1);
+            String langValue = matcher.group(2);
+            String replacementLangValue;
+            if ((langValue.startsWith("\"") && langValue.endsWith("\""))
+                    || (langValue.startsWith("'") && langValue.endsWith("'"))) {
+                String quote = langValue.substring(0, 1);
+                replacementLangValue = quote + targetLanguage + quote;
+            } else {
+                replacementLangValue = targetLanguage;
+            }
+
+            String replacement = prefix + replacementLangValue;
+            matcher.appendReplacement(stringBuilder, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(stringBuilder);
+        return stringBuilder.toString();
     }
 
     private List<String> getLiquidTranslatableTexts(String code) {
