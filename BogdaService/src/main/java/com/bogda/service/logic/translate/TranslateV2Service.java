@@ -1,5 +1,6 @@
 package com.bogda.service.logic.translate;
 
+import com.alibaba.fastjson2.JSON;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.ChatGptIntegration;
@@ -979,6 +980,10 @@ public class TranslateV2Service {
                     + shopName + " randomDo: " + randomDo.getId() + " token: " + token + " initialTaskId: " + initialTaskId);
             String resourceId = randomDo.getResourceId();
             List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId, randomDo.getModule());
+            if (TranslateConstants.EMAIL_TEMPLATE.equals(randomDo.getModule()) && "body_html".equals(taskList.get(0).getNodeKey())){
+                String jsonHtml = JsonUtils.objectToJson(taskList.get(0).getTargetValue());
+                taskList.get(0).setTargetValue(jsonHtml);
+            }
 
             // 填回shopify
             ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
