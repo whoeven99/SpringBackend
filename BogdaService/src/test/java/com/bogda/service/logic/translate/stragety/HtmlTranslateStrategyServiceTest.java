@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -197,6 +198,47 @@ class HtmlTranslateStrategyServiceTest {
         assertEquals("0", context.getTranslateVariables().get("glossaryCount"));
         assertEquals("50", context.getTranslateVariables().get("translatedChars"));
         assertNotNull(context.getTranslatedTime());
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldReplaceHtmlLangAttribute() {
+        // Given
+        String htmlContent = "<html lang=\"ko\"><body><p>Hello World</p></body></html>";
+        String targetLanguage = "zh";
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                TranslateContext ctx = invocation.getArgument(0);
+                // 让所有抽取到的文本都“翻译”为同一个值，确保能验证 replacedCode 的注入效果
+                for (Map.Entry<Integer, String> entry : ctx.getOriginalTextMap().entrySet()) {
+                    ctx.getTranslatedTextMap().put(entry.getKey(), "你好世界");
+                }
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertTrue(context.getTranslatedContent().contains("lang=\"zh\""));
+            assertFalse(context.getTranslatedContent().contains("lang=\"ko\""));
+            assertTrue(context.getTranslatedContent().contains("你好世界"));
+            assertFalse(context.getTranslatedContent().contains("Hello"));
+            assertFalse(context.getTranslatedContent().contains("World"));
+        }
     }
 
     // Helper method to create a mock Document for HTML without <html> tag (uses body.childNodes())
