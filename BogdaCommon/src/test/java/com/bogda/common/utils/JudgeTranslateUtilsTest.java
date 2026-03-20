@@ -36,6 +36,20 @@ public class JudgeTranslateUtilsTest {
     }
 
     @Test
+    @DisplayName("ISO8601 时区时间字符串应被拦截")
+    void testIsoOffsetDatetime() {
+        assertFalse(translationRuleJudgment("k", "2026-03-20T13:07:15+08:00"));
+        assertFalse(translationRuleJudgment("k", "2026-03-20T13:07:15.123+08:00"));
+    }
+
+    @Test
+    @DisplayName("空 body 标签应被拦截")
+    void testEmptyBodyTag() {
+        assertFalse(translationRuleJudgment("k", "<body></body>"));
+        assertFalse(translationRuleJudgment("k", "  <body>   </body>  "));
+    }
+
+    @Test
     @DisplayName("包含 px 的值应被拦截")
     void testContainsPx() {
         assertFalse(translationRuleJudgment("k", "12px"));
