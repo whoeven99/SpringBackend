@@ -153,6 +153,8 @@ public class JudgeTranslateUtils {
             Pattern.CASE_INSENSITIVE); // 图片/视频后缀不翻译
 
     public static final Pattern PATH_PATTERN = Pattern.compile("^/[a-zA-Z0-9_\\-./?=&%]*$"); // 以路径相关 key不翻译
+    public static final Pattern ISO_OFFSET_DATETIME_PATTERN = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?[+-]\\d{2}:\\d{2}$");
+    public static final Pattern EMPTY_BODY_TAG_PATTERN = Pattern.compile("^<body\\s*>\\s*</body\\s*>$", Pattern.CASE_INSENSITIVE);
 
     /**
      * theme模块判断给定的key是否需要翻译
@@ -248,6 +250,16 @@ public class JudgeTranslateUtils {
 
         if ("value".equals(key) && JsonUtils.isJson(value)) {
             return true;
+        }
+
+        if (ISO_OFFSET_DATETIME_PATTERN.matcher(value).matches()) {
+            printTranslateReason(value + " 是ISO8601时区时间格式, key是： " + key);
+            return false;
+        }
+
+        if (EMPTY_BODY_TAG_PATTERN.matcher(value.trim()).matches()) {
+            printTranslateReason(value + " 是空body标签, key是： " + key);
+            return false;
         }
 
         if (JsoupUtils.isHtml(value)) {
