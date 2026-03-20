@@ -120,6 +120,18 @@ public class TranslateTask {
 
     }
 
+//    @Scheduled(fixedDelay = 5 * 60 * 1000)
+    public void retrySaveFailedTasks() {
+        try {
+            translateV2Service.retrySaveAllFailedTasks();
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTask.retrySaveFailedTasks",
+                    "FatalException retrySaveFailedTasks: " + e.getMessage());
+            ExceptionReporterHolder.report("TranslateTask.retrySaveFailedTasks", e);
+            feiShuRobotIntegration.sendMessage("FatalException retrySaveFailedTasks: " + e);
+        }
+    }
+
     @Scheduled(fixedDelay = 300 * 1000)
     public void deleteToShopify() {
         translateV2Service.deleteToShopify();

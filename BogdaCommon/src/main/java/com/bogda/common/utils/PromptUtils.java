@@ -56,6 +56,31 @@ public class PromptUtils {
             Do not modify units or numbers if they are part of official product specifications.
             """;
 
+    /**
+     * 字段规则 ：Field Rule
+     * title/seo_title: concise, keywords
+     * description: natural
+     * meta_description: marketing
+     */
+    private static final String FIELD_RULE = """
+            [Field Rule]
+            Adjust by type and length:
+            {{FIELD_RULE}}
+            Respect max_length: Max_length <= {{FIELD_LENGTH}}, shorten, keep key terms, no truncation.
+            """;
+
+    private static final Map<String, Map<String, String>> FIELD_RULES = new LinkedHashMap<>();
+    static {
+        FIELD_RULES.put("title", Map.of(
+                "FIELD_LENGTH", "255",
+                "FIELD_RULE", "title: concise, keywords"
+        ));
+        FIELD_RULES.put("meta_description", Map.of(
+                "FIELD_LENGTH", "320",
+                "FIELD_RULE", "meta_description: marketing"
+        ));
+    }
+
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(
             "\\{\\{\\s*[^{}]*?\\s*\\}\\}"      // {{ ... }}
                     + "|\\{%\\s*.*?\\s*%\\}"   // {% ... %}
@@ -84,7 +109,7 @@ public class PromptUtils {
         return buildDynamicPrompt(base
                         .replace("{{SOURCE_LANGUAGE_LIST}}", sourceLanguageList)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                true, termRules, styleRules, includeProtection, includeUnit, JSON_OUTPUT_RULE);
+                true, termRules, styleRules, includeProtection, includeUnit, null, JSON_OUTPUT_RULE);
     }
 
     /**
@@ -126,7 +151,40 @@ public class PromptUtils {
         return buildDynamicPrompt(base
                         .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
                         .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
-                true, termRules, styleRules, includeProtection, includeUnit, SINGLE_OUTPUT_RULE);
+                true, termRules, styleRules, includeProtection, includeUnit, null, SINGLE_OUTPUT_RULE);
+    }
+
+    /**
+     * 单条翻译 + FIELD_RULE（用于重试保存失败的任务，根据 nodeKey 增加字段长度约束）
+     *
+     * @param customBasePrompt 为 null 时使用默认 BASE_PROMPT
+     * @param nodeKey          Shopify 节点 key，如 "title"、"meta_description"，用于匹配 FIELD_RULES
+     */
+    public static String buildDynamicSinglePromptWithFieldRule(String targetLanguage, String text,
+                                                               String termRules, String styleRules,
+                                                               String customBasePrompt, String nodeKey) {
+        String safeText = text == null ? "" : text;
+        boolean includeProtection = hasSpecialContent(safeText);
+        boolean includeUnit = hasDigit(safeText);
+        String base = (customBasePrompt != null) ? customBasePrompt : BASE_PROMPT;
+        String fieldRule = resolveFieldRule(nodeKey);
+        return buildDynamicPrompt(base
+                        .replace("{{SOURCE_LANGUAGE_LIST}}", safeText)
+                        .replace("{{TARGET_LANGUAGE}}", ModuleCodeUtils.getLanguageName(targetLanguage)),
+                true, termRules, styleRules, includeProtection, includeUnit, fieldRule, SINGLE_OUTPUT_RULE);
+    }
+
+    private static String resolveFieldRule(String nodeKey) {
+        if (nodeKey == null || nodeKey.isEmpty()) {
+            return null;
+        }
+        Map<String, String> rule = FIELD_RULES.get(nodeKey);
+        if (rule == null) {
+            return null;
+        }
+        return FIELD_RULE
+                .replace("{{FIELD_RULE}}", rule.get("FIELD_RULE"))
+                .replace("{{FIELD_LENGTH}}", rule.get("FIELD_LENGTH"));
     }
 
     /**
@@ -141,12 +199,12 @@ public class PromptUtils {
         return buildDynamicPrompt(base
                         .replace("{{SOURCE_LANGUAGE_LIST}}", sourceText)
                         .replace("{{TARGET_LANGUAGE}}", targetLanguage),
-                false, null, null, false, hasDigit(sourceText), HANDLE_OUTPUT_RULE);
+                false, null, null, false, hasDigit(sourceText), null, HANDLE_OUTPUT_RULE);
     }
 
     private static String buildDynamicPrompt(String basePrompt, boolean includeContextRule, String termRules,
                                              String styleRules, boolean includeProtectionRule, boolean includeUnitRule,
-                                             String outputRule) {
+                                             String fieldRule, String outputRule) {
         StringBuilder prompt = new StringBuilder(basePrompt.trim()).append("\n\n");
         if (includeContextRule) {
             prompt.append(CONTEXT_RULE.trim()).append("\n\n");
@@ -162,6 +220,9 @@ public class PromptUtils {
         }
         if (includeUnitRule) {
             prompt.append(UNIT_RULE.trim()).append("\n\n");
+        }
+        if (fieldRule != null && !fieldRule.trim().isEmpty()) {
+            prompt.append(fieldRule.trim()).append("\n\n");
         }
         prompt.append(outputRule.trim());
         return prompt.toString();

@@ -36,8 +36,10 @@ import com.bogda.common.controller.request.ClickTranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.repository.entity.InitialTaskV2DO;
+import com.bogda.repository.entity.TranslateSaveFailedTaskDO;
 import com.bogda.repository.entity.TranslateTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.repository.repo.TranslateSaveFailedTaskRepo;
 import com.bogda.repository.repo.TranslateTaskV2Repo;
 import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.*;
@@ -102,6 +104,12 @@ public class TranslateV2Service {
     private AiModelConfigService aiModelConfigService;
     @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
+    @Autowired
+    private TranslateSaveFailedTaskRepo translateSaveFailedTaskRepo;
+    @Autowired
+    private PromptConfigService promptConfigService;
+    @Autowired
+    private ModelTranslateService modelTranslateService;
     private static final String JSON_JUDGE = "\"type\":\"text\""; // 用于json数据的筛选（降级逻辑）
     private static final String METAFIELD_JSON_TRANSLATE_RULE = "METAFIELD_JSON_TRANSLATE_RULE";
 
@@ -969,7 +977,7 @@ public class TranslateV2Service {
         while (randomDo != null) {
             TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
             String resourceId = randomDo.getResourceId();
-            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId, randomDo.getModule());
+            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
 
             // 填回shopify
             ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
@@ -995,10 +1003,22 @@ public class TranslateV2Service {
             if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")) {
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
+
+                    ShopifyRegisterResponse registerResponse = JsonUtils.jsonToObject(strResponse, ShopifyRegisterResponse.class);
+                    Set<Integer> failedIndices = parseUserErrorFailedIndices(registerResponse);
+                    String errorMsg = parseUserErrorMessages(registerResponse);
+                    for (int idx : failedIndices) {
+                        if (idx >= 0 && idx < taskList.size()) {
+                            TranslateTaskV2DO failedTask = taskList.get(idx);
+                            translateSaveFailedTaskRepo.insertFailedTask(
+                                    failedTask.getId(), initialTaskId, shopName, errorMsg);
+                        }
+                    }
                 }
 
                 TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving success: " + shopName +
                         " randomDo: " + randomDo.getId() + " response: " + strResponse);
+
                 // 回写数据库，标记已写入 TODO 批量
                 // 需要data.translationsRegister.translations[]不为空，并且有key，才是最严格的
                 for (TranslateTaskV2DO taskDO : taskList) {
@@ -1006,6 +1026,7 @@ public class TranslateV2Service {
                 }
                 translateTaskMonitorV2RedisService.addSavedCount(initialTaskId, taskList.size());
             }
+
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
             TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
@@ -1021,6 +1042,176 @@ public class TranslateV2Service {
         translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
         initialTaskV2Repo.updateStatusSavingShopifyMinutesById(initialTaskV2DO.getStatus(), initialTaskV2DO.getSavingShopifyMinutes()
                 , initialTaskV2DO.getId());
+    }
+
+    /**
+     * 解析 Shopify translationsRegister 响应中 userErrors 的失败索引。
+     * userErrors[].field 格式为 ["translations", "3"]，其中第二个元素为翻译请求列表中的索引。
+     */
+    private static final List<String> RETRYABLE_ERROR_KEYWORDS = Arrays.asList(
+            "Meta description is too long",
+            "Title is too long"
+    );
+
+    private boolean isRetryableError(String message) {
+        if (message == null || message.isEmpty()) {
+            return false;
+        }
+        for (String keyword : RETRYABLE_ERROR_KEYWORDS) {
+            if (message.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<Integer> parseUserErrorFailedIndices(ShopifyRegisterResponse response) {
+        Set<Integer> failedIndices = new HashSet<>();
+        if (response == null || response.getData() == null
+                || response.getData().getTranslationsRegister() == null) {
+            return failedIndices;
+        }
+
+        List<ShopifyGraphRegisterResponse.TranslationsRegister.UserError> userErrors =
+                response.getData().getTranslationsRegister().getUserErrors();
+        if (CollectionUtils.isEmpty(userErrors)) {
+            return failedIndices;
+        }
+
+        for (ShopifyGraphRegisterResponse.TranslationsRegister.UserError error : userErrors) {
+            if (!isRetryableError(error.getMessage())) {
+                continue;
+            }
+            List<String> field = error.getField();
+            if (field != null && field.size() >= 2) {
+                try {
+                    failedIndices.add(Integer.parseInt(field.get(1)));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return failedIndices;
+    }
+
+    private String parseUserErrorMessages(ShopifyRegisterResponse response) {
+        if (response == null || response.getData() == null || response.getData().getTranslationsRegister() == null) {
+            return "";
+        }
+
+        List<ShopifyGraphRegisterResponse.TranslationsRegister.UserError> userErrors =
+                response.getData().getTranslationsRegister().getUserErrors();
+        if (CollectionUtils.isEmpty(userErrors)) {
+            return "";
+        }
+
+        Set<String> uniqueMessages = new LinkedHashSet<>();
+        for (ShopifyGraphRegisterResponse.TranslationsRegister.UserError error : userErrors) {
+            String msg = error.getMessage();
+            if (isRetryableError(msg)) {
+                uniqueMessages.add(msg);
+            }
+        }
+        return String.join("; ", uniqueMessages);
+    }
+
+    /**
+     * 定时任务入口：获取一条未重试的保存失败记录，根据 nodeKey 构建带 FIELD_RULE 的提示词重新翻译后保存到 Shopify。
+     * 不再做多次重试，无论成功失败均标记为已重试。
+     */
+    public void retrySaveAllFailedTasks() {
+        TranslateSaveFailedTaskDO failedRecord = translateSaveFailedTaskRepo.selectOneUnretried();
+        if (failedRecord == null) {
+            return;
+        }
+
+        TranslateTaskV2DO taskDO = translateTaskV2Repo.getById(failedRecord.getTranslateTaskId());
+        if (taskDO == null || taskDO.isSavedToShopify()) {
+            translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
+            return;
+        }
+
+        InitialTaskV2DO initialTaskV2DO = initialTaskV2Repo.getById(failedRecord.getInitialTaskId());
+        if (initialTaskV2DO == null) {
+            translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
+            return;
+        }
+
+        String shopName = failedRecord.getShopName();
+        UsersDO userDO = iUsersService.getUserByName(shopName);
+        if (userDO == null) {
+            translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
+            return;
+        }
+        String token = userDO.getAccessToken();
+        String target = initialTaskV2DO.getTarget();
+        String aiModel = initialTaskV2DO.getAiModel();
+
+        TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
+                "Retranslating failed task: shop=" + shopName
+                        + " taskId=" + taskDO.getId() + " nodeKey=" + taskDO.getNodeKey());
+
+        // 构建带 FIELD_RULE 的提示词（根据 nodeKey 匹配字段规则）
+        Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
+        String glossaryMapping = null;
+        Map<String, GlossaryDO> usedGlossaryMap = new HashMap<>();
+        if (GlossaryService.hasGlossary(taskDO.getSourceValue(), glossaryMap, usedGlossaryMap)) {
+            glossaryMapping = GlossaryService.convertMapToText(usedGlossaryMap, taskDO.getSourceValue());
+        }
+
+        String prompt = promptConfigService.buildSinglePromptWithFieldRule(
+                taskDO.getModule(), target, taskDO.getSourceValue(),
+                glossaryMapping, null, taskDO.getNodeKey());
+
+        Pair<String, Integer> pair = modelTranslateService.modelTranslate(
+                aiModel, prompt, target, taskDO.getSourceValue());
+        if (pair == null) {
+            TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
+                    "Retranslation returned null: shop=" + shopName + " taskId=" + taskDO.getId());
+            feiShuRobotIntegration.sendMessage("Retranslation returned null: shop=" + shopName + " taskId=" + taskDO.getId());
+            translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
+            return;
+        }
+
+        String translatedValue = pair.getFirst();
+
+        // 检查解析结果是否有效
+        if (translatedValue == null || translatedValue.isEmpty()) {
+            // 解析失败，可能是AI返回格式错误
+            TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
+                    "Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
+                            + " nodeKey=" + taskDO.getNodeKey() + " response=" + pair.toString());
+            feiShuRobotIntegration.sendMessage("Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
+                    + " nodeKey=" + taskDO.getNodeKey() + " response=" + pair.toString());
+            return;
+        }
+
+        userTokenService.addUsedToken(shopName, pair.getSecond());
+        translateTaskV2Repo.updateTargetValueAndHasTargetValue(translatedValue, true, taskDO.getId());
+
+        // 保存到 Shopify
+        ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
+        ShopifyTranslationsResponse.Node.Translation translation = new ShopifyTranslationsResponse.Node.Translation();
+        translation.setLocale(target);
+        translation.setKey(taskDO.getNodeKey());
+        translation.setTranslatableContentDigest(taskDO.getDigest());
+        translation.setValue(translatedValue);
+        node.setTranslations(Collections.singletonList(translation));
+        node.setResourceId(taskDO.getResourceId());
+
+        String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
+
+        // 无论成功失败，直接标记为已重试，不再做后续重试
+        translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
+
+        if (strResponse != null && strResponse.contains("\"userErrors\":[]")) {
+            translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
+            translateTaskMonitorV2RedisService.addSavedCount(failedRecord.getInitialTaskId(), 1);
+            TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
+                    "Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
+        } else {
+            feiShuRobotIntegration.sendMessage("Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
+                            + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
+        }
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
