@@ -975,9 +975,10 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
         while (randomDo != null) {
-            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId() + "token: " + token);
+            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: "
+                    + shopName + " randomDo: " + randomDo.getId() + " token: " + token + " initialTaskId: " + initialTaskId);
             String resourceId = randomDo.getResourceId();
-            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
+            List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId, randomDo.getModule());
 
             // 填回shopify
             ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
