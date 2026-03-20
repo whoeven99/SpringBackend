@@ -123,8 +123,7 @@ public class TranslateTask {
 
     }
 
-    @EnableScheduledTask
-    @Scheduled(fixedDelay = 5 * 60 * 1000)
+//    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void retrySaveFailedTasks() {
         try {
             translateV2Service.retrySaveAllFailedTasks();
