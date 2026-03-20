@@ -1,6 +1,7 @@
 package com.bogda.integration.shopify;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.http.BaseHttpIntegration;
 import com.bogda.integration.model.*;
 import com.bogda.common.contants.TranslateConstants;
@@ -9,6 +10,7 @@ import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Component
@@ -35,9 +37,11 @@ public class ShopifyHttpIntegration {
 
         JSONObject queryMap = new JSONObject();
         queryMap.put("query", ShopifyRequestUtils.registerTransactionQuery());
-        queryMap.put("variables", node);
-
-        return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken));
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("resourceId", node.getResourceId());
+        variables.put("translations", node.getTranslations());
+        queryMap.put("variables", variables);
+        return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken, "Content-Type", "application/json"));
     }
 
     public ShopifyRemoveResponse deleteShopifyData(String shopName, String accessToken, ShopifyTranslationsRemove shopifyTranslationsRemove){
