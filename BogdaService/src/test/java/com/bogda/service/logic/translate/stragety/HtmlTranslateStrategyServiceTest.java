@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -169,6 +170,281 @@ class HtmlTranslateStrategyServiceTest {
         assertEquals("0", context.getTranslateVariables().get("glossaryCount"));
         assertEquals("50", context.getTranslateVariables().get("translatedChars"));
         assertNotNull(context.getTranslatedTime());
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldReplaceHtmlLangAttribute() {
+        // Given
+        String htmlContent = "<html lang=\"ko\"><body><p>Hello World</p></body></html>";
+        String targetLanguage = "zh";
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                TranslateContext ctx = invocation.getArgument(0);
+                // 让所有抽取到的文本都“翻译”为同一个值，确保能验证 replacedCode 的注入效果
+                for (Map.Entry<Integer, String> entry : ctx.getOriginalTextMap().entrySet()) {
+                    ctx.getTranslatedTextMap().put(entry.getKey(), "你好世界");
+                }
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertEquals("EMAIL_TEMPLATE的Liquid HTML翻译", context.getStrategy());
+            assertNull(context.getDoc());
+            assertTrue(context.getNodeMap().isEmpty());
+            assertTrue(context.getTranslatedContent().contains("lang=\"zh\""));
+            assertFalse(context.getTranslatedContent().contains("lang=\"ko\""));
+            assertTrue(context.getTranslatedContent().contains("你好世界"));
+            assertFalse(context.getTranslatedContent().contains("Hello"));
+            assertFalse(context.getTranslatedContent().contains("World"));
+        }
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldReplaceHtmlLangAttribute_SingleQuotes() {
+        // Given
+        String htmlContent = "<html lang='ko'><body><p>Hello World</p></body></html>";
+        String targetLanguage = "zh";
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                TranslateContext ctx = invocation.getArgument(0);
+                for (Map.Entry<Integer, String> entry : ctx.getOriginalTextMap().entrySet()) {
+                    ctx.getTranslatedTextMap().put(entry.getKey(), "你好世界");
+                }
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertEquals("EMAIL_TEMPLATE的Liquid HTML翻译", context.getStrategy());
+            assertNull(context.getDoc());
+            assertTrue(context.getNodeMap().isEmpty());
+            assertTrue(context.getTranslatedContent().contains("lang='zh'"));
+            assertFalse(context.getTranslatedContent().contains("lang='ko'"));
+            assertTrue(context.getTranslatedContent().contains("你好世界"));
+            assertFalse(context.getTranslatedContent().contains("Hello"));
+            assertFalse(context.getTranslatedContent().contains("World"));
+        }
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldReplaceHtmlLangAttribute_NoQuotes() {
+        // Given
+        String htmlContent = "<html lang=ko><body><p>Hello World</p></body></html>";
+        String targetLanguage = "zh";
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                TranslateContext ctx = invocation.getArgument(0);
+                for (Map.Entry<Integer, String> entry : ctx.getOriginalTextMap().entrySet()) {
+                    ctx.getTranslatedTextMap().put(entry.getKey(), "你好世界");
+                }
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertEquals("EMAIL_TEMPLATE的Liquid HTML翻译", context.getStrategy());
+            assertNull(context.getDoc());
+            assertTrue(context.getNodeMap().isEmpty());
+            assertTrue(context.getTranslatedContent().contains("lang=zh"));
+            assertFalse(context.getTranslatedContent().contains("lang=ko"));
+            assertTrue(context.getTranslatedContent().contains("你好世界"));
+            assertFalse(context.getTranslatedContent().contains("Hello"));
+            assertFalse(context.getTranslatedContent().contains("World"));
+        }
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldRestoreEscapedNewlines() {
+        // Given
+        // 这里刻意在 Liquid 标签之间放入字面量 "\n"（两个字符：\ + n），期望最终输出恢复为真实换行符。
+        String htmlContent = "{% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq %} \\n {% if delivery_method_types.size > 1 %}{% endif %}";
+        String targetLanguage = "zh";
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                // 为了只测试最终的换行还原逻辑，这里让翻译结果等于原文（避免触发 replacedCode.replace）。
+                TranslateContext ctx = invocation.getArgument(0);
+                ctx.getOriginalTextMap().forEach((k, v) -> ctx.getTranslatedTextMap().put(k, v));
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertTrue(context.getTranslatedContent().contains("\n"));
+            assertFalse(context.getTranslatedContent().contains("\\n"));
+            assertTrue(context.getTranslatedContent().contains("{% assign"));
+        }
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldTranslateEmailTitleCapture() {
+        // Given
+        String htmlContent = ""
+                + "{% capture email_title %}\n"
+                + "  Thank you for your purchase!\n"
+                + "{% endcapture %}\n"
+                + "{% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq %}\n"
+                + "{% if delivery_method_types.size > 1 %}\n"
+                + "  {% assign has_split_cart = true %}\n"
+                + "{% else %}\n"
+                + "  {% assign has_split_cart = false %}\n"
+                + "{% endif %}";
+        String targetLanguage = "zh";
+        String translateValue = "感谢您的购买！";
+
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                TranslateContext ctx = invocation.getArgument(0);
+                // 只对我们关心的那条英文做翻译，其它原样保持，避免测试被其它抽取片段干扰
+                for (Map.Entry<Integer, String> entry : ctx.getOriginalTextMap().entrySet()) {
+                    String originalText = entry.getValue();
+                    if ("Thank you for your purchase!".equals(originalText)) {
+                        ctx.getTranslatedTextMap().put(entry.getKey(), translateValue);
+                    } else {
+                        ctx.getTranslatedTextMap().put(entry.getKey(), originalText);
+                    }
+                }
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertEquals("EMAIL_TEMPLATE的Liquid HTML翻译", context.getStrategy());
+            assertTrue(context.getTranslatedContent().contains(translateValue));
+            assertFalse(context.getTranslatedContent().contains("Thank you for your purchase!"));
+        }
+    }
+
+    @Test
+    void testTranslate_EmailTemplate_ShouldTranslateAnyCaptureVariable() {
+        // Given
+        String htmlContent = ""
+                + "{% capture some_other_title %}\n"
+                + "  Welcome to our store!\n"
+                + "{% endcapture %}\n"
+                + "{% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq %}\n"
+                + "{% if delivery_method_types.size > 1 %}\n"
+                + "  {% assign has_split_cart = true %}\n"
+                + "{% else %}\n"
+                + "  {% assign has_split_cart = false %}\n"
+                + "{% endif %}";
+        String targetLanguage = "zh";
+        String translateValue = "欢迎光临我们的商店！";
+
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                TranslateContext ctx = invocation.getArgument(0);
+                for (Map.Entry<Integer, String> entry : ctx.getOriginalTextMap().entrySet()) {
+                    if ("Welcome to our store!".equals(entry.getValue())) {
+                        ctx.getTranslatedTextMap().put(entry.getKey(), translateValue);
+                    } else {
+                        ctx.getTranslatedTextMap().put(entry.getKey(), entry.getValue());
+                    }
+                }
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertTrue(context.getTranslatedContent().contains(translateValue));
+            assertFalse(context.getTranslatedContent().contains("Welcome to our store!"));
+        }
     }
 
     // Helper method to create a mock Document for HTML without <html> tag (uses body.childNodes())

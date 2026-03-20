@@ -1125,7 +1125,7 @@ public class TranslateV2Service {
         }
 
         TranslateTaskV2DO taskDO = translateTaskV2Repo.getById(failedRecord.getTranslateTaskId());
-        if (taskDO == null || taskDO.isSavedToShopify()) {
+        if (taskDO == null) {
             translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
             return;
         }
@@ -1147,7 +1147,7 @@ public class TranslateV2Service {
         String aiModel = initialTaskV2DO.getAiModel();
 
         TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
-                "Retranslating failed task: shop=" + shopName
+                "Retranslating failed task: shop=" + shopName + " sourceText: " + taskDO.getSourceValue()
                         + " taskId=" + taskDO.getId() + " nodeKey=" + taskDO.getNodeKey());
 
         // 构建带 FIELD_RULE 的提示词（根据 nodeKey 匹配字段规则）

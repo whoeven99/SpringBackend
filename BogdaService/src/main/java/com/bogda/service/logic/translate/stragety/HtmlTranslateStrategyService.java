@@ -1,6 +1,7 @@
 package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
+import com.bogda.common.contants.TranslateConstants;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -21,6 +22,19 @@ import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.*;
 public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     // 判断是否有 <html> 标签的模式
     public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<\\s*html\\s*", Pattern.CASE_INSENSITIVE);
+    // 匹配 <html ... lang="ko"> / <html lang=ko> 等写法
+    private static final Pattern HTML_LANG_ATTRIBUTE_PATTERN =
+            Pattern.compile("(?i)(<\\s*html\\b[^>]*?\\blang\\s*=\\s*)(\"[^\"]*\"|'[^']*'|[^\\s>]+)");
+    private static final Pattern LIQUID_CAPTURE_PATTERN =
+            // 保留任意 capture 块内文本（可见文案往往在 endcapture 之间）
+            // 例如：{% capture some_var %}Hello{% endcapture %}
+            Pattern.compile("(?s)\\{%\\s*capture\\s+\\w+\\s*%\\}(.*?)\\{%\\s*endcapture\\s*%\\}");
+    private static final Pattern LIQUID_TAG_PATTERN = Pattern.compile("(?s)\\{%.*?%\\}");
+    private static final Pattern LIQUID_VARIABLE_PATTERN = Pattern.compile("(?s)\\{\\{.*?\\}\\}");
+    private static final Pattern STYLE_TAG_PATTERN = Pattern.compile("(?si)<style[^>]*>.*?</style>");
+    private static final Pattern SCRIPT_TAG_PATTERN = Pattern.compile("(?si)<script[^>]*>.*?</script>");
+    private static final Pattern HTML_ELEMENT_TAG_PATTERN = Pattern.compile("<[^>]+>");
+    private static final Pattern LETTER_PATTERN = Pattern.compile("\\p{L}");
 
     @Autowired
     private BatchTranslateStrategyService batchTranslateStrategyService;
@@ -36,6 +50,12 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         String target = ctx.getTargetLanguage();
 
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+        ctx.setContent(value);
+
+        if (TranslateConstants.EMAIL_TEMPLATE.equals(ctx.getModule())) {
+            translateLiquidHtmlForEmailTemplate(ctx);
+            return;
+        }
 
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
         Document doc = parseHtml(value, target, hasHtmlTag);
@@ -86,6 +106,117 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         ctx.setTranslatedContent(replacedBackString);
         ctx.setDoc(null);
         ctx.getNodeMap().clear();
+    }
+
+    private void translateLiquidHtmlForEmailTemplate(TranslateContext ctx) {
+        String originalCode = ctx.getContent();
+        originalCode = replaceHtmlLangValue(originalCode, ctx.getTargetLanguage());
+        List<String> originalTexts = getLiquidTranslatableTexts(originalCode);
+
+        int index = 0;
+        for (String text : originalTexts) {
+            ctx.getOriginalTextMap().put(index, text);
+            index++;
+        }
+
+        batchTranslateStrategyService.translate(ctx);
+
+        Map<Integer, String> translatedTextMap = ctx.getTranslatedTextMap();
+        String replacedCode = originalCode;
+
+        for (int i = 0; i < originalTexts.size(); i++) {
+            String originalText = originalTexts.get(i);
+            String translatedText = translatedTextMap.get(i);
+            if (translatedText != null && !translatedText.equals(originalText)) {
+                replacedCode = replacedCode.replace(originalText, translatedText);
+            }
+        }
+
+        // AI 结果/JSON 反序列化链路可能会把真实换行转成字面量的 "\n"（两个字符：\ + n），
+        // 这会破坏 Liquid 邮件模板原有排版；这里在最终输出前统一还原。
+        replacedCode = restoreEscapedNewlines(replacedCode);
+
+        ctx.setStrategy("EMAIL_TEMPLATE的Liquid HTML翻译");
+        ctx.setTranslatedContent(isHtmlEntity(replacedCode));
+        ctx.setDoc(null);
+        ctx.getNodeMap().clear();
+    }
+
+    /**
+     * 将字面量 "\n" / "\r\n" / "\r" 还原为真实换行符。
+     * <p>
+     * 注意：这里只处理反斜杠转义的换行序列，避免影响原本就存在的真实换行。
+     */
+    private String restoreEscapedNewlines(String code) {
+        if (code == null) {
+            return null;
+        }
+
+        // 先处理最完整的组合，避免被后续 replace 吃掉。
+        String restored = code;
+        restored = restored.replace("\\r\\n", "\n");
+        restored = restored.replace("\\n", "\n");
+        restored = restored.replace("\\r", "\n");
+        return restored;
+    }
+
+    private String replaceHtmlLangValue(String originalCode, String targetLanguage) {
+        if (originalCode == null || targetLanguage == null || targetLanguage.isEmpty()) {
+            return originalCode;
+        }
+
+        Matcher matcher = HTML_LANG_ATTRIBUTE_PATTERN.matcher(originalCode);
+        if (!matcher.find()) {
+            return originalCode;
+        }
+
+        StringBuilder stringBuilder = new StringBuilder();
+        matcher.reset();
+        while (matcher.find()) {
+            String prefix = matcher.group(1);
+            String langValue = matcher.group(2);
+            String replacementLangValue;
+            if ((langValue.startsWith("\"") && langValue.endsWith("\""))
+                    || (langValue.startsWith("'") && langValue.endsWith("'"))) {
+                String quote = langValue.substring(0, 1);
+                replacementLangValue = quote + targetLanguage + quote;
+            } else {
+                replacementLangValue = targetLanguage;
+            }
+
+            String replacement = prefix + replacementLangValue;
+            matcher.appendReplacement(stringBuilder, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(stringBuilder);
+        return stringBuilder.toString();
+    }
+
+    private List<String> getLiquidTranslatableTexts(String code) {
+        String tempCode = code;
+        // 只去掉 capture/endcapture 包装，保留块内文本进入后续抽取逻辑
+        tempCode = LIQUID_CAPTURE_PATTERN.matcher(tempCode).replaceAll("$1");
+        tempCode = LIQUID_TAG_PATTERN.matcher(tempCode).replaceAll(" ");
+        tempCode = LIQUID_VARIABLE_PATTERN.matcher(tempCode).replaceAll(" ");
+        tempCode = STYLE_TAG_PATTERN.matcher(tempCode).replaceAll(" ");
+        tempCode = SCRIPT_TAG_PATTERN.matcher(tempCode).replaceAll(" ");
+        tempCode = HTML_ELEMENT_TAG_PATTERN.matcher(tempCode).replaceAll(" ");
+
+        tempCode = tempCode.replace("&nbsp;", " ");
+        tempCode = tempCode.replace("&amp;", "&");
+        tempCode = tempCode.replace("&lt;", "<");
+        tempCode = tempCode.replace("&gt;", ">");
+        tempCode = tempCode.replace("&quot;", "\"");
+        tempCode = tempCode.replace("&#39;", "'");
+
+        String[] rawTexts = tempCode.split("\\s{2,}|\\n");
+        List<String> validTexts = new ArrayList<>();
+        for (String text : rawTexts) {
+            String trimmedText = text.trim();
+            if (!trimmedText.isEmpty() && LETTER_PATTERN.matcher(trimmedText).find()) {
+                validTexts.add(trimmedText);
+            }
+        }
+        return validTexts;
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {

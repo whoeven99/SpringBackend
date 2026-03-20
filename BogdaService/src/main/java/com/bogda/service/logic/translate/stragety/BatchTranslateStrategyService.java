@@ -306,8 +306,6 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         );
 
         if (result == null) {
-            feiShuRobotIntegration.sendMessage("FatalException BATCH translateWithGlossary shopName : " + ctx.getShopName() + " prompt : "
-                    + prompt + "  module : " + ctx.getModule());
             return;
         }
 
