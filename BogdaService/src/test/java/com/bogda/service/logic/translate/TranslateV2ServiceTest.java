@@ -7,8 +7,15 @@ import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.common.TranslateContext;
 import com.bogda.integration.aimodel.GeminiIntegration;
+import com.bogda.integration.feishu.FeiShuRobotIntegration;
+import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.common.entity.DO.UsersDO;
+import com.bogda.integration.model.ShopifyTranslationsResponse;
+import com.bogda.repository.entity.TranslateSaveFailedTaskDO;
+import com.bogda.repository.entity.TranslateTaskV2DO;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.repository.repo.TranslateSaveFailedTaskRepo;
 import com.bogda.repository.repo.TranslateTaskV2Repo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
@@ -28,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
+import kotlin.Pair;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -74,6 +82,18 @@ class TranslateV2ServiceTest {
 
     @Mock
     private ITranslateStrategyService translateStrategyService;
+
+    @Mock
+    private TranslateSaveFailedTaskRepo translateSaveFailedTaskRepo;
+
+    @Mock
+    private PromptConfigService promptConfigService;
+
+    @Mock
+    private ModelTranslateService modelTranslateService;
+
+    @Mock
+    private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @InjectMocks
     private TranslateV2Service translateV2Service;
@@ -377,6 +397,147 @@ class TranslateV2ServiceTest {
         verify(userTokenService).getUsedToken(testShopName);
     }
 
+    @Test
+    void testRetrySaveAllFailedTasks_WithNoFailedRecord_ShouldReturnDirectly() {
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(null);
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(translateSaveFailedTaskRepo).selectOneUnretried();
+        verifyNoMoreInteractions(translateSaveFailedTaskRepo);
+        verifyNoInteractions(translateTaskV2Repo, initialTaskV2Repo, iUsersService, modelTranslateService, shopifyService);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithMissingTranslateTask_ShouldMarkRetried() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(null);
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(translateSaveFailedTaskRepo).markRetried(1);
+        verifyNoInteractions(modelTranslateService, shopifyService);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithSavedTask_ShouldMarkRetried() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        TranslateTaskV2DO task = createTranslateTask();
+        task.setSavedToShopify(true);
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(translateSaveFailedTaskRepo).markRetried(1);
+        verifyNoInteractions(modelTranslateService, shopifyService);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithNullModelResult_ShouldMarkRetriedAndNotify() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        TranslateTaskV2DO task = createTranslateTask();
+        InitialTaskV2DO initial = createInitialTask();
+        UsersDO user = createUser();
+
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+        when(initialTaskV2Repo.getById(201)).thenReturn(initial);
+        when(iUsersService.getUserByName(testShopName)).thenReturn(user);
+        when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<>());
+        when(promptConfigService.buildSinglePromptWithFieldRule(anyString(), anyString(), anyString(), any(), any(), anyString()))
+                .thenReturn("retry-prompt");
+        when(modelTranslateService.modelTranslate(eq("gemini-3-flash"), eq("retry-prompt"), eq("zh"), eq("hello source")))
+                .thenReturn(null);
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(feiShuRobotIntegration).sendMessage(contains("Retranslation returned null"));
+        verify(translateSaveFailedTaskRepo).markRetried(1);
+        verifyNoMoreInteractions(shopifyService);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithEmptyTranslatedValue_ShouldNotifyAndNotMarkRetried() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        TranslateTaskV2DO task = createTranslateTask();
+        InitialTaskV2DO initial = createInitialTask();
+        UsersDO user = createUser();
+
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+        when(initialTaskV2Repo.getById(201)).thenReturn(initial);
+        when(iUsersService.getUserByName(testShopName)).thenReturn(user);
+        when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<>());
+        when(promptConfigService.buildSinglePromptWithFieldRule(anyString(), anyString(), anyString(), any(), any(), anyString()))
+                .thenReturn("retry-prompt");
+        when(modelTranslateService.modelTranslate(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new Pair<>("", 21));
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(feiShuRobotIntegration).sendMessage(contains("Retry failed (no more retries)"));
+        verify(translateSaveFailedTaskRepo, never()).markRetried(anyInt());
+        verifyNoInteractions(shopifyService);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithSuccessfulSave_ShouldUpdateStatusAndMetrics() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        TranslateTaskV2DO task = createTranslateTask();
+        InitialTaskV2DO initial = createInitialTask();
+        UsersDO user = createUser();
+
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+        when(initialTaskV2Repo.getById(201)).thenReturn(initial);
+        when(iUsersService.getUserByName(testShopName)).thenReturn(user);
+        when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<String, GlossaryDO>());
+        when(promptConfigService.buildSinglePromptWithFieldRule(anyString(), anyString(), anyString(), any(), any(), anyString()))
+                .thenReturn("retry-prompt");
+        when(modelTranslateService.modelTranslate(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new Pair<>("translated-value", 66));
+        when(shopifyService.saveDataWithRateLimit(eq(testShopName), eq("token-abc"), any(ShopifyTranslationsResponse.Node.class)))
+                .thenReturn("{\"userErrors\":[]}");
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(userTokenService).addUsedToken(testShopName, 66);
+        verify(translateTaskV2Repo).updateTargetValueAndHasTargetValue("translated-value", true, 101);
+        verify(translateSaveFailedTaskRepo).markRetried(1);
+        verify(translateTaskV2Repo).updateSavedToShopify(101);
+        verify(translateTaskMonitorV2RedisService).addSavedCount(201, 1);
+        verifyNoInteractions(feiShuRobotIntegration);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithSaveFailure_ShouldMarkRetriedAndNotify() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        TranslateTaskV2DO task = createTranslateTask();
+        InitialTaskV2DO initial = createInitialTask();
+        UsersDO user = createUser();
+
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+        when(initialTaskV2Repo.getById(201)).thenReturn(initial);
+        when(iUsersService.getUserByName(testShopName)).thenReturn(user);
+        when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<>());
+        when(promptConfigService.buildSinglePromptWithFieldRule(anyString(), anyString(), anyString(), any(), any(), anyString()))
+                .thenReturn("retry-prompt");
+        when(modelTranslateService.modelTranslate(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new Pair<>("translated-value", 66));
+        when(shopifyService.saveDataWithRateLimit(eq(testShopName), eq("token-abc"), any(ShopifyTranslationsResponse.Node.class)))
+                .thenReturn("{\"userErrors\":[{\"message\":\"invalid\"}]}");
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(translateSaveFailedTaskRepo).markRetried(1);
+        verify(translateTaskV2Repo, never()).updateSavedToShopify(anyInt());
+        verify(translateTaskMonitorV2RedisService, never()).addSavedCount(anyInt(), anyInt());
+        verify(feiShuRobotIntegration).sendMessage(contains("Retry failed (no more retries)"));
+    }
+
     // Helper methods
     private ClickTranslateRequest createValidClickTranslateRequest() {
         ClickTranslateRequest request = new ClickTranslateRequest();
@@ -396,6 +557,42 @@ class TranslateV2ServiceTest {
         context.put("translatedCount", translatedCount);
         context.put("savedCount", savedCount);
         return context;
+    }
+
+    private TranslateSaveFailedTaskDO createFailedRecord() {
+        TranslateSaveFailedTaskDO failed = new TranslateSaveFailedTaskDO();
+        failed.setId(1);
+        failed.setTranslateTaskId(101);
+        failed.setInitialTaskId(201);
+        failed.setShopName(testShopName);
+        return failed;
+    }
+
+    private TranslateTaskV2DO createTranslateTask() {
+        TranslateTaskV2DO task = new TranslateTaskV2DO();
+        task.setId(101);
+        task.setModule("PRODUCT");
+        task.setNodeKey("title");
+        task.setSourceValue("hello source");
+        task.setDigest("digest-1");
+        task.setResourceId("gid://shopify/Product/1");
+        task.setSavedToShopify(false);
+        return task;
+    }
+
+    private InitialTaskV2DO createInitialTask() {
+        InitialTaskV2DO initial = new InitialTaskV2DO();
+        initial.setId(201);
+        initial.setTarget(testTarget);
+        initial.setAiModel("gemini-3-flash");
+        return initial;
+    }
+
+    private UsersDO createUser() {
+        UsersDO user = new UsersDO();
+        user.setShopName(testShopName);
+        user.setAccessToken("token-abc");
+        return user;
     }
 }
 
