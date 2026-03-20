@@ -25,8 +25,10 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     // 匹配 <html ... lang="ko"> / <html lang=ko> 等写法
     private static final Pattern HTML_LANG_ATTRIBUTE_PATTERN =
             Pattern.compile("(?i)(<\\s*html\\b[^>]*?\\blang\\s*=\\s*)(\"[^\"]*\"|'[^']*'|[^\\s>]+)");
-    private static final Pattern LIQUID_EMAIL_TITLE_CAPTURE_PATTERN =
-            Pattern.compile("(?s)\\{%\\s*capture\\s+email_title\\s*%\\}.*?\\{%\\s*endcapture\\s*%\\}");
+    private static final Pattern LIQUID_CAPTURE_PATTERN =
+            // 保留任意 capture 块内文本（可见文案往往在 endcapture 之间）
+            // 例如：{% capture some_var %}Hello{% endcapture %}
+            Pattern.compile("(?s)\\{%\\s*capture\\s+\\w+\\s*%\\}(.*?)\\{%\\s*endcapture\\s*%\\}");
     private static final Pattern LIQUID_TAG_PATTERN = Pattern.compile("(?s)\\{%.*?%\\}");
     private static final Pattern LIQUID_VARIABLE_PATTERN = Pattern.compile("(?s)\\{\\{.*?\\}\\}");
     private static final Pattern STYLE_TAG_PATTERN = Pattern.compile("(?si)<style[^>]*>.*?</style>");
@@ -191,7 +193,8 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
 
     private List<String> getLiquidTranslatableTexts(String code) {
         String tempCode = code;
-        tempCode = LIQUID_EMAIL_TITLE_CAPTURE_PATTERN.matcher(tempCode).replaceAll("");
+        // 只去掉 capture/endcapture 包装，保留块内文本进入后续抽取逻辑
+        tempCode = LIQUID_CAPTURE_PATTERN.matcher(tempCode).replaceAll("$1");
         tempCode = LIQUID_TAG_PATTERN.matcher(tempCode).replaceAll(" ");
         tempCode = LIQUID_VARIABLE_PATTERN.matcher(tempCode).replaceAll(" ");
         tempCode = STYLE_TAG_PATTERN.matcher(tempCode).replaceAll(" ");
