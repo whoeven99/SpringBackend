@@ -1,7 +1,6 @@
 package com.bogda.integration.shopify;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.http.BaseHttpIntegration;
 import com.bogda.integration.model.*;
 import com.bogda.common.contants.TranslateConstants;
