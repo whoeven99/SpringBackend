@@ -302,6 +302,44 @@ class HtmlTranslateStrategyServiceTest {
         }
     }
 
+    @Test
+    void testTranslate_EmailTemplate_ShouldRestoreEscapedNewlines() {
+        // Given
+        // 这里刻意在 Liquid 标签之间放入字面量 "\n"（两个字符：\ + n），期望最终输出恢复为真实换行符。
+        String htmlContent = "{% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq %} \\n {% if delivery_method_types.size > 1 %}{% endif %}";
+        String targetLanguage = "zh";
+        context = new TranslateContext(
+                htmlContent,
+                targetLanguage,
+                "type",
+                "key",
+                new HashMap<>(),
+                testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE
+        );
+
+        try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
+            mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            doAnswer(invocation -> {
+                // 为了只测试最终的换行还原逻辑，这里让翻译结果等于原文（避免触发 replacedCode.replace）。
+                TranslateContext ctx = invocation.getArgument(0);
+                ctx.getOriginalTextMap().forEach((k, v) -> ctx.getTranslatedTextMap().put(k, v));
+                return null;
+            }).when(batchTranslateStrategyService).translate(context);
+
+            // When
+            htmlTranslateStrategyService.translate(context);
+
+            // Then
+            assertNotNull(context.getTranslatedContent());
+            assertTrue(context.getTranslatedContent().contains("\n"));
+            assertFalse(context.getTranslatedContent().contains("\\n"));
+            assertTrue(context.getTranslatedContent().contains("{% assign"));
+        }
+    }
+
     // Helper method to create a mock Document for HTML without <html> tag (uses body.childNodes())
     private Document createMockDocumentForBody(String html) {
         Document doc = mock(Document.class);

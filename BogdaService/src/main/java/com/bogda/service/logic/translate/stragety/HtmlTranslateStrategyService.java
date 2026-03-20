@@ -130,10 +130,32 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
             }
         }
 
+        // AI 结果/JSON 反序列化链路可能会把真实换行转成字面量的 "\n"（两个字符：\ + n），
+        // 这会破坏 Liquid 邮件模板原有排版；这里在最终输出前统一还原。
+        replacedCode = restoreEscapedNewlines(replacedCode);
+
         ctx.setStrategy("EMAIL_TEMPLATE的Liquid HTML翻译");
         ctx.setTranslatedContent(isHtmlEntity(replacedCode));
         ctx.setDoc(null);
         ctx.getNodeMap().clear();
+    }
+
+    /**
+     * 将字面量 "\n" / "\r\n" / "\r" 还原为真实换行符。
+     * <p>
+     * 注意：这里只处理反斜杠转义的换行序列，避免影响原本就存在的真实换行。
+     */
+    private String restoreEscapedNewlines(String code) {
+        if (code == null) {
+            return null;
+        }
+
+        // 先处理最完整的组合，避免被后续 replace 吃掉。
+        String restored = code;
+        restored = restored.replace("\\r\\n", "\n");
+        restored = restored.replace("\\n", "\n");
+        restored = restored.replace("\\r", "\n");
+        return restored;
     }
 
     private String replaceHtmlLangValue(String originalCode, String targetLanguage) {
