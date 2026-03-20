@@ -64,19 +64,20 @@ public class PromptUtils {
      */
     private static final String FIELD_RULE = """
             [Field Rule]
-            Adjust by type and length:
-            {{FIELD_RULE}}
-            Respect max_length: Max_length <= {{FIELD_LENGTH}}, shorten, keep key terms, no truncation.
+            Rewrite the text to be under {{FIELD_LENGTH}} characters (including spaces).
+            Keep key product terms.
+            Remove less important details.
+            Keep it natural and fluent.
             """;
 
     private static final Map<String, Map<String, String>> FIELD_RULES = new LinkedHashMap<>();
     static {
         FIELD_RULES.put("title", Map.of(
-                "FIELD_LENGTH", "255",
+                "FIELD_LENGTH", "230",
                 "FIELD_RULE", "title: concise, keywords"
         ));
         FIELD_RULES.put("meta_description", Map.of(
-                "FIELD_LENGTH", "320",
+                "FIELD_LENGTH", "300",
                 "FIELD_RULE", "meta_description: marketing"
         ));
     }
