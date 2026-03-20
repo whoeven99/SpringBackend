@@ -56,6 +56,13 @@ public class PromptConfigService {
         return buildJsonPrompt(module, target, textMap, null, null);
     }
 
+    public String buildSinglePromptWithFieldRule(String module, String targetLanguage,
+                                                String text, String termRules, String styleRules,
+                                                String nodeKey) {
+        String customBasePrompt = getModuleBasePrompt(module);
+        return PromptUtils.buildDynamicSinglePromptWithFieldRule(targetLanguage, text, termRules, styleRules, customBasePrompt, nodeKey);
+    }
+
     public String buildGlossarySinglePrompt(String module, String targetLanguage,
                                             String text, String glossaryMapping) {
         return buildSinglePrompt(module, targetLanguage, text, glossaryMapping, null);
