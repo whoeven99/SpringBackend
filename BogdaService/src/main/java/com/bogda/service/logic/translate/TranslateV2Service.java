@@ -1,6 +1,5 @@
 package com.bogda.service.logic.translate;
 
-import com.alibaba.fastjson2.JSON;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.aimodel.ChatGptIntegration;
@@ -141,6 +140,26 @@ public class TranslateV2Service {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    private String getPrimaryLocaleFromShopifyData(String shopifyData) {
+        if (shopifyData == null) {
+            return null;
+        }
+        JsonNode root = JsonUtils.readTree(shopifyData);
+        if (root == null) {
+            return null;
+        }
+        JsonNode shopLocales = root.path("shopLocales");
+        if (!shopLocales.isArray()) {
+            return null;
+        }
+        for (JsonNode node : shopLocales) {
+            if (node.path("primary").asBoolean(false)) {
+                return node.path("locale").asText(null);
+            }
+        }
+        return null;
     }
 
     private static double getDoubleSafe(Map<String, Double> map, String key, Map<String, Double> fallbackMap, double defaultVal) {
@@ -664,14 +683,26 @@ public class TranslateV2Service {
     public void initialToTranslateTask(InitialTaskV2DO initialTaskV2DO) {
         String shopName = initialTaskV2DO.getShopName();
         String target = initialTaskV2DO.getTarget();
-
+        int initialTaskId = initialTaskV2DO.getId();
         List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
         });
         assert moduleList != null;
 
         UsersDO userDO = iUsersService.getUserByName(initialTaskV2DO.getShopName());
 
-        String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskV2DO.getId());
+        // 判断默认语言是否和source一致，不一致则停止任务
+        String primaryLocaleData = shopifyService.getShopifyData(shopName, userDO.getAccessToken(),
+                TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
+        String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
+        if (primaryLocale != null && !primaryLocale.equals(initialTaskV2DO.getSource())) {
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.ALL_DONE.getStatus(), initialTaskId, true, true);
+            translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
+            TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask",
+                    "默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
+            return;
+        }
+
+        String finishedModules = translateTaskMonitorV2RedisService.getFinishedModules(initialTaskId);
         List<ShopifyTranslationsRemove> shopifyTranslationsRemoveList = new ArrayList<>();
 
         // 自动翻译：上次翻译任务创建时间，用于筛选 updated_at 大于该时间的数据（仅 PRODUCT/ARTICLE/PAGE/COLLECTION）
@@ -684,7 +715,6 @@ public class TranslateV2Service {
         }
 
         // 方法入口：进入 for 之前检查是否已停止，若已停止则执行初始化中止收尾并 return
-        Integer initialTaskId = initialTaskV2DO.getId();
         if (redisStoppedRepository.isTaskStopped(shopName, initialTaskId)) {
             doInitStoppedCleanup(initialTaskV2DO);
             return;
@@ -699,7 +729,7 @@ public class TranslateV2Service {
                 doInitStoppedCleanup(initialTaskV2DO);
                 return;
             }
-            String moduleCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskV2DO.getId(), module);
+            String moduleCursor = translateTaskMonitorV2RedisService.getAfterEndCursor(initialTaskId, module);
             final String currentModule = module;
 
             Consumer<ShopifyTranslationsResponse.Node> nodeConsumer = (node) -> {
@@ -708,7 +738,7 @@ public class TranslateV2Service {
                 }
                 TranslateTaskV2DO taskDo = new TranslateTaskV2DO();
                 taskDo.setModule(currentModule);
-                taskDo.setInitialTaskId(initialTaskV2DO.getId());
+                taskDo.setInitialTaskId(initialTaskId);
                 taskDo.setResourceId(node.getResourceId());
                 TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotating Shopify: " + shopName + " module: " + currentModule + " resourceId: " + node.getResourceId());
                 node.getTranslatableContent().forEach(translatableContent -> {
@@ -722,8 +752,8 @@ public class TranslateV2Service {
                         taskDo.setId(null);
                         try {
                             translateTaskV2Repo.insert(taskDo);
-                            translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskV2DO.getId());
-                            translateTaskMonitorV2RedisService.incrementEstimatedCredits(initialTaskV2DO.getId(), translatableContent.getValue().length());
+                            translateTaskMonitorV2RedisService.incrementTotalCount(initialTaskId);
+                            translateTaskMonitorV2RedisService.incrementEstimatedCredits(initialTaskId, translatableContent.getValue().length());
                         } catch (Exception e) {
                             ExceptionReporterHolder.report("TranslateV2Service.initialToTranslateTask", e);
                             feiShuRobotIntegration.sendMessage("FatalException initialToTranslateTask errors " + e);
@@ -733,7 +763,7 @@ public class TranslateV2Service {
                 if (!shopifyTranslationsRemoveList.isEmpty()) {
                     ShopifyTranslationsRemove remove = shopifyTranslationsRemoveList.get(0);
                     for (String key : remove.getTranslationKeys()) {
-                        deleteTasksRepo.saveSingleData(initialTaskV2DO.getId(), remove.getResourceId(), key);
+                        deleteTasksRepo.saveSingleData(initialTaskId, remove.getResourceId(), key);
                     }
                     shopifyTranslationsRemoveList.clear();
                 }
@@ -752,10 +782,10 @@ public class TranslateV2Service {
             shopifyService.rotateAllShopifyGraph(shopName, module, userDO.getAccessToken(), 250, target, moduleCursor,
                     resourceIds,
                     nodeConsumer,
-                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskV2DO.getId(), currentModule, after)));
+                    (after -> translateTaskMonitorV2RedisService.setAfterEndCursor(initialTaskId, currentModule, after)));
 
-            translateTaskMonitorV2RedisService.addFinishedModule(initialTaskV2DO.getId(), module);
-            translateTaskMonitorV2RedisService.clearAfterEndCursor(initialTaskV2DO.getId(), module);
+            translateTaskMonitorV2RedisService.addFinishedModule(initialTaskId, module);
+            translateTaskMonitorV2RedisService.clearAfterEndCursor(initialTaskId, module);
             TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 rotate Shopify done: " + shopName + " module: " + module);
         }
 
@@ -765,10 +795,10 @@ public class TranslateV2Service {
         long initTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);
         initialTaskV2DO.setStatus(InitialTaskStatus.READ_DONE_TRANSLATING.status);
         initialTaskV2DO.setInitMinutes((int) initTimeInMinutes);
-        translateTaskMonitorV2RedisService.setInitEndTime(initialTaskV2DO.getId());
+        translateTaskMonitorV2RedisService.setInitEndTime(initialTaskId);
 
         // totalCount 确定后立即计算预估积分与翻译消耗时间，供 getProcess 返回前端
-        Map<String, String> monitor = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
+        Map<String, String> monitor = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskId);
         String avgTokenPerItem = configRedisRepo.getConfig("AVG_TOKEN_PER_ITEM");
         String tokenPerSecond = configRedisRepo.getConfig("TOKEN_PER_SECOND");
 
@@ -784,7 +814,7 @@ public class TranslateV2Service {
             avgSecondMap = TOKEN_PER_SECOND;
         }
         TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 avgTokenMap: "
-                + avgTokenMap + " avgSecondMap: " + avgSecondMap + " shopName: " + shopName + " initialTaskId: " + initialTaskV2DO.getId());
+                + avgTokenMap + " avgSecondMap: " + avgSecondMap + " shopName: " + shopName + " initialTaskId: " + initialTaskId);
 
         String estimatedCreditsStr = monitor != null ? monitor.get("estimatedCredits") : null;
         String totalCountStr = monitor != null ? monitor.get("totalCount") : null;
@@ -794,7 +824,7 @@ public class TranslateV2Service {
             // 避免 aiModel 为 null 或不在 Map 中时 get(aiModel) 返回 null 导致 NPE
             double tokenPerItem = getDoubleSafe(avgTokenMap, aiModel, AVG_TOKEN_PER_ITEM, 1.0);
             long finalCredits = (long) (totalCredits * tokenPerItem);
-            translateTaskMonitorV2RedisService.setEstimatedCredits(initialTaskV2DO.getId(), finalCredits);
+            translateTaskMonitorV2RedisService.setEstimatedCredits(initialTaskId, finalCredits);
 
             double tokenPerSecondVal = getDoubleSafe(avgSecondMap, aiModel, TOKEN_PER_SECOND, 0.2);
             int estimatedTranslateSeconds = (int) (finalCredits * tokenPerSecondVal);
@@ -804,13 +834,13 @@ public class TranslateV2Service {
                 int finalCount = parseIntSafe(totalCountStr, 0);
                 estimatedTranslateSeconds += finalCount;
             }
-            translateTaskMonitorV2RedisService.setEstimatedMinutes(initialTaskV2DO.getId(), estimatedTranslateSeconds);
+            translateTaskMonitorV2RedisService.setEstimatedMinutes(initialTaskId, estimatedTranslateSeconds);
         }
 
         TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask",
-                "TranslateTaskV2 初始化数据计算完成，修改任务状态 " + " shopName: " + shopName + " initialTaskId: " + initialTaskV2DO.getId());
+                "TranslateTaskV2 初始化数据计算完成，修改任务状态 " + " shopName: " + shopName + " initialTaskId: " + initialTaskId);
         initialTaskV2Repo.updateStatusAndInitMinutes(initialTaskV2DO.getStatus(), initialTaskV2DO.getInitMinutes()
-                , initialTaskV2DO.getId());
+                , initialTaskId);
     }
 
     // 翻译 step 3, 翻译任务 -> 具体翻译行为 直接对数据库操作
@@ -820,6 +850,19 @@ public class TranslateV2Service {
         String target = initialTaskV2DO.getTarget();
         String shopName = initialTaskV2DO.getShopName();
         String aiModel = initialTaskV2DO.getAiModel();
+
+        // 判断默认语言是否和source一致，不一致则停止任务
+        UsersDO primaryCheckUser = iUsersService.getUserByName(shopName);
+        String primaryLocaleData = shopifyService.getShopifyData(shopName, primaryCheckUser.getAccessToken(),
+                TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
+        String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
+        if (primaryLocale != null && !primaryLocale.equals(initialTaskV2DO.getSource())) {
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.ALL_DONE.getStatus(), initialTaskV2DO.getId(), true, true);
+            translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
+            TraceReporterHolder.report("TranslateV2Service.translateEachTask",
+                    "默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
+            return;
+        }
 
         Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
 
@@ -970,6 +1013,18 @@ public class TranslateV2Service {
         UsersDO userDO = iUsersService.getUserByName(shopName);
         String token = userDO.getAccessToken();
         String target = initialTaskV2DO.getTarget();
+
+        // 判断默认语言是否和source一致，不一致则停止任务
+        String primaryLocaleData = shopifyService.getShopifyData(shopName, token,
+                TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
+        String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
+        if (primaryLocale != null && !primaryLocale.equals(initialTaskV2DO.getSource())) {
+            initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.ALL_DONE.getStatus(), initialTaskV2DO.getId(), true, true);
+            translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
+            TraceReporterHolder.report("TranslateV2Service.saveToShopify",
+                    "默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
+            return;
+        }
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
         while (randomDo != null) {
@@ -1380,6 +1435,15 @@ public class TranslateV2Service {
             // 将用户的自动翻译标识改为false
             translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
             TraceReporterHolder.report("TranslateV2Service.autoTranslateV2", "autoTranslateV2 用户本地语言数据不存在 用户: " + shopName + " target: " + target);
+            return false;
+        }
+
+        // 判断默认语言是否和source一致，不一致则关闭自动翻译
+        String primaryLocale = getPrimaryLocaleFromShopifyData(shopifyByQuery);
+        if (primaryLocale != null && !primaryLocale.equals(source)) {
+            translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
+            TraceReporterHolder.report("TranslateV2Service.autoTranslateV2",
+                    "autoTranslateV2 默认语言与source不一致，关闭自动翻译 用户: " + shopName + " primaryLocale: " + primaryLocale + " source: " + source);
             return false;
         }
 
