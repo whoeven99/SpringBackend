@@ -697,7 +697,6 @@ public class TranslateV2Service {
         if (primaryLocale != null && !primaryLocale.equals(initialTaskV2DO.getSource())) {
             initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.ALL_DONE.getStatus(), initialTaskId, true, true);
             translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
-            feiShuRobotIntegration.sendMessage("默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
             TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask",
                     "默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
             return;
@@ -860,7 +859,6 @@ public class TranslateV2Service {
         if (primaryLocale != null && !primaryLocale.equals(initialTaskV2DO.getSource())) {
             initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.ALL_DONE.getStatus(), initialTaskV2DO.getId(), true, true);
             translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
-            feiShuRobotIntegration.sendMessage("默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
             TraceReporterHolder.report("TranslateV2Service.translateEachTask",
                     "默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
             return;
@@ -1023,7 +1021,6 @@ public class TranslateV2Service {
         if (primaryLocale != null && !primaryLocale.equals(initialTaskV2DO.getSource())) {
             initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.ALL_DONE.getStatus(), initialTaskV2DO.getId(), true, true);
             translateTaskMonitorV2RedisService.setSavingShopifyEndTime(initialTaskId);
-            feiShuRobotIntegration.sendMessage("默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
             TraceReporterHolder.report("TranslateV2Service.saveToShopify",
                     "默认语言与source不一致，停止任务 shop: " + shopName + " primaryLocale: " + primaryLocale + " source: " + initialTaskV2DO.getSource());
             return;
@@ -1446,7 +1443,6 @@ public class TranslateV2Service {
         String primaryLocale = getPrimaryLocaleFromShopifyData(shopifyByQuery);
         if (primaryLocale != null && !primaryLocale.equals(source)) {
             translatesService.updateAutoTranslateByShopNameAndTargetToFalse(shopName, target);
-            feiShuRobotIntegration.sendMessage("autoTranslateV2 默认语言与source不一致，关闭自动翻译 用户: " + shopName + " primaryLocale: " + primaryLocale + " source: " + source);
             TraceReporterHolder.report("TranslateV2Service.autoTranslateV2",
                     "autoTranslateV2 默认语言与source不一致，关闭自动翻译 用户: " + shopName + " primaryLocale: " + primaryLocale + " source: " + source);
             return false;
