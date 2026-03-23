@@ -36,10 +36,7 @@ public class ShopifyHttpIntegration {
 
         JSONObject queryMap = new JSONObject();
         queryMap.put("query", ShopifyRequestUtils.registerTransactionQuery());
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("resourceId", node.getResourceId());
-        variables.put("translations", node.getTranslations());
-        queryMap.put("variables", variables);
+        queryMap.put("variables", node);
         return baseHttpIntegration.httpPost(url, queryMap.toString(), Map.of("X-Shopify-Access-Token", accessToken, "Content-Type", "application/json"));
     }
 
