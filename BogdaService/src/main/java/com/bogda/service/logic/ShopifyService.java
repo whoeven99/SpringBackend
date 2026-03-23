@@ -383,7 +383,7 @@ public class ShopifyService {
             rateLimiter.acquire();
 
             String response = shopifyHttpIntegration.saveShopifyData(shopName, token, node);
-            TraceReporterHolder.report("ShopifyService.saveDataWithRateLimit", "response : " + response);
+            TraceReporterHolder.report("debug", "response : " + response);
             if (response == null) {
                 return null;
             }

@@ -2,6 +2,7 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.reporter.TraceReporterHolder;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -113,33 +116,114 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         originalCode = replaceHtmlLangValue(originalCode, ctx.getTargetLanguage());
         List<String> originalTexts = getLiquidTranslatableTexts(originalCode);
 
+        // 1. 去重：LinkedHashSet 保持首次出现顺序，避免重复文本多次翻译
+        LinkedHashSet<String> uniqueTexts = new LinkedHashSet<>(originalTexts);
         int index = 0;
-        for (String text : originalTexts) {
+        for (String text : uniqueTexts) {
             ctx.getOriginalTextMap().put(index, text);
             index++;
         }
 
+        // 2. 批量翻译去重后的文本
         batchTranslateStrategyService.translate(ctx);
-
         Map<Integer, String> translatedTextMap = ctx.getTranslatedTextMap();
-        String replacedCode = originalCode;
 
-        for (int i = 0; i < originalTexts.size(); i++) {
-            String originalText = originalTexts.get(i);
-            String translatedText = translatedTextMap.get(i);
-            if (translatedText != null && !translatedText.equals(originalText)) {
-                replacedCode = replacedCode.replace(originalText, translatedText);
+        // 3. 构建 原文 -> 译文 映射
+        Map<String, String> translationMap = new LinkedHashMap<>();
+        int idx = 0;
+        for (String text : uniqueTexts) {
+            String translated = translatedTextMap.get(idx);
+            translationMap.put(text, translated != null ? translated : text);
+            idx++;
+        }
+
+        // 4. 计算受保护区域（style/script/liquid 标签、HTML 标签——含属性值），
+        //    这些区域中的文本不应被替换。
+        List<int[]> protectedRegions = computeProtectedRegions(originalCode);
+
+        // 5. 在原始 HTML 中搜索每段原文的所有出现位置，
+        //    仅保留处于可翻译区域（非受保护区域）的匹配。
+        List<int[]> replacePositions = new ArrayList<>();
+        List<String> replaceValues = new ArrayList<>();
+        for (Map.Entry<String, String> entry : translationMap.entrySet()) {
+            String src = entry.getKey();
+            String dst = entry.getValue();
+            if (dst.equals(src)) {
+                continue;
+            }
+            int searchFrom = 0;
+            while (searchFrom < originalCode.length()) {
+                int pos = originalCode.indexOf(src, searchFrom);
+                if (pos < 0) {
+                    break;
+                }
+                int end = pos + src.length();
+                if (!isInProtectedRegion(pos, end, protectedRegions)) {
+                    replacePositions.add(new int[]{pos, end});
+                    replaceValues.add(dst);
+                }
+                searchFrom = end;
             }
         }
 
+        // 6. 按位置从后向前排序并替换，保证替换不影响前面的索引
+        List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < replacePositions.size(); i++) {
+            order.add(i);
+        }
+        order.sort((a, b) -> Integer.compare(
+                replacePositions.get(b)[0], replacePositions.get(a)[0]));
+
+        StringBuilder sb = new StringBuilder(originalCode);
+        for (int i : order) {
+            int[] pos = replacePositions.get(i);
+            sb.replace(pos[0], pos[1], replaceValues.get(i));
+        }
+        String replacedCode = sb.toString();
+
         // AI 结果/JSON 反序列化链路可能会把真实换行转成字面量的 "\n"（两个字符：\ + n），
         // 这会破坏 Liquid 邮件模板原有排版；这里在最终输出前统一还原。
-//        replacedCode = restoreEscapedNewlines(replacedCode);
-
+        replacedCode = restoreEscapedNewlines(replacedCode);
+        TraceReporterHolder.report("debug", "replaceCode : " + replacedCode);
         ctx.setStrategy("EMAIL_TEMPLATE的Liquid HTML翻译");
         ctx.setTranslatedContent(isHtmlEntity(replacedCode));
         ctx.setDoc(null);
         ctx.getNodeMap().clear();
+    }
+
+    /**
+     * 计算原始 HTML 中所有"受保护区域"的位置范围。
+     * 受保护区域包括：style 块、script 块、Liquid 标签 / 变量、HTML 元素标签（含属性）。
+     * 这些区域中的文本即使与待翻译原文匹配，也不应被替换。
+     */
+    private List<int[]> computeProtectedRegions(String code) {
+        List<int[]> regions = new ArrayList<>();
+        addMatchRegions(regions, STYLE_TAG_PATTERN, code);
+        addMatchRegions(regions, SCRIPT_TAG_PATTERN, code);
+        addMatchRegions(regions, LIQUID_TAG_PATTERN, code);
+        addMatchRegions(regions, LIQUID_VARIABLE_PATTERN, code);
+        addMatchRegions(regions, HTML_ELEMENT_TAG_PATTERN, code);
+        regions.sort((a, b) -> Integer.compare(a[0], b[0]));
+        return regions;
+    }
+
+    private void addMatchRegions(List<int[]> regions, Pattern pattern, String code) {
+        Matcher matcher = pattern.matcher(code);
+        while (matcher.find()) {
+            regions.add(new int[]{matcher.start(), matcher.end()});
+        }
+    }
+
+    /**
+     * 判断 [start, end) 是否与任一受保护区域存在交集。
+     */
+    private boolean isInProtectedRegion(int start, int end, List<int[]> protectedRegions) {
+        for (int[] region : protectedRegions) {
+            if (start < region[1] && end > region[0]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -191,7 +275,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         return stringBuilder.toString();
     }
 
-    private List<String> getLiquidTranslatableTexts(String code) {
+    public List<String> getLiquidTranslatableTexts(String code) {
         String tempCode = code;
         // 只去掉 capture/endcapture 包装，保留块内文本进入后续抽取逻辑
         tempCode = LIQUID_CAPTURE_PATTERN.matcher(tempCode).replaceAll("$1");

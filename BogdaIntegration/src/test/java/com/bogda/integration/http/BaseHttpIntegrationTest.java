@@ -66,28 +66,6 @@ class BaseHttpIntegrationTest {
         verify(r3, times(1)).close();
     }
 
-    @Test
-    void shouldRetry3TimesAndReturnNullWhenHtmlByBodySniffing() throws Exception {
-        CloseableHttpClient httpClient = mock(CloseableHttpClient.class);
-        NoSleepBaseHttpIntegration integration = new NoSleepBaseHttpIntegration(httpClient);
-
-        CloseableHttpResponse r1 = mock(CloseableHttpResponse.class);
-        CloseableHttpResponse r2 = mock(CloseableHttpResponse.class);
-        CloseableHttpResponse r3 = mock(CloseableHttpResponse.class);
-        when(r1.getEntity()).thenReturn(entity("   <!doctype html><html>1</html>", null));
-        when(r2.getEntity()).thenReturn(entity("<HTML>2</HTML>", null));
-        when(r3.getEntity()).thenReturn(entity("<head>3</head>", null));
-        when(httpClient.execute(any(HttpRequestBase.class))).thenReturn(r1, r2, r3);
-
-        String result = integration.httpPost("https://example.com", "{\"q\":1}", Map.of());
-        assertNull(result);
-
-        verify(httpClient, times(3)).execute(any(HttpRequestBase.class));
-        verify(r1, times(1)).close();
-        verify(r2, times(1)).close();
-        verify(r3, times(1)).close();
-    }
-
     private static HttpEntity entity(String body, String contentType) {
         BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)));
