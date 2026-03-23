@@ -26,15 +26,6 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
 
     public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId, String module) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        if (TranslateConstants.EMAIL_TEMPLATE.equals(module)){
-            wrapper.select("TOP " + 1 + " *")
-                    .eq("initial_task_id", initialTaskId)
-                    .eq("resource_id", resourceId)
-                    .eq("has_target_value", true)
-                    .eq("saved_to_shopify", false)
-                    .eq("is_deleted", false);
-            return baseMapper.selectList(wrapper);
-        }
         wrapper.select("TOP " + 10 + " *")
                 .eq("initial_task_id", initialTaskId)
                 .eq("resource_id", resourceId)

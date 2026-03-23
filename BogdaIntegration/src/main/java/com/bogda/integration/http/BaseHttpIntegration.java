@@ -143,11 +143,7 @@ public class BaseHttpIntegration {
             return false;
         }
         String lower = s.length() > 256 ? s.substring(0, 256).toLowerCase() : s.toLowerCase();
-        return lower.startsWith("<!doctype html")
-                || lower.startsWith("<html")
-                || lower.contains("<html")
-                || lower.contains("<head")
-                || lower.contains("<body");
+        return lower.startsWith("<!doctype html");
     }
 
     private static void sleepWithBackoffAndJitter(int attempt, long baseDelayMs, long maxDelayMs) throws InterruptedException {
