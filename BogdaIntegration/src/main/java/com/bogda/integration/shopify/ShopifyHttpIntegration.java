@@ -8,8 +8,6 @@ import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
 import java.util.Map;
 
 @Component

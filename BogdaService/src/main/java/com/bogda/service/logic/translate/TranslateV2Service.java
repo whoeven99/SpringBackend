@@ -883,8 +883,6 @@ public class TranslateV2Service {
                 // 批量翻译
                 List<TranslateTaskV2DO> originTaskList =
                         translateTaskV2Repo.selectByInitialTaskIdAndTypeAndEmptyValueWithLimit(initialTaskId, 30);
-
-                TraceReporterHolder.report("debug", "originTaskList : " + originTaskList.toString());
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
@@ -901,7 +899,6 @@ public class TranslateV2Service {
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
                         .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
 
-                TraceReporterHolder.report("debug", "idToSourceValueMap : " + idToSourceValueMap.toString());
                 if (idToSourceValueMap.isEmpty()) {
                     maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
                     randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndEmptyValue(initialTaskId);
@@ -980,10 +977,6 @@ public class TranslateV2Service {
                     + shopName + " randomDo: " + randomDo.getId() + " token: " + token + " initialTaskId: " + initialTaskId);
             String resourceId = randomDo.getResourceId();
             List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId, randomDo.getModule());
-            if (TranslateConstants.EMAIL_TEMPLATE.equals(randomDo.getModule()) && "body_html".equals(taskList.get(0).getNodeKey())){
-                String jsonHtml = JsonUtils.objectToJson(taskList.get(0).getTargetValue());
-                taskList.get(0).setTargetValue(jsonHtml);
-            }
 
             // 填回shopify
             ShopifyTranslationsResponse.Node node = new ShopifyTranslationsResponse.Node();
