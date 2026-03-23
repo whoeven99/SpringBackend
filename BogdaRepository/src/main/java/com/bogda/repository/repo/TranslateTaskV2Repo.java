@@ -3,6 +3,7 @@ package com.bogda.repository.repo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bogda.common.contants.TranslateConstants;
 import com.bogda.repository.entity.TranslateTaskV2DO;
 import com.bogda.repository.mapper.TranslateTaskV2Mapper;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,17 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId) {
+    public List<TranslateTaskV2DO> selectByInitialTaskIdAndResourceIdWithLimit(Integer initialTaskId, String resourceId, String module) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
+        if (TranslateConstants.EMAIL_TEMPLATE.equals(module)){
+            wrapper.select("TOP " + 1 + " *")
+                    .eq("initial_task_id", initialTaskId)
+                    .eq("resource_id", resourceId)
+                    .eq("has_target_value", true)
+                    .eq("saved_to_shopify", false)
+                    .eq("is_deleted", false);
+            return baseMapper.selectList(wrapper);
+        }
         wrapper.select("TOP " + 10 + " *")
                 .eq("initial_task_id", initialTaskId)
                 .eq("resource_id", resourceId)

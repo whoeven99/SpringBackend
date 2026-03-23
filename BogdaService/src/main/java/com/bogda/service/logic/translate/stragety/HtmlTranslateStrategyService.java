@@ -2,6 +2,7 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.contants.TranslateConstants;
+import com.bogda.common.reporter.TraceReporterHolder;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -164,7 +165,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         // AI 结果/JSON 反序列化链路可能会把真实换行转成字面量的 "\n"（两个字符：\ + n），
         // 这会破坏 Liquid 邮件模板原有排版；这里在最终输出前统一还原。
         replacedCode = restoreEscapedNewlines(replacedCode);
-
+        TraceReporterHolder.report("debug", "replaceCode : " + replacedCode);
         ctx.setStrategy("EMAIL_TEMPLATE的Liquid HTML翻译");
         ctx.setTranslatedContent(isHtmlEntity(replacedCode));
         ctx.setDoc(null);
