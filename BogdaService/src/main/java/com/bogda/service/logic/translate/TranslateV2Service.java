@@ -975,7 +975,7 @@ public class TranslateV2Service {
 
         TranslateTaskV2DO randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
         while (randomDo != null) {
-            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId());
+            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving shopify shop: " + shopName + " randomDo: " + randomDo.getId() + "token: " + token);
             String resourceId = randomDo.getResourceId();
             List<TranslateTaskV2DO> taskList = translateTaskV2Repo.selectByInitialTaskIdAndResourceIdWithLimit(initialTaskId, resourceId);
 
@@ -993,6 +993,7 @@ public class TranslateV2Service {
                     })
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
+            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "shopName: " + shopName + " token: " + token + " node: " + node);
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
             if (strResponse == null) {
                 // 写入失败 fatalException
