@@ -894,7 +894,6 @@ public class TranslateV2Service {
 
             // 随机找一条，如果是html就单条翻译，不是就直接批量
             boolean isHtml = randomDo.isSingleHtml();
-            TraceReporterHolder.report("debug", "TranslateTaskV2 isHtml: " + isHtml + " randomDo: " + randomDo.getId() + " content: " + randomDo.getSourceValue());
             if (JsonUtils.isJson(randomDo.getSourceValue())) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
                 context.setModule(randomDo.getModule());
@@ -920,8 +919,21 @@ public class TranslateV2Service {
                 translateTaskV2Repo.updateTargetValueAndHasTargetValue(context.getTranslatedContent(), true, randomDo.getId());
 
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
-                        context.getUsedToken(), context.getTranslatedChars());
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1, context.getUsedToken()
+                        , context.getTranslatedChars());
+            } else if (JsonUtils.isListFormat(randomDo.getSourceValue()) && TranslateConstants.LIST_SINGLE_LINE_TEXT_FIELD
+                    .equals(randomDo.getType())) {
+                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
+                context.setModule(randomDo.getModule());
+                context.setShopName(shopName);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("LIST");
+                service.translate(context);
+
+                // 翻译后更新db
+                translateTaskV2Repo.updateTargetValueAndHasTargetValue(context.getTranslatedContent(), true, randomDo.getId());
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1, context.getUsedToken()
+                        , context.getTranslatedChars());
             } else {
                 // 批量翻译
                 List<TranslateTaskV2DO> originTaskList =
@@ -929,7 +941,9 @@ public class TranslateV2Service {
                 List<TranslateTaskV2DO> taskList = new ArrayList<>();
                 int totalChars = 0;
                 for (TranslateTaskV2DO task : originTaskList) {
-                    if (task.isSingleHtml() || JsonUtils.isJson(task.getSourceValue())) {
+                    if (task.isSingleHtml() || JsonUtils.isJson(task.getSourceValue()) ||
+                            (JsonUtils.isListFormat(task.getSourceValue()) && TranslateConstants.LIST_SINGLE_LINE_TEXT_FIELD
+                                    .equals(task.getType())) ) {
                         continue;
                     }
                     taskList.add(task);
