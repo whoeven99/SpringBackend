@@ -355,8 +355,8 @@ class HtmlTranslateStrategyServiceTest {
 
             doAnswer(invocation -> {
                 TranslateContext ctx = invocation.getArgument(0);
-                // 去重后 originalTextMap 只有一条 {0: "Hello"}
-                assertEquals(3, ctx.getOriginalTextMap().size());
+                // 新的 span 抽取粒度更细：Hello, hello, test, q 各为独立 segment
+                assertEquals(4, ctx.getOriginalTextMap().size());
                 assertEquals("Hello", ctx.getOriginalTextMap().get(0));
                 ctx.getTranslatedTextMap().put(0, "你好");
                 return null;

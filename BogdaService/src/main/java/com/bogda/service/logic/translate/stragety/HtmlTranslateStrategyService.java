@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -38,6 +37,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     private static final Pattern SCRIPT_TAG_PATTERN = Pattern.compile("(?si)<script[^>]*>.*?</script>");
     private static final Pattern HTML_ELEMENT_TAG_PATTERN = Pattern.compile("<[^>]+>");
     private static final Pattern LETTER_PATTERN = Pattern.compile("\\p{L}");
+    private static final Pattern TEXT_SEGMENT_PATTERN = Pattern.compile("\\S+(?:[ \\t]\\S+)*");
 
     @Autowired
     private BatchTranslateStrategyService batchTranslateStrategyService;
@@ -140,78 +140,55 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         ctx.getNodeMap().clear();
     }
 
-    private void translateLiquidHtmlForEmailTemplate(TranslateContext ctx) {
+    public void translateLiquidHtmlForEmailTemplate(TranslateContext ctx) {
         String originalCode = ctx.getContent();
         originalCode = replaceHtmlLangValue(originalCode, ctx.getTargetLanguage());
-        List<String> originalTexts = getLiquidTranslatableTexts(originalCode);
 
-        // 1. 去重：LinkedHashSet 保持首次出现顺序，避免重复文本多次翻译
-        LinkedHashSet<String> uniqueTexts = new LinkedHashSet<>(originalTexts);
-        int index = 0;
-        for (String text : uniqueTexts) {
-            ctx.getOriginalTextMap().put(index, text);
-            index++;
+        // 1. 计算受保护区域并抽取带位置信息的 segment
+        List<int[]> protectedRegions = computeProtectedRegions(originalCode);
+        List<Segment> segments = extractSegments(originalCode, protectedRegions);
+
+        if (segments.isEmpty()) {
+            ctx.setStrategy("EMAIL_TEMPLATE的Liquid HTML翻译");
+            ctx.setTranslatedContent(isHtmlEntity(originalCode));
+            ctx.setDoc(null);
+            ctx.getNodeMap().clear();
+            return;
         }
 
-        // 2. 批量翻译去重后的文本
+        // 2. 去重构建翻译请求（相同文本只翻译一次，减少 API 调用）
+        LinkedHashMap<String, Integer> uniqueTextToIndex = new LinkedHashMap<>();
+        int index = 0;
+        for (Segment seg : segments) {
+            if (!uniqueTextToIndex.containsKey(seg.sourceForModel)) {
+                uniqueTextToIndex.put(seg.sourceForModel, index);
+                ctx.getOriginalTextMap().put(index, seg.sourceForModel);
+                index++;
+            }
+        }
+
+        // 3. 批量翻译
         batchTranslateStrategyService.translate(ctx);
         Map<Integer, String> translatedTextMap = ctx.getTranslatedTextMap();
 
-        // 3. 构建 原文 -> 译文 映射
+        // 4. 构建 sourceForModel -> translated 映射
         Map<String, String> translationMap = new LinkedHashMap<>();
-        int idx = 0;
-        for (String text : uniqueTexts) {
-            String translated = translatedTextMap.get(idx);
-            translationMap.put(text, translated != null ? translated : text);
-            idx++;
+        for (Map.Entry<String, Integer> entry : uniqueTextToIndex.entrySet()) {
+            String translated = translatedTextMap.get(entry.getValue());
+            translationMap.put(entry.getKey(), translated != null ? translated : entry.getKey());
         }
 
-        // 4. 计算受保护区域（style/script/liquid 标签、HTML 标签——含属性值），
-        //    这些区域中的文本不应被替换。
-        List<int[]> protectedRegions = computeProtectedRegions(originalCode);
-
-        // 5. 在原始 HTML 中搜索每段原文的所有出现位置，
-        //    仅保留处于可翻译区域（非受保护区域）的匹配。
-        List<int[]> replacePositions = new ArrayList<>();
-        List<String> replaceValues = new ArrayList<>();
-        for (Map.Entry<String, String> entry : translationMap.entrySet()) {
-            String src = entry.getKey();
-            String dst = entry.getValue();
-            if (dst.equals(src)) {
-                continue;
-            }
-            int searchFrom = 0;
-            while (searchFrom < originalCode.length()) {
-                int pos = originalCode.indexOf(src, searchFrom);
-                if (pos < 0) {
-                    break;
-                }
-                int end = pos + src.length();
-                if (!isInProtectedRegion(pos, end, protectedRegions)) {
-                    replacePositions.add(new int[]{pos, end});
-                    replaceValues.add(dst);
-                }
-                searchFrom = end;
-            }
-        }
-
-        // 6. 按位置从后向前排序并替换，保证替换不影响前面的索引
-        List<Integer> order = new ArrayList<>();
-        for (int i = 0; i < replacePositions.size(); i++) {
-            order.add(i);
-        }
-        order.sort((a, b) -> Integer.compare(
-                replacePositions.get(b)[0], replacePositions.get(a)[0]));
-
+        // 5. 按位置倒序替换，确保前面的坐标不受后面替换长度变化的影响
+        segments.sort((a, b) -> Integer.compare(b.start, a.start));
         StringBuilder sb = new StringBuilder(originalCode);
-        for (int i : order) {
-            int[] pos = replacePositions.get(i);
-            sb.replace(pos[0], pos[1], replaceValues.get(i));
+        for (Segment seg : segments) {
+            String translated = translationMap.get(seg.sourceForModel);
+            if (translated != null && !translated.equals(seg.sourceForModel)) {
+                sb.replace(seg.start, seg.end, translated);
+            }
         }
-        String replacedCode = sb.toString();
 
-        // AI 结果/JSON 反序列化链路可能会把真实换行转成字面量的 "\n"（两个字符：\ + n），
-        // 这会破坏 Liquid 邮件模板原有排版；这里在最终输出前统一还原。
+        String replacedCode = sb.toString();
         replacedCode = restoreEscapedNewlines(replacedCode);
         TraceReporterHolder.report("debug", "replaceCode : " + replacedCode);
         ctx.setStrategy("EMAIL_TEMPLATE的Liquid HTML翻译");
@@ -244,15 +221,79 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     }
 
     /**
-     * 判断 [start, end) 是否与任一受保护区域存在交集。
+     * 在非受保护区域中扫描可翻译文本，为每段文本记录其在 originalCode 中的精确位置。
+     * 回填时直接按 [start, end) 替换，彻底避免 indexOf 二次搜索导致的错位/误替换。
      */
-    private boolean isInProtectedRegion(int start, int end, List<int[]> protectedRegions) {
-        for (int[] region : protectedRegions) {
-            if (start < region[1] && end > region[0]) {
-                return true;
+    private List<Segment> extractSegments(String code, List<int[]> protectedRegions) {
+        List<int[]> merged = mergeOverlappingRegions(protectedRegions);
+        List<int[]> gaps = computeGaps(code.length(), merged);
+        List<Segment> segments = new ArrayList<>();
+        for (int[] gap : gaps) {
+            String gapText = code.substring(gap[0], gap[1]);
+            Matcher m = TEXT_SEGMENT_PATTERN.matcher(gapText);
+            while (m.find()) {
+                String raw = m.group();
+                String decoded = decodeHtmlEntities(raw);
+                if (LETTER_PATTERN.matcher(decoded).find()) {
+                    Segment seg = new Segment();
+                    seg.start = gap[0] + m.start();
+                    seg.end = gap[0] + m.end();
+                    seg.sourceForModel = decoded;
+                    segments.add(seg);
+                }
             }
         }
-        return false;
+        return segments;
+    }
+
+    /**
+     * 合并已按 start 排序的区间列表中的重叠/相邻区间。
+     */
+    private List<int[]> mergeOverlappingRegions(List<int[]> sortedRegions) {
+        if (sortedRegions.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<int[]> merged = new ArrayList<>();
+        int[] current = {sortedRegions.get(0)[0], sortedRegions.get(0)[1]};
+        for (int i = 1; i < sortedRegions.size(); i++) {
+            int[] next = sortedRegions.get(i);
+            if (next[0] <= current[1]) {
+                current[1] = Math.max(current[1], next[1]);
+            } else {
+                merged.add(current);
+                current = new int[]{next[0], next[1]};
+            }
+        }
+        merged.add(current);
+        return merged;
+    }
+
+    /**
+     * 根据合并后的受保护区间，计算出所有"间隙"（非受保护区域）的位置范围。
+     */
+    private List<int[]> computeGaps(int length, List<int[]> mergedRegions) {
+        List<int[]> gaps = new ArrayList<>();
+        int cursor = 0;
+        for (int[] region : mergedRegions) {
+            if (cursor < region[0]) {
+                gaps.add(new int[]{cursor, region[0]});
+            }
+            cursor = Math.max(cursor, region[1]);
+        }
+        if (cursor < length) {
+            gaps.add(new int[]{cursor, length});
+        }
+        return gaps;
+    }
+
+    private String decodeHtmlEntities(String text) {
+        return text
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'");
     }
 
     /**
@@ -387,5 +428,15 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
                 node.text(text);
             }
         }
+    }
+
+    /**
+     * 表示 originalCode 中一段可翻译文本的精确位置。
+     * 回填时通过 [start, end) 直接定位，不再依赖 indexOf。
+     */
+    private static class Segment {
+        int start;
+        int end;
+        String sourceForModel;
     }
 }
