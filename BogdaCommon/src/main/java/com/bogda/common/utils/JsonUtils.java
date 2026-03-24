@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class JsonUtils {
@@ -66,7 +67,7 @@ public class JsonUtils {
         }
     }
 
-    // 判断一个string类型是不是Json数据
+    /** 判断一个string类型是不是Json数据 */
     public static boolean isJson(String str) {
         if (str == null || str.trim().isEmpty()) {
             return false;
@@ -76,6 +77,24 @@ public class JsonUtils {
             return node.isObject();
         } catch (Exception e) {
 
+            return false;
+        }
+    }
+
+    /** 判断一个文本是不是List格式的数据 */
+    public static boolean isListFormat(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<String> list = mapper.readValue(
+                    jsonStr,
+                    new TypeReference<List<String>>() {}
+            );
+            return list != null; // 只要能解析成功就算匹配
+        } catch (Exception e) {
             return false;
         }
     }
