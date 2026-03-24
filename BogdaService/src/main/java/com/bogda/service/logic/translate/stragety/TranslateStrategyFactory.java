@@ -41,6 +41,8 @@ public class TranslateStrategyFactory {
             strategy = "JSON";
         }else if (TranslateConstants.HTML.equals(ctx.getShopifyTextType()) || JsoupUtils.isHtml(ctx.getContent())) {
             strategy = "HTML";
+        }else if (JsonUtils.isListFormat(ctx.getContent())) {
+            strategy = "LIST";
         } else {
             strategy = "SINGLE";
         }
