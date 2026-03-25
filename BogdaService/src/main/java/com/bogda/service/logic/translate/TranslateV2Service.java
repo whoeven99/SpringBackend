@@ -954,7 +954,13 @@ public class TranslateV2Service {
                 }
 
                 Map<Integer, String> idToSourceValueMap = taskList.stream()
-                        .collect(Collectors.toMap(TranslateTaskV2DO::getId, TranslateTaskV2DO::getSourceValue));
+                        .collect(Collectors.toMap(TranslateTaskV2DO::getId, task -> {
+                            String sourceValue = task.getSourceValue();
+                            if (TranslateConstants.LOWERCASE_HANDLE.equals(task.getNodeKey()) && sourceValue != null) {
+                                return sourceValue.replace('-', ' ');
+                            }
+                            return sourceValue;
+                        }));
 
                 if (idToSourceValueMap.isEmpty()) {
                     maxToken = userTokenService.getMaxToken(shopName); // max token也重新获取，防止期间用户购买
