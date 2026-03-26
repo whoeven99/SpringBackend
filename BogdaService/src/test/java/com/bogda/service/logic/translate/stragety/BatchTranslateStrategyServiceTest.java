@@ -497,7 +497,7 @@ class BatchTranslateStrategyServiceTest {
         String input = "{\"1\":\"你好\",\"2\":\"世界\"}";
 
         // When
-        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
+        LinkedHashMap<Integer, String> result = batchTranslateStrategyService.parseOutput(input);
 
         // Then
         assertNotNull(result);
@@ -512,7 +512,7 @@ class BatchTranslateStrategyServiceTest {
         String badJson = "{\"53\":\" (tenzij uitdrukkelijk door ons vermeld) \"zoals ze zijn\" en \"zoals beschikbaar\" aangeboden voor uw\"}";
 
         // When
-        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(badJson);
+        LinkedHashMap<Integer, String> result = batchTranslateStrategyService.parseOutput(badJson);
 
         // Then
         assertNotNull(result);
@@ -524,7 +524,7 @@ class BatchTranslateStrategyServiceTest {
     @Test
     void testParseOutput_WithNullInput_ShouldReturnNull() {
         // When
-        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(null);
+        LinkedHashMap<Integer, String> result = batchTranslateStrategyService.parseOutput(null);
 
         // Then
         assertNull(result);
@@ -536,7 +536,7 @@ class BatchTranslateStrategyServiceTest {
         String input = "invalid json";
 
         // When
-        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
+        LinkedHashMap<Integer, String> result = batchTranslateStrategyService.parseOutput(input);
 
         // Then
         assertNull(result);
@@ -548,7 +548,7 @@ class BatchTranslateStrategyServiceTest {
         String input = "{\"1\":\"你好\",\"2\":\"\",\"3\":\"   \"}";
 
         // When
-        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
+        LinkedHashMap<Integer, String> result = batchTranslateStrategyService.parseOutput(input);
 
         // Then
         assertNotNull(result);
@@ -563,7 +563,7 @@ class BatchTranslateStrategyServiceTest {
         String input = "{\"1\":\"Hello " + "\\\\" + "u0022world" + "\\\\" + "u0022\"}";
 
         // When
-        LinkedHashMap<Integer, String> result = BatchTranslateStrategyService.parseOutput(input);
+        LinkedHashMap<Integer, String> result = batchTranslateStrategyService.parseOutput(input);
 
         // Then: 还原后 Jackson 会把 \u0022 解码为真实双引号
         assertNotNull(result);
