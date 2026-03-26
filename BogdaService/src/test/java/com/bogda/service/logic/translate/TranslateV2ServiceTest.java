@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
@@ -538,6 +539,82 @@ class TranslateV2ServiceTest {
         verify(feiShuRobotIntegration).sendMessage(contains("Retry failed (no more retries)"));
     }
 
+    @Test
+    void testRetrySaveAllFailedTasks_WithValueFailsValidation_ShouldTranslateAndSave() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        failed.setErrorMessage("Value fails validation on resource");
+
+        TranslateTaskV2DO task = createTranslateTask();
+        InitialTaskV2DO initial = createInitialTask();
+        UsersDO user = createUser();
+
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+        when(initialTaskV2Repo.getById(201)).thenReturn(initial);
+        when(iUsersService.getUserByName(testShopName)).thenReturn(user);
+        when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<String, GlossaryDO>());
+        when(promptConfigService.buildSinglePromptWithFieldRule(anyString(), anyString(), anyString(), any(), any(), anyString()))
+                .thenReturn("retry-prompt");
+        when(modelTranslateService.modelTranslate(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new Pair<>("translated-value", 66));
+        when(shopifyService.saveDataWithRateLimit(eq(testShopName), eq("token-abc"), any(ShopifyTranslationsResponse.Node.class)))
+                .thenReturn("{\"userErrors\":[]}");
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(modelTranslateService).modelTranslate(anyString(), anyString(), eq(testTarget), anyString());
+        verify(translateSaveFailedTaskRepo).markRetried(1);
+        verify(translateTaskV2Repo).updateSavedToShopify(101);
+    }
+
+    @Test
+    void testRetrySaveAllFailedTasks_WithInvalidTranslatableContentHash_ShouldRefreshDigestAndSave() {
+        TranslateSaveFailedTaskDO failed = createFailedRecord();
+        failed.setErrorMessage("Translatable content hash is invalid");
+
+        TranslateTaskV2DO task = createTranslateTask();
+        InitialTaskV2DO initial = createInitialTask();
+        UsersDO user = createUser();
+
+        when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(failed);
+        when(translateTaskV2Repo.getById(101)).thenReturn(task);
+        when(initialTaskV2Repo.getById(201)).thenReturn(initial);
+        when(iUsersService.getUserByName(testShopName)).thenReturn(user);
+        when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<String, GlossaryDO>());
+        when(translateStrategyFactory.getServiceByContext(any(TranslateContext.class))).thenReturn(translateStrategyService);
+        doAnswer(invocation -> {
+            TranslateContext ctx = invocation.getArgument(0);
+            ctx.setTranslatedContent("translated-value");
+            ctx.setUsedToken(66);
+            return null;
+        }).when(translateStrategyService).translate(any(TranslateContext.class));
+        doAnswer(invocation -> {
+            TranslateContext ctx = invocation.getArgument(0);
+            ctx.setTranslateVariables(new HashMap<>());
+            return null;
+        }).when(translateStrategyService).finishAndGetJsonRecord(any(TranslateContext.class));
+
+        // mock Shopify: getShopifyData -> 返回你期望的 translatableResourcesByIds 响应（digest/key/value）
+        when(shopifyService.getShopifyData(eq(testShopName), eq("token-abc"), anyString(), anyString()))
+                .thenReturn("{\"translatableResourcesByIds\":{\"nodes\":[{\"resourceId\":\"" + task.getResourceId() + "\",\"translatableContent\":[{\"digest\":\"latest-digest\",\"key\":\"" + task.getNodeKey() + "\",\"value\":\"latest source\"}]}],\"pageInfo\":{\"hasNextPage\":false,\"endCursor\":null}}}");
+
+        ArgumentCaptor<ShopifyTranslationsResponse.Node> nodeCaptor = ArgumentCaptor.forClass(ShopifyTranslationsResponse.Node.class);
+        when(shopifyService.saveDataWithRateLimit(eq(testShopName), eq("token-abc"), nodeCaptor.capture()))
+                .thenReturn("{\"userErrors\":[]}");
+
+        translateV2Service.retrySaveAllFailedTasks();
+
+        verify(translateStrategyService).translate(any(TranslateContext.class));
+        verify(translateStrategyService).finishAndGetJsonRecord(any(TranslateContext.class));
+        verify(userTokenService).addUsedToken(testShopName, 66);
+
+        ShopifyTranslationsResponse.Node capturedNode = nodeCaptor.getValue();
+        assertNotNull(capturedNode);
+        assertNotNull(capturedNode.getTranslations());
+        assertEquals(1, capturedNode.getTranslations().size());
+        assertEquals("latest-digest", capturedNode.getTranslations().get(0).getTranslatableContentDigest());
+    }
+
     // Helper methods
     private ClickTranslateRequest createValidClickTranslateRequest() {
         ClickTranslateRequest request = new ClickTranslateRequest();
@@ -565,6 +642,7 @@ class TranslateV2ServiceTest {
         failed.setTranslateTaskId(101);
         failed.setInitialTaskId(201);
         failed.setShopName(testShopName);
+        failed.setErrorMessage("Value fails validation on resource");
         return failed;
     }
 

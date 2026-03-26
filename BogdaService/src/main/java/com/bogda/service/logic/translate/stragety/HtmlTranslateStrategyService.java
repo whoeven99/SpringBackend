@@ -55,7 +55,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
         ctx.setContent(value);
 
-        if (TranslateConstants.EMAIL_TEMPLATE.equals(ctx.getModule())) {
+        if (TranslateConstants.EMAIL_TEMPLATE.equals(ctx.getModule()) || TranslateConstants.SHOP_POLICY.equals(ctx.getModule())) {
             translateLiquidHtmlForEmailTemplate(ctx);
             return;
         }
