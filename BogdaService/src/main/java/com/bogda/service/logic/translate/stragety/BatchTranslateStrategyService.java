@@ -570,7 +570,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * @param input AI返回的原始响应文本
      * @return 解析后的译文Map（序号 -> 译文），解析失败返回null
      */
-    public static LinkedHashMap<Integer, String> parseOutput(String input) {
+    public LinkedHashMap<Integer, String> parseOutput(String input) {
         if (input == null) {
             return null;
         }
@@ -601,6 +601,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             }
         }
         if (resultMap == null) {
+            feiShuRobotIntegration.sendMessage("翻译解析报错 译文 ： " + input);
             return null;
         }
 
