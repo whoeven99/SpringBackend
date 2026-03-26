@@ -3,7 +3,6 @@ package com.bogda.repository.repo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bogda.common.contants.TranslateConstants;
 import com.bogda.repository.entity.TranslateTaskV2DO;
 import com.bogda.repository.mapper.TranslateTaskV2Mapper;
 import org.springframework.stereotype.Service;
