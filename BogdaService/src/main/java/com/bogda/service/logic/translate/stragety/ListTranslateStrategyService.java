@@ -63,7 +63,9 @@ public class ListTranslateStrategyService implements ITranslateStrategyService {
             }
         }
 
-        ctx.setTranslatedContent(JsonUtils.objectToJson(Arrays.asList(resultArray)));
+        List<String> list = Arrays.asList(resultArray);
+        String result = JsonUtils.objectToJson(list);
+        ctx.setTranslatedContent(result);
     }
 
     private void translatePlainTextBatch(TranslateContext ctx,

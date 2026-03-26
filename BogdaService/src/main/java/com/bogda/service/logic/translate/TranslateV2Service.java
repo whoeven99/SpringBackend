@@ -908,19 +908,6 @@ public class TranslateV2Service {
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1,
                         context.getUsedToken(), context.getTranslatedChars());
 
-            } else if (isHtml) {
-                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
-                context.setModule(randomDo.getModule());
-                context.setShopName(shopName);
-                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
-                service.translate(context);
-
-                // 翻译后更新db
-                translateTaskV2Repo.updateTargetValueAndHasTargetValue(context.getTranslatedContent(), true, randomDo.getId());
-
-                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
-                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1, context.getUsedToken()
-                        , context.getTranslatedChars());
             } else if (JsonUtils.isListFormat(randomDo.getSourceValue()) && TranslateConstants.LIST_SINGLE_LINE_TEXT_FIELD
                     .equals(randomDo.getType())) {
                 TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
@@ -934,6 +921,19 @@ public class TranslateV2Service {
                 usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
                 translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1, context.getUsedToken()
                         , context.getTranslatedChars());
+            } else if (isHtml) {
+                TranslateContext context = new TranslateContext(randomDo.getSourceValue(), target, glossaryMap, aiModel);
+                context.setModule(randomDo.getModule());
+                context.setShopName(shopName);
+                ITranslateStrategyService service = translateStrategyFactory.getServiceByStrategy("HTML");
+                service.translate(context);
+
+                // 翻译后更新db
+                translateTaskV2Repo.updateTargetValueAndHasTargetValue(context.getTranslatedContent(), true, randomDo.getId());
+
+                usedToken = userTokenService.addUsedToken(shopName, initialTaskId, context.getUsedToken());
+                translateTaskMonitorV2RedisService.trackTranslateDetail(initialTaskId, 1, context.getUsedToken()
+                        , context.getTranslatedChars());
             } else {
                 // 批量翻译
                 List<TranslateTaskV2DO> originTaskList =
@@ -943,7 +943,7 @@ public class TranslateV2Service {
                 for (TranslateTaskV2DO task : originTaskList) {
                     if (task.isSingleHtml() || JsonUtils.isJson(task.getSourceValue()) ||
                             (JsonUtils.isListFormat(task.getSourceValue()) && TranslateConstants.LIST_SINGLE_LINE_TEXT_FIELD
-                                    .equals(task.getType())) ) {
+                                    .equals(task.getType()))) {
                         continue;
                     }
                     taskList.add(task);
@@ -1238,11 +1238,11 @@ public class TranslateV2Service {
      * 构建带 FIELD_RULE 的提示词（根据 nodeKey 匹配字段规则），重新翻译并保存到 Shopify。
      */
     private void retryWithFieldRulePromptAndSaveToShopify(TranslateSaveFailedTaskDO failedRecord,
-                                                           TranslateTaskV2DO taskDO,
-                                                           String shopName,
-                                                           String token,
-                                                           String target,
-                                                           String aiModel) {
+                                                          TranslateTaskV2DO taskDO,
+                                                          String shopName,
+                                                          String token,
+                                                          String target,
+                                                          String aiModel) {
         // 构建带 FIELD_RULE 的提示词（根据 nodeKey 匹配字段规则）
         Map<String, GlossaryDO> glossaryMap = glossaryService.getGlossaryDoByShopName(shopName, target);
         String glossaryMapping = null;
@@ -1303,7 +1303,7 @@ public class TranslateV2Service {
                     "Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
         } else {
             feiShuRobotIntegration.sendMessage("Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
-                            + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
+                    + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
         }
     }
 
@@ -1313,13 +1313,13 @@ public class TranslateV2Service {
      * 然后重新翻译并保存到 Shopify。
      */
     private void retryForInvalidTranslatableContentHash(TranslateSaveFailedTaskDO failedRecord,
-                                                       TranslateTaskV2DO taskDO,
-                                                       String shopName,
-                                                       String token,
-                                                       String target,
-                                                       String aiModel) {
+                                                        TranslateTaskV2DO taskDO,
+                                                        String shopName,
+                                                        String token,
+                                                        String target,
+                                                        String aiModel) {
         boolean refreshed = refreshDigestAndSourceValueFromShopify(shopName, token, target, taskDO);
-        if (!refreshed){
+        if (!refreshed) {
             translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
             return;
         }
@@ -1369,9 +1369,9 @@ public class TranslateV2Service {
      * 从 Shopify 拉取最新 translatableContent，并按 nodeKey 刷新 TranslateTaskV2DO 的 digest / sourceValue。
      */
     private boolean refreshDigestAndSourceValueFromShopify(String shopName,
-                                                             String token,
-                                                             String target,
-                                                             TranslateTaskV2DO taskDO) {
+                                                           String token,
+                                                           String target,
+                                                           TranslateTaskV2DO taskDO) {
         if (taskDO == null
                 || taskDO.getResourceId() == null || taskDO.getResourceId().isEmpty()
                 || taskDO.getNodeKey() == null || taskDO.getNodeKey().isEmpty()) {
