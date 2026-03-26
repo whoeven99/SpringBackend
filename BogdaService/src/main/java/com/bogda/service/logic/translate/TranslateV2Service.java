@@ -1369,7 +1369,6 @@ public class TranslateV2Service {
         if (taskDO == null
                 || taskDO.getResourceId() == null || taskDO.getResourceId().isEmpty()
                 || taskDO.getNodeKey() == null || taskDO.getNodeKey().isEmpty()) {
-            System.out.println("null 1");
             return false;
         }
 

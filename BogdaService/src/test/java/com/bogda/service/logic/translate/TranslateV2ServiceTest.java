@@ -596,7 +596,7 @@ class TranslateV2ServiceTest {
 
         // mock Shopify: getShopifyData -> 返回你期望的 translatableResourcesByIds 响应（digest/key/value）
         when(shopifyService.getShopifyData(eq(testShopName), eq("token-abc"), anyString(), anyString()))
-                .thenReturn("{\"data\":{\"translatableResourcesByIds\":{\"nodes\":[{\"resourceId\":\"" + task.getResourceId() + "\",\"translatableContent\":[{\"digest\":\"latest-digest\",\"key\":\"" + task.getNodeKey() + "\",\"value\":\"latest source\"}]}],\"pageInfo\":{\"hasNextPage\":false,\"endCursor\":null}}}}");
+                .thenReturn("{\"translatableResourcesByIds\":{\"nodes\":[{\"resourceId\":\"" + task.getResourceId() + "\",\"translatableContent\":[{\"digest\":\"latest-digest\",\"key\":\"" + task.getNodeKey() + "\",\"value\":\"latest source\"}]}],\"pageInfo\":{\"hasNextPage\":false,\"endCursor\":null}}}");
 
         ArgumentCaptor<ShopifyTranslationsResponse.Node> nodeCaptor = ArgumentCaptor.forClass(ShopifyTranslationsResponse.Node.class);
         when(shopifyService.saveDataWithRateLimit(eq(testShopName), eq("token-abc"), nodeCaptor.capture()))
