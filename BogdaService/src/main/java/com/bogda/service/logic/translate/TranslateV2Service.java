@@ -1369,6 +1369,7 @@ public class TranslateV2Service {
         if (taskDO == null
                 || taskDO.getResourceId() == null || taskDO.getResourceId().isEmpty()
                 || taskDO.getNodeKey() == null || taskDO.getNodeKey().isEmpty()) {
+            System.out.println("null 1");
             return false;
         }
 
@@ -1397,7 +1398,7 @@ public class TranslateV2Service {
             return false;
         }
 
-        JsonNode nodes = root.path("data").path("translatableResourcesByIds").path("nodes");
+        JsonNode nodes = root.path("translatableResourcesByIds").path("nodes");
         if (nodes == null || !nodes.isArray() || nodes.isEmpty()) {
             return false;
         }
