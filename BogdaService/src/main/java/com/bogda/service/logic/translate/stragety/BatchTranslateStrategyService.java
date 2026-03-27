@@ -618,7 +618,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         }
 
         if (resultMap == null) {
-//            feiShuRobotIntegration.sendMessage("翻译解析报错 译文 ： " + input);
+            feiShuRobotIntegration.sendMessage("翻译解析报错 译文 ： " + input);
             return null;
         }
 
