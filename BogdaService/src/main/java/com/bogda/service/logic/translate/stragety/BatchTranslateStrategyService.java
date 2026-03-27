@@ -578,6 +578,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 步骤1: 从响应中提取JSON块（可能包含其他说明文字）
         String jsonPart = StringUtils.extractJsonBlock(input);
+        if (jsonPart == null) {
+            return null;
+        }
+
         // 临时保护 JSON 中的 \" （把 \\" 替换成一个不可能出现的占位符）
         String placeholder = "___JSON_QUOTE___";
         jsonPart = jsonPart.replace("\\\"", placeholder);
@@ -586,10 +590,6 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 把占位符还原回 \"
         jsonPart = jsonPart.replace(placeholder, "\\\"");
-
-        if (jsonPart == null) {
-            return null;
-        }
 
         // 步骤1.5: 若存在被双重转义的 unicode 序列（例如 \\u0022），先还原一层再解析
         String decodedUnicode = JsonUtils.decodeDoubleEscapedUnicode(jsonPart);
