@@ -3,6 +3,7 @@ package com.bogda.service.logic.translate.stragety;
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.common.utils.PromptUtils;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.RedisProcessService;
@@ -68,25 +69,25 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         // 1.2 包含词汇表词条：带词汇表的AI翻译
         if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
             String glossaryMappingText = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), value);
-            String prompt = promptConfigService.buildGlossarySinglePrompt(ctx.getModule(), target, value, glossaryMappingText);
+            String prompt = null;
+            if (ctx.getTranslatedContent() != null) {
+                prompt = PromptUtils.buildDynamicTargetSinglePrompt(target, value, ctx.getLastTranslatedText(),
+                        glossaryMappingText, null);
+            } else {
+                prompt = promptConfigService.buildSinglePrompt(ctx.getModule(), target, value, glossaryMappingText, null);
+            }
             ctx.setStrategy("语法表单条翻译");
             ctx.setPrompt(prompt);
         }
 
-
-        // 2. 检查缓存
-        String cachedValue = redisProcessService.getCacheData(target, value);
-        if (cachedValue != null) {
-            translateTaskMonitorV2RedisService.addCacheCount(value);
-            ctx.setCached(true);
-            ctx.setStrategy("单条文本翻译-缓存命中");
-            ctx.setTranslatedContent(cachedValue);
-            return;
-        }
-
         // 普通 prompt（仅当前面没设置）
         if (ctx.getPrompt() == null) {
-            String prompt = promptConfigService.buildPlainSinglePrompt(ctx.getModule(), target, value);
+            String prompt = null;
+            if (ctx.getTranslatedContent() != null) {
+                prompt = PromptUtils.buildDynamicTargetSinglePrompt(target, value, ctx.getLastTranslatedText(), null, null);
+            } else {
+                prompt = promptConfigService.buildSinglePrompt(ctx.getModule(), target, value, null, null);
+            }
             ctx.setStrategy("普通单条文本翻译");
             ctx.setPrompt(prompt);
         }
@@ -100,8 +101,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
             return;
         }
 
-        TraceReporterHolder.report("test", "单条翻译提示词： " + ctx.getPrompt());
-        TraceReporterHolder.report("test", "单条翻译原文： " + value);
+        TraceReporterHolder.report("debug", "单条翻译提示词： " + ctx.getPrompt());
         redisProcessService.setCacheData(target, pair.getFirst(), value);
         ctx.setUsedToken(pair.getSecond());
         ctx.setTranslatedContent(pair.getFirst());

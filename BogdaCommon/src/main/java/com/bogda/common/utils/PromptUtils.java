@@ -265,4 +265,83 @@ public class PromptUtils {
 
         return EmojiManager.containsEmoji(source);
     }
+
+    /** 基础单条翻译提示词*/
+    private static String BASE_SINGLE_PROMPT = "You are an e-commerce translation expert.";
+
+    /** 原文和上次翻译文本提示词*/
+    private static String COMPARE_SINGLE_PROMPT = """
+            [Original]
+            {{ORIGINAL_TEXT}}
+
+            [Translation]
+            {{TRANSLATION_TEXT}}
+
+            Task:
+            Improve the translation.
+            """;
+
+    /** 要求提示词*/
+    private static String REQUIRE_SINGLE_PROMPT = """
+            Requirements:
+                - Preserve meaning and ensure accuracy
+                - Make it natural and fluent in {{TARGET_LANGUAGE}}
+            """;
+
+    /** 词汇表提示词*/
+    private static String GLOSSAYR_SINGLE_PROMPT = """
+                - Keep terminology consistent:{{TERM_RULES}}
+            """;
+
+    /** 返回提示词*/
+    private static String OUT_SINGLE_PROMPT = """
+            Goal:
+            Fix errors with minimal changes, staying close to the original.
+
+            Output:
+            Return ONLY the improved translation.
+            """;
+
+    /**
+     * 单条翻译 — 支持外部 BasePrompt
+     */
+    public static String buildDynamicTargetSinglePrompt(String targetLanguage, String text, String translatedText,
+                                                  String termRules, String styleRules) {
+        String safeText = text == null ? "" : text;
+        boolean includeProtection = hasSpecialContent(safeText);
+        boolean includeUnit = hasDigit(safeText);
+        return buildSingleDynamicPrompt(BASE_SINGLE_PROMPT, safeText, translatedText, ModuleCodeUtils.getLanguageName(targetLanguage),
+                termRules,includeProtection,includeUnit, styleRules);
+    }
+
+    private static String buildSingleDynamicPrompt(String basePrompt, String sourceText, String translateText, String targetCode
+    , String termRules, boolean includeProtectionRule, boolean includeUnitRule, String styleRules) {
+        StringBuilder prompt = new StringBuilder(basePrompt.trim()).append("\n\n");
+
+        prompt.append(COMPARE_SINGLE_PROMPT.replace("{{ORIGINAL_TEXT}}", sourceText)
+                .replace("{{TRANSLATION_TEXT}}", translateText)).append("\n\n");
+
+        prompt.append(REQUIRE_SINGLE_PROMPT.replace("{{TARGET_LANGUAGE}}", targetCode)).append("\n");
+
+        if (termRules != null && !termRules.trim().isEmpty()) {
+            prompt.append(GLOSSAYR_SINGLE_PROMPT.replace("{{TERM_RULES}}", termRules.trim()).trim()).append("\n\n");
+        }else {
+            prompt.append("\n");
+        }
+
+        if (styleRules != null && !styleRules.trim().isEmpty()) {
+            prompt.append(STYLE_RULE.replace("{{STYLE_RULES}}", styleRules.trim()).trim()).append("\n\n");
+        }
+
+        if (includeProtectionRule) {
+            prompt.append(PROTECTION_RULE.trim()).append("\n\n");
+        }
+
+        if (includeUnitRule) {
+            prompt.append(UNIT_RULE.trim()).append("\n\n");
+        }
+
+        prompt.append(OUT_SINGLE_PROMPT.trim());
+        return prompt.toString();
+    }
 }

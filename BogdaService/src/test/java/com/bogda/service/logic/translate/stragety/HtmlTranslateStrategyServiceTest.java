@@ -18,6 +18,7 @@ import java.util.Map;
 
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -35,13 +36,14 @@ class HtmlTranslateStrategyServiceTest {
     private String testContent;
     private String testTarget;
     private String testAiModel;
+    private String testTargetContent;
 
     @BeforeEach
     void setUp() {
         testContent = "<p>Hello World</p>";
         testTarget = "zh";
         testAiModel = "gemini-3-flash";
-
+        testTargetContent = "你好， 世界";
         context = new TranslateContext(testContent, testTarget, new HashMap<>(), testAiModel);
     }
 
@@ -62,7 +64,7 @@ class HtmlTranslateStrategyServiceTest {
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
             mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(htmlContent)).thenReturn(htmlContent);
-            
+
             // 先创建 mock Document，完成所有 stubbing（hasHtmlTag 为 false，使用 body.childNodes()）
             Document mockDoc = createMockDocumentForBody("<p>你好世界</p>");
             mockedUtils.when(() -> LiquidHtmlTranslatorUtils.parseHtml(eq(htmlContent), eq(testTarget), eq(false))).thenReturn(mockDoc);
@@ -212,7 +214,7 @@ class HtmlTranslateStrategyServiceTest {
                 "key",
                 new HashMap<>(),
                 testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+                TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -250,13 +252,8 @@ class HtmlTranslateStrategyServiceTest {
         String htmlContent = "<html lang='ko'><body><p>Hello World</p></body></html>";
         String targetLanguage = "zh";
         context = new TranslateContext(
-                htmlContent,
-                targetLanguage,
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+                htmlContent, targetLanguage, "type", "key", new HashMap<>(), testAiModel,
+                TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -292,14 +289,8 @@ class HtmlTranslateStrategyServiceTest {
         // Given
         String htmlContent = "<html lang=ko><body><p>Hello World</p></body></html>";
         String targetLanguage = "zh";
-        context = new TranslateContext(
-                htmlContent,
-                targetLanguage,
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+        context = new TranslateContext(htmlContent, targetLanguage, "type", "key", new HashMap<>(),
+                testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -339,14 +330,8 @@ class HtmlTranslateStrategyServiceTest {
                 + "<p>test</p>q"
                 + "<p>Hello</p>"
                 + "</body></html>";
-        context = new TranslateContext(
-                htmlContent,
-                "zh",
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+        context = new TranslateContext(htmlContent, "zh", "type", "key",
+                new HashMap<>(), testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -380,13 +365,8 @@ class HtmlTranslateStrategyServiceTest {
         // Given
         String htmlContent = "<html lang=\"en\"><body><p>Hello World</p></body></html>";
         context = new TranslateContext(
-                htmlContent,
-                "zh",
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+                htmlContent, "zh", "type", "key", new HashMap<>(),
+                testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -418,14 +398,8 @@ class HtmlTranslateStrategyServiceTest {
                 + "<p>Line one</p>\\n"
                 + "<p>Line two</p>"
                 + "</body></html>";
-        context = new TranslateContext(
-                htmlContent,
-                "zh",
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+        context = new TranslateContext(htmlContent, "zh", "type", "key",
+                new HashMap<>(), testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -456,15 +430,8 @@ class HtmlTranslateStrategyServiceTest {
         // 这里刻意在 Liquid 标签之间放入字面量 "\n"（两个字符：\ + n），期望最终输出恢复为真实换行符。
         String htmlContent = "{% assign delivery_method_types = delivery_agreements | map: 'delivery_method_type' | uniq %} \\n {% if delivery_method_types.size > 1 %}{% endif %}";
         String targetLanguage = "zh";
-        context = new TranslateContext(
-                htmlContent,
-                targetLanguage,
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
-        );
+        context = new TranslateContext(htmlContent, targetLanguage, "type", "key",
+                new HashMap<>(), testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent);
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
             mockedUtils.when(() -> LiquidHtmlTranslatorUtils.isHtmlEntity(anyString()))
@@ -505,13 +472,8 @@ class HtmlTranslateStrategyServiceTest {
         String translateValue = "感谢您的购买！";
 
         context = new TranslateContext(
-                htmlContent,
-                targetLanguage,
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+                htmlContent, targetLanguage, "type", "key",
+                new HashMap<>(), testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -560,13 +522,8 @@ class HtmlTranslateStrategyServiceTest {
         String translateValue = "欢迎光临我们的商店！";
 
         context = new TranslateContext(
-                htmlContent,
-                targetLanguage,
-                "type",
-                "key",
-                new HashMap<>(),
-                testAiModel,
-                TranslateConstants.EMAIL_TEMPLATE
+                htmlContent, targetLanguage, "type", "key", new HashMap<>(),
+                testAiModel, TranslateConstants.EMAIL_TEMPLATE, testTargetContent
         );
 
         try (MockedStatic<LiquidHtmlTranslatorUtils> mockedUtils = mockStatic(LiquidHtmlTranslatorUtils.class)) {
@@ -601,25 +558,25 @@ class HtmlTranslateStrategyServiceTest {
         Element body = mock(Element.class);
         Element pElement = mock(Element.class);
         TextNode textNode = mock(TextNode.class);
-        
+
         // 设置 body（只在 hasHtmlTag 为 false 时使用）
         when(doc.body()).thenReturn(body);
         when(body.childNodes()).thenReturn(new java.util.ArrayList<>());
-        
+
         // 设置 getAllElements() 返回 Elements（jsoup 的特殊集合类型）
         Elements allElements = new Elements();
         allElements.add(pElement);
         when(doc.getAllElements()).thenReturn(allElements);
-        
+
         // 设置 textNodes() 返回包含 textNode 的列表
         java.util.List<TextNode> textNodes = new java.util.ArrayList<>();
         textNodes.add(textNode);
         when(pElement.textNodes()).thenReturn(textNodes);
-        
+
         // 设置 textNode 的 text() 方法
         when(textNode.text()).thenReturn("Hello World");
         when(textNode.getWholeText()).thenReturn("Hello World");
-        
+
         return doc;
     }
 
@@ -628,21 +585,21 @@ class HtmlTranslateStrategyServiceTest {
         Document doc = mock(Document.class);
         Element pElement = mock(Element.class);
         TextNode textNode = mock(TextNode.class);
-        
+
         // 设置 getAllElements() 返回 Elements（jsoup 的特殊集合类型）
         Elements allElements = new Elements();
         allElements.add(pElement);
         when(doc.getAllElements()).thenReturn(allElements);
-        
+
         // 设置 textNodes() 返回包含 textNode 的列表
         java.util.List<TextNode> textNodes = new java.util.ArrayList<>();
         textNodes.add(textNode);
         when(pElement.textNodes()).thenReturn(textNodes);
-        
+
         // 设置 textNode 的 text() 方法
         when(textNode.text()).thenReturn("Hello World");
         when(textNode.getWholeText()).thenReturn("Hello World");
-        
+
         return doc;
     }
 
