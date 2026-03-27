@@ -1104,7 +1104,6 @@ public class TranslateV2Service {
             }
 
             randomDo = translateTaskV2Repo.selectOneByInitialTaskIdAndNotSaved(initialTaskId);
-            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "TranslateTaskV2 saving SHOPIFY: " + shopName + " size: " + taskList.size());
         }
 
         long savingShopifyTimeInMinutes = (System.currentTimeMillis() - initialTaskV2DO.getUpdatedAt().getTime()) / (1000 * 60);

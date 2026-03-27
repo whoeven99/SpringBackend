@@ -50,6 +50,7 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
     @Override
     public void translate(TranslateContext ctx) {
         String value = ctx.getContent();
+        String rawValue = value;
         String target = ctx.getTargetLanguage();
 
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
@@ -95,6 +96,34 @@ public class HtmlTranslateStrategyService implements ITranslateStrategyService {
             replacedBackString = isHtmlEntity(results);
         } else {
             Element body = ctx.getDoc().body();
+            // 如果输入显式包含 <body>，且 body 内没有有效子节点（空/仅空白），则回退原始输入
+            boolean inputHasBodyTag = rawValue != null
+                    && rawValue.toLowerCase().contains("<body")
+                    && rawValue.toLowerCase().contains("</body");
+            boolean hasMeaningfulChild = false;
+            for (Node child : body.childNodes()) {
+                if (child == null) {
+                    continue;
+                }
+                if (child instanceof TextNode) {
+                    if (!((TextNode) child).text().trim().isEmpty()) {
+                        hasMeaningfulChild = true;
+                        break;
+                    }
+                } else {
+                    hasMeaningfulChild = true;
+                    break;
+                }
+            }
+            if (inputHasBodyTag && !hasMeaningfulChild) {
+                replacedBackString = isHtmlEntity(rawValue);
+                ctx.setStrategy("HTML的json翻译");
+                ctx.setTranslatedContent(replacedBackString);
+                ctx.setDoc(null);
+                ctx.getNodeMap().clear();
+                return;
+            }
+
             // 只返回子节点内容，不包含 <body>
             StringBuilder results = new StringBuilder();
             for (Node child : body.childNodes()) {
