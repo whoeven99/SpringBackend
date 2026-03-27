@@ -13,6 +13,7 @@ import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -570,13 +571,22 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * @param input AI返回的原始响应文本
      * @return 解析后的译文Map（序号 -> 译文），解析失败返回null
      */
-    public static LinkedHashMap<Integer, String> parseOutput(String input) {
+    public LinkedHashMap<Integer, String> parseOutput(String input) {
         if (input == null) {
             return null;
         }
 
         // 步骤1: 从响应中提取JSON块（可能包含其他说明文字）
         String jsonPart = StringUtils.extractJsonBlock(input);
+        // 临时保护 JSON 中的 \" （把 \\" 替换成一个不可能出现的占位符）
+        String placeholder = "___JSON_QUOTE___";
+        jsonPart = jsonPart.replace("\\\"", placeholder);
+
+        jsonPart = StringEscapeUtils.unescapeJava(jsonPart);
+
+        // 把占位符还原回 \"
+        jsonPart = jsonPart.replace(placeholder, "\\\"");
+
         if (jsonPart == null) {
             return null;
         }
@@ -589,18 +599,26 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 步骤2: 将JSON字符串解析为Map对象
         LinkedHashMap<Integer, String> resultMap = JsonUtils.jsonToObjectWithNull(
-                jsonPart,
-                new TypeReference<LinkedHashMap<Integer, String>>() {
-                }
-        );
+                jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {});
+
         if (resultMap == null) {
             // 容错：当 AI 输出的字符串值中包含未转义的双引号时，先修复后再尝试解析一次
             String repaired = JsonUtils.repairUnescapedQuotesInStringValues(jsonPart);
             if (repaired != null && !repaired.equals(jsonPart)) {
-                resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {});
+                resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {
+                });
             }
         }
+
         if (resultMap == null) {
+            String fixMissingQuote = JsonUtils.fixMissingQuote(jsonPart);
+            if (fixMissingQuote != null) {
+                resultMap = JsonUtils.jsonToObjectWithNull(fixMissingQuote, new TypeReference<LinkedHashMap<Integer, String>>() {});
+            }
+        }
+
+        if (resultMap == null) {
+            feiShuRobotIntegration.sendMessage("翻译解析报错 译文 ： " + input);
             return null;
         }
 

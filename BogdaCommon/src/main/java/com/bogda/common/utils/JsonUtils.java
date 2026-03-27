@@ -192,7 +192,26 @@ public class JsonUtils {
         }
         // 注意：避免在源码里直接出现 反斜杠+uXXXX 触发 Java unicode 转义
         Pattern p = Pattern.compile("\\\\\\\\" + "u([0-9a-fA-F]{4})");
-        String replaced = p.matcher(text).replaceAll("\\\\" + "u$1");
-        return replaced;
+        return p.matcher(text).replaceAll("\\\\" + "u$1");
+    }
+
+    // 修复JSON字符串中缺少的引号
+    public static String fixMissingQuote(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return jsonStr;
+        }
+
+        String fixed = jsonStr;
+
+        // 第一步：修复缺少开头的引号（"key": value → "key": "value）
+        // 只在 : 后面紧跟非引号、非空格字符时才加
+        fixed = fixed.replaceAll("(\"\\d+\"\\s*:\\s*)([^\"\\s])", "$1\"$2");
+
+        // 第二步：修复缺少结尾的引号（"key": "value, → "key": "value",）
+        // 匹配 : "内容（不含任何"） 后面紧跟 , 或 }
+        // 使用正向预查，不会影响已经正确的行
+        fixed = fixed.replaceAll("(:\\s*\"[^\"]*)(?=\\s*,|\\s*})", "$1\"");
+
+        return fixed;
     }
 }
