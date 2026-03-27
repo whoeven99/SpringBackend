@@ -15,4 +15,5 @@ public class SingleTranslateVO {
     private String context;
     private String key;
     private String type;
+    private String targetText;
 }

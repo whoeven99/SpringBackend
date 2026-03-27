@@ -195,7 +195,7 @@ public class TranslateV2Service {
         String aiModel = aiModelConfigService.getSingleTranslateModel();
         TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
                 request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()),
-                aiModel, request.getResourceType());
+                aiModel, request.getResourceType(), request.getTargetText());
         context.setShopName(shopName);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
@@ -1330,7 +1330,7 @@ public class TranslateV2Service {
 
         // digest 重新翻译
         TranslateContext context = new TranslateContext(taskDO.getSourceValue(), target, taskDO.getType(),
-                taskDO.getNodeKey(), glossaryService.getGlossaryDoByShopName(shopName, target), aiModel, taskDO.getModule());
+                taskDO.getNodeKey(), glossaryService.getGlossaryDoByShopName(shopName, target), aiModel, taskDO.getModule(), taskDO.getTargetValue());
         context.setShopName(shopName);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
