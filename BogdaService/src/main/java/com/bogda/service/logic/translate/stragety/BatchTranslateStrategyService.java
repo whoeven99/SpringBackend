@@ -584,7 +584,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         jsonPart = StringEscapeUtils.unescapeJava(jsonPart);
 
-        // 第四步：把占位符还原回 \"
+        // 把占位符还原回 \"
         jsonPart = jsonPart.replace(placeholder, "\\\"");
 
         if (jsonPart == null) {
