@@ -54,6 +54,14 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
 //            return;
         }
 
+        if (ctx.getTranslatedContent() == null) {
+            // 如果TranslatedContent为空， 先获取redis中的数据
+            String cacheData = redisProcessService.getCacheData(ctx.getTargetLanguage(), ctx.getTranslatedContent());
+            if (cacheData != null) {
+                ctx.setTranslatedContent(cacheData);
+            }
+        }
+
         // 1. 先检查词汇表
         Map<String, GlossaryDO> glossaryMap = ctx.getGlossaryMap();
 
