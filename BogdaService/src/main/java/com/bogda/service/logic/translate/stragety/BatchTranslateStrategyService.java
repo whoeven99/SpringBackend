@@ -585,12 +585,12 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         // 临时保护 JSON 中的 \" （把 \\" 替换成一个不可能出现的占位符）
         String placeholder = "___JSON_QUOTE___";
         jsonPart = jsonPart.replace("\\\"", placeholder);
-
-        jsonPart = StringEscapeUtils.unescapeJava(jsonPart);
+        if (!jsonPart.contains("\n")) {
+            jsonPart = StringEscapeUtils.unescapeJava(jsonPart);
+        }
 
         // 把占位符还原回 \"
         jsonPart = jsonPart.replace(placeholder, "\\\"");
-
         // 步骤1.5: 若存在被双重转义的 unicode 序列（例如 \\u0022），先还原一层再解析
         String decodedUnicode = JsonUtils.decodeDoubleEscapedUnicode(jsonPart);
         if (decodedUnicode != null) {
