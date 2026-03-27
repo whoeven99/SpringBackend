@@ -103,13 +103,14 @@ class TranslateV2ServiceTest {
     private String testShopName;
     private String testTarget;
     private String testContext;
+    private String testTargetContent;
 
     @BeforeEach
     void setUp() {
         testShopName = "test-shop";
         testTarget = "zh";
         testContext = "Hello, world!";
-
+        testTargetContent = "你好， 世界";
         singleTranslateVO = new SingleTranslateVO();
         singleTranslateVO.setShopName(testShopName);
         singleTranslateVO.setTarget(testTarget);
@@ -172,7 +173,8 @@ class TranslateV2ServiceTest {
         when(glossaryService.getGlossaryDoByShopName(testShopName, testTarget)).thenReturn(new HashMap<>());
         when(translateStrategyFactory.getServiceByContext(any(TranslateContext.class))).thenReturn(translateStrategyService);
 
-        TranslateContext mockContext = new TranslateContext(testContext, testTarget, "TEXT", "test-key", new HashMap<>(), GeminiIntegration.GEMINI_3_FLASH, "ARTICLE");
+        TranslateContext mockContext = new TranslateContext(testContext, testTarget, "TEXT", "test-key", new HashMap<>()
+                , GeminiIntegration.GEMINI_3_FLASH, "ARTICLE", testTargetContent);
         mockContext.setTranslatedContent("你好，世界！");
         mockContext.setUsedToken(100);
         mockContext.setTranslateVariables(new HashMap<>());

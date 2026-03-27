@@ -17,7 +17,7 @@ public class TranslateContext {
 
     // Start
     private String content;
-
+    private String lastTranslatedText;
     private String shopifyTextType;
     private String shopifyTextKey;
     private String targetLanguage;
@@ -62,8 +62,8 @@ public class TranslateContext {
     }
 
     // For single
-    public TranslateContext(String content, String targetLanguage, String type, String key,
-                            Map<String, GlossaryDO> glossaryMap, String aiModel, String module) {
+    public TranslateContext(String content, String targetLanguage, String type, String key, Map<String, GlossaryDO> glossaryMap,
+                            String aiModel, String module, String lastTranslatedText) {
         this.content = content;
         this.targetLanguage = targetLanguage;
         this.shopifyTextType = type;
@@ -73,6 +73,7 @@ public class TranslateContext {
         this.translatedChars = content.length();
         this.aiModel = aiModel;
         this.module = module;
+        this.lastTranslatedText = lastTranslatedText;
     }
 
     // For batch

@@ -51,14 +51,15 @@ class SingleTranslateStrategyServiceTest {
     private String testContent;
     private String testTarget;
     private String testAiModel;
+    private String testTargetContent;
 
     @BeforeEach
     void setUp() {
         testContent = "Hello, world!";
         testTarget = "zh";
         testAiModel = "gemini-3-flash";
-
-        context = new TranslateContext(testContent, testTarget, "TEXT", "test-key", new HashMap<>(), testAiModel, "ARTICLE");
+        testTargetContent = "你好， 世界";
+        context = new TranslateContext(testContent, testTarget, "TEXT", "test-key", new HashMap<>(), testAiModel, "ARTICLE", testTargetContent);
     }
 
     @Test
@@ -71,76 +72,6 @@ class SingleTranslateStrategyServiceTest {
     }
 
     @Test
-    void testTranslate_WithCachedValue_ShouldUseCache() {
-        // Given
-        String cachedValue = "你好，世界！";
-        when(redisProcessService.getCacheData(testTarget, testContent)).thenReturn(cachedValue);
-
-        // When
-        singleTranslateStrategyService.translate(context);
-
-        // Then
-        assertTrue(context.isCached());
-        assertEquals(cachedValue, context.getTranslatedContent());
-        assertEquals("单条文本翻译-缓存命中", context.getStrategy());
-        verify(translateTaskMonitorV2RedisService).addCacheCount(testContent);
-        verifyNoInteractions(modelTranslateService);
-    }
-
-    @Test
-    void testTranslate_WithGlossary_ShouldUseGlossaryPrompt() {
-        // Given
-        Map<String, GlossaryDO> glossaryMap = new HashMap<>();
-        glossaryMap.put("Hello", new GlossaryDO("Hello", "你好", 0));
-
-        context.setGlossaryMap(glossaryMap);
-        when(redisProcessService.getCacheData(testTarget, testContent)).thenReturn(null);
-
-        try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class)) {
-            mockedGlossary.when(() -> GlossaryService.hasGlossary(eq(testContent), anyMap(), anyMap())).thenReturn(true);
-            mockedGlossary.when(() -> GlossaryService.convertMapToText(anyMap(), eq(testContent))).thenReturn("Hello -> 你好");
-
-            when(promptConfigService.buildGlossarySinglePrompt(anyString(), eq(testTarget), eq(testContent), anyString())).thenReturn("glossary-prompt");
-            Pair<String, Integer> mockPair = new Pair<>("你好，世界！", 50);
-            when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent)))
-                    .thenReturn(mockPair);
-
-            // When
-            singleTranslateStrategyService.translate(context);
-
-            // Then
-            assertEquals("语法表单条翻译", context.getStrategy());
-            assertNotNull(context.getPrompt());
-            verify(modelTranslateService).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent));
-        }
-    }
-
-    @Test
-    void testTranslate_WithNormalText_ShouldUseNormalPrompt() {
-        // Given
-        context.setGlossaryMap(new HashMap<>());
-        when(redisProcessService.getCacheData(testTarget, testContent)).thenReturn(null);
-
-        try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class)) {
-            mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
-
-            when(promptConfigService.buildPlainSinglePrompt(anyString(), eq(testTarget), eq(testContent))).thenReturn("plain-prompt");
-            Pair<String, Integer> mockPair = new Pair<>("你好，世界！", 50);
-            when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent)))
-                    .thenReturn(mockPair);
-
-            // When
-            singleTranslateStrategyService.translate(context);
-
-            // Then
-            assertEquals("普通单条文本翻译", context.getStrategy());
-            assertNotNull(context.getPrompt());
-            verify(modelTranslateService).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent));
-            verify(redisProcessService).setCacheData(testTarget, "你好，世界！", testContent);
-        }
-    }
-
-    @Test
     void testTranslate_WithHandleType_ShouldSetHandleStrategy() {
         // Given
         context.setShopifyTextType(TranslateConstants.URI);
@@ -148,7 +79,6 @@ class SingleTranslateStrategyServiceTest {
         context.setContent("hello-world-product");
 
         context.setGlossaryMap(new HashMap<>());
-        when(redisProcessService.getCacheData(testTarget, context.getContent())).thenReturn(null);
 
         try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class);
              MockedStatic<StringUtils> mockedStringUtils = mockStatic(StringUtils.class)) {
@@ -171,27 +101,6 @@ class SingleTranslateStrategyServiceTest {
         }
     }
 
-    @Test
-    void testTranslate_WithNullTranslation_ShouldNotSetContent() {
-        // Given
-        context.setGlossaryMap(new HashMap<>());
-        when(redisProcessService.getCacheData(testTarget, testContent)).thenReturn(null);
-
-        try (MockedStatic<GlossaryService> mockedGlossary = mockStatic(GlossaryService.class)) {
-            mockedGlossary.when(() -> GlossaryService.hasGlossary(anyString(), anyMap(), anyMap())).thenReturn(false);
-
-            when(promptConfigService.buildPlainSinglePrompt(anyString(), eq(testTarget), eq(testContent))).thenReturn("plain-prompt");
-            when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(testContent)))
-                    .thenReturn(null);
-
-            // When
-            singleTranslateStrategyService.translate(context);
-
-            // Then
-            assertNull(context.getTranslatedContent());
-            verify(redisProcessService, never()).setCacheData(anyString(), anyString(), anyString());
-        }
-    }
 
     @Test
     void testFinishAndGetJsonRecord_ShouldSetVariables() {

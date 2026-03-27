@@ -62,13 +62,4 @@ public class PromptConfigService {
         String customBasePrompt = getModuleBasePrompt(module);
         return PromptUtils.buildDynamicSinglePromptWithFieldRule(targetLanguage, text, termRules, styleRules, customBasePrompt, nodeKey);
     }
-
-    public String buildGlossarySinglePrompt(String module, String targetLanguage,
-                                            String text, String glossaryMapping) {
-        return buildSinglePrompt(module, targetLanguage, text, glossaryMapping, null);
-    }
-
-    public String buildPlainSinglePrompt(String module, String targetLanguage, String text) {
-        return buildSinglePrompt(module, targetLanguage, text, null, null);
-    }
 }
