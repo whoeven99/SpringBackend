@@ -54,11 +54,11 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
 //            return;
         }
 
-        if (ctx.getTranslatedContent() == null) {
+        if (ctx.getLastTranslatedText() == null) {
             // 如果TranslatedContent为空， 先获取redis中的数据
-            String cacheData = redisProcessService.getCacheData(ctx.getTargetLanguage(), ctx.getTranslatedContent());
+            String cacheData = redisProcessService.getCacheData(ctx.getTargetLanguage(), ctx.getContent());
             if (cacheData != null) {
-                ctx.setTranslatedContent(cacheData);
+                ctx.setLastTranslatedText(cacheData);
             }
         }
 
@@ -78,7 +78,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         if (GlossaryService.hasGlossary(value, glossaryMap, ctx.getUsedGlossaryMap())) {
             String glossaryMappingText = GlossaryService.convertMapToText(ctx.getUsedGlossaryMap(), value);
             String prompt = null;
-            if (ctx.getTranslatedContent() != null) {
+            if (ctx.getLastTranslatedText() != null) {
                 prompt = PromptUtils.buildDynamicTargetSinglePrompt(target, value, ctx.getLastTranslatedText(),
                         glossaryMappingText, null);
             } else {
@@ -91,7 +91,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         // 普通 prompt（仅当前面没设置）
         if (ctx.getPrompt() == null) {
             String prompt = null;
-            if (ctx.getTranslatedContent() != null) {
+            if (ctx.getLastTranslatedText() != null) {
                 prompt = PromptUtils.buildDynamicTargetSinglePrompt(target, value, ctx.getLastTranslatedText(), null, null);
             } else {
                 prompt = promptConfigService.buildSinglePrompt(ctx.getModule(), target, value, null, null);
