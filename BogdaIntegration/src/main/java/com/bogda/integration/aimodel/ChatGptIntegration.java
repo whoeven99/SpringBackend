@@ -67,7 +67,7 @@ public class ChatGptIntegration {
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
-                    client.getChatCompletions(modelName, options));
+                    client.getChatCompletions(GPT_4_1, options));
             String content = chatCompletions.getChoices().get(0).getMessage().getContent();
             int allToken = (int) Math.ceil(chatCompletions.getUsage().getTotalTokens() * magnification);
             int input = chatCompletions.getUsage().getPromptTokens();
