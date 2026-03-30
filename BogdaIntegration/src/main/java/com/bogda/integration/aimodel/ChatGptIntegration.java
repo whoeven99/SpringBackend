@@ -2,10 +2,7 @@ package com.bogda.integration.aimodel;
 
 import com.azure.ai.openai.OpenAIClient;
 import com.azure.ai.openai.OpenAIClientBuilder;
-import com.azure.ai.openai.models.ChatCompletions;
-import com.azure.ai.openai.models.ChatCompletionsOptions;
-import com.azure.ai.openai.models.ChatMessage;
-import com.azure.ai.openai.models.ChatRole;
+import com.azure.ai.openai.models.*;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
@@ -55,16 +52,15 @@ public class ChatGptIntegration {
      * content - allToken，支持指定模型名称和系数（配置化入口）
      */
     public Pair<String, Integer> chatWithGpt(String modelName, double magnification, String prompt, String target) {
-        ChatMessage userMessage = new ChatMessage(ChatRole.USER);
-        userMessage.setContent(prompt);
+        ChatRequestUserMessage userMessage = new ChatRequestUserMessage(prompt);
 
-        List<ChatMessage> prompts = new ArrayList<>();
-        prompts.add(userMessage);
+        List<ChatRequestMessage> messages = new ArrayList<>();
+        messages.add(userMessage);
 
-        ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
+        ChatCompletionsOptions options = new ChatCompletionsOptions(messages)
                 .setFrequencyPenalty(0.0)
                 .setPresencePenalty(0.0)
-                .setStream(false);
+                .setResponseFormat(new ChatCompletionsJsonResponseFormat());
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
                     client.getChatCompletions(modelName, options));
