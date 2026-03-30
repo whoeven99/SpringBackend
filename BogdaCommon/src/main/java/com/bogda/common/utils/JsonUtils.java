@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JsonUtils {
@@ -79,6 +80,66 @@ public class JsonUtils {
 
             return false;
         }
+    }
+
+    /**
+     * 深度修复 LLM 返回的畸形 JSON
+     */
+    public static String highlyRobustRepair(String json) {
+        if (json == null || json.trim().isEmpty()) return json;
+
+        String fixed = json.trim();
+
+        // 1. 处理被截断的 JSON (补齐结尾)
+        if (fixed.startsWith("{") && !fixed.endsWith("}")) {
+            if (!fixed.endsWith("\"")) fixed += "\"";
+            fixed += "}";
+        }
+
+        // 2. 修复缺失的键值对逗号: "val" "2": -> "val", "2":
+        fixed = fixed.replaceAll("(\"\\s*)(?=\"\\d+\"\\s*:)", "$1, ");
+
+        // 3. 修复内容中未转义的双引号
+        fixed = repairUnescapedQuotesAdvanced(fixed);
+
+        return fixed;
+    }
+
+    private static String repairUnescapedQuotesAdvanced(String json) {
+        StringBuilder sb = new StringBuilder();
+        boolean inString = false;
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            // 简单判定是否为未被转义的引号
+            if (c == '"' && (i == 0 || json.charAt(i - 1) != '\\')) {
+                if (!inString) {
+                    inString = true;
+                    sb.append(c);
+                } else {
+                    // 探测下一个非空字符，判断当前引号是否为结束引号
+                    int j = i + 1;
+                    while (j < json.length() && Character.isWhitespace(json.charAt(j))) j++;
+
+                    if (j < json.length()) {
+                        char next = json.charAt(j);
+                        // 合法的结束引号后通常跟着 , } 或 :
+                        if (next == ',' || next == '}' || next == ':') {
+                            inString = false;
+                            sb.append(c);
+                        } else {
+                            // 否则视为内容中的引号，强行转义
+                            sb.append("\\\"");
+                        }
+                    } else {
+                        sb.append(c);
+                        inString = false;
+                    }
+                }
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     /** 判断一个文本是不是List格式的数据 */
@@ -180,19 +241,15 @@ public class JsonUtils {
     }
 
     /**
-     * 将 JSON 文本中“被双重转义”的 unicode 序列还原一层。
-     * <p>
-     * 场景：上游为了避免内容里的双引号干扰 prompt，会把 " 替换为“反斜杠 + u0022”这 6 个字符；
-     * 这会导致 JSON 文本里出现“两个反斜杠 + uXXXX”的形式，Jackson 解析后只会得到字面量“反斜杠 + uXXXX”。
-     * 在反序列化前，先把“两个反斜杠 + uXXXX”->“一个反斜杠 + uXXXX”还原，让 Jackson 在解析时解码为真实字符。
+     * 修复多重转义的 Unicode (\\\\u -> \\u)
      */
     public static String decodeDoubleEscapedUnicode(String text) {
         if (text == null || text.isEmpty()) {
             return text;
         }
-        // 注意：避免在源码里直接出现 反斜杠+uXXXX 触发 Java unicode 转义
-        Pattern p = Pattern.compile("\\\\\\\\" + "u([0-9a-fA-F]{4})");
-        return p.matcher(text).replaceAll("\\\\" + "u$1");
+        Pattern p = Pattern.compile("\\\\{2,4}u([0-9a-fA-F]{4})");
+        Matcher m = p.matcher(text);
+        return m.replaceAll("\\\\u$1");
     }
 
     // 修复JSON字符串中缺少的引号
@@ -200,18 +257,8 @@ public class JsonUtils {
         if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return jsonStr;
         }
-
-        String fixed = jsonStr;
-
-        // 第一步：修复缺少开头的引号（"key": value → "key": "value）
-        // 只在 : 后面紧跟非引号、非空格字符时才加
-        fixed = fixed.replaceAll("(\"\\d+\"\\s*:\\s*)([^\"\\s])", "$1\"$2");
-
-        // 第二步：修复缺少结尾的引号（"key": "value, → "key": "value",）
-        // 匹配 : "内容（不含任何"） 后面紧跟 , 或 }
-        // 使用正向预查，不会影响已经正确的行
+        String fixed = jsonStr.replaceAll("(\"\\d+\"\\s*:\\s*)([^\"\\s])", "$1\"$2");
         fixed = fixed.replaceAll("(:\\s*\"[^\"]*)(?=\\s*,|\\s*})", "$1\"");
-
         return fixed;
     }
 }

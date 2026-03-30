@@ -14,11 +14,12 @@ import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.StringUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class BatchTranslateStrategyService implements ITranslateStrategyService {
@@ -573,62 +574,55 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * @return 解析后的译文Map（序号 -> 译文），解析失败返回null
      */
     public LinkedHashMap<Integer, String> parseOutput(String input) {
-        if (input == null) {
-            return null;
-        }
+        if (input == null) return null;
 
-        // 步骤1: 从响应中提取JSON块（可能包含其他说明文字）
+        // 1. 提取 JSON 块
         String jsonPart = StringUtils.extractJsonBlock(input);
-        if (jsonPart == null) {
-            return null;
-        }
+        if (jsonPart == null) return null;
 
-        // 临时保护 JSON 中的 \" （把 \\" 替换成一个不可能出现的占位符）
-        String placeholder = "___JSON_QUOTE___";
-        jsonPart = jsonPart.replace("\\\"", placeholder);
-        if (!jsonPart.contains("\\n")) {
-            jsonPart = StringEscapeUtils.unescapeJava(jsonPart);
-        }
+        // 2. 基础清洗: 修复过度转义的 Unicode
+        jsonPart = JsonUtils.decodeDoubleEscapedUnicode(jsonPart);
 
-        // 把占位符还原回 \"
-        jsonPart = jsonPart.replace(placeholder, "\\\"");
-        // 步骤1.5: 若存在被双重转义的 unicode 序列（例如 \\u0022），先还原一层再解析
-        String decodedUnicode = JsonUtils.decodeDoubleEscapedUnicode(jsonPart);
-        if (decodedUnicode != null) {
-            jsonPart = decodedUnicode;
-        }
-
-        // 步骤2: 将JSON字符串解析为Map对象
+        // 3. 尝试标准解析
         LinkedHashMap<Integer, String> resultMap = JsonUtils.jsonToObjectWithNull(
                 jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {});
 
+        // 4. 如果解析失败，启动深度修复流水线
         if (resultMap == null) {
-            // 容错：当 AI 输出的字符串值中包含未转义的双引号时，先修复后再尝试解析一次
-            String repaired = JsonUtils.repairUnescapedQuotesInStringValues(jsonPart);
-            if (repaired != null && !repaired.equals(jsonPart)) {
-                resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {
-                });
-            }
+            String repaired = JsonUtils.highlyRobustRepair(jsonPart);
+            repaired = JsonUtils.fixMissingQuote(repaired);
+            resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {});
+        }
+
+        // 5. 如果依然失败，使用正则强行暴力提取 (兜底方案)
+        if (resultMap == null) {
+            resultMap = tryRegexRecovery(jsonPart);
         }
 
         if (resultMap == null) {
-            String fixMissingQuote = JsonUtils.fixMissingQuote(jsonPart);
-            if (fixMissingQuote != null) {
-                resultMap = JsonUtils.jsonToObjectWithNull(fixMissingQuote, new TypeReference<LinkedHashMap<Integer, String>>() {});
-            }
-        }
-
-        if (resultMap == null) {
-            feiShuRobotIntegration.sendMessage("翻译解析报错 译文 ： " + input);
-            TraceReporterHolder.report("BatchTranslateStrategyService.parseOutput", "翻译解析报错 ： " + input);
+            feiShuRobotIntegration.sendMessage("翻译解析 报错，原文：" + input);
+            TraceReporterHolder.report("BatchTranslateStrategyService.parseOutput", "解析失败：" + input);
             return null;
         }
 
-        // 步骤3: 过滤掉空值或空白译文
-        resultMap.entrySet().removeIf(entry ->
-                entry.getValue() == null || entry.getValue().trim().isEmpty()
-        );
-
+        // 6. 过滤无效结果
+        resultMap.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().trim().isEmpty());
         return resultMap;
+    }
+
+    /**
+     * 正则兜底提取：即便 JSON 格式全乱了，只要包含 "1": "xxx" 这种模式就能救回来
+     */
+    private LinkedHashMap<Integer, String> tryRegexRecovery(String json) {
+        LinkedHashMap<Integer, String> map = new LinkedHashMap<>();
+        // 匹配模式: "数字": "内容" (支持跨行)
+        Pattern p = Pattern.compile("\"(\\d+)\"\\s*:\\s*\"(.*?)\"(?=\\s*[,|}])", Pattern.DOTALL);
+        Matcher m = p.matcher(json);
+        while (m.find()) {
+            try {
+                map.put(Integer.parseInt(m.group(1)), m.group(2));
+            } catch (Exception ignored) {}
+        }
+        return map.isEmpty() ? null : map;
     }
 }
