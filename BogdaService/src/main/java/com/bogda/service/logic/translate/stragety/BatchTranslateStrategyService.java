@@ -2,6 +2,7 @@ package com.bogda.service.logic.translate.stragety;
 
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.GlossaryService;
@@ -585,7 +586,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         // 临时保护 JSON 中的 \" （把 \\" 替换成一个不可能出现的占位符）
         String placeholder = "___JSON_QUOTE___";
         jsonPart = jsonPart.replace("\\\"", placeholder);
-        if (!jsonPart.contains("\n")) {
+        if (!jsonPart.contains("\\n")) {
             jsonPart = StringEscapeUtils.unescapeJava(jsonPart);
         }
 
@@ -619,6 +620,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         if (resultMap == null) {
             feiShuRobotIntegration.sendMessage("翻译解析报错 译文 ： " + input);
+            TraceReporterHolder.report("BatchTranslateStrategyService.parseOutput", "翻译解析报错 ： " + input);
             return null;
         }
 
