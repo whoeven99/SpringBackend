@@ -201,7 +201,8 @@ public class TranslateV2Service {
         service.translate(context);
         service.finishAndGetJsonRecord(context);
         userTokenService.addUsedToken(shopName, context.getUsedToken());
-
+        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "shopName : " + shopName
+                + " token 单条翻译消耗 " + context.getUsedToken());
         SingleReturnVO returnVO = new SingleReturnVO();
         returnVO.setTargetText(context.getTranslatedContent());
         returnVO.setTranslateVariables(context.getTranslateVariables());
