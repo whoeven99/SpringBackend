@@ -121,11 +121,11 @@ public class UserIpService {
             Integer maxChars = iTranslationCounterService.getMaxCharsByShopName(shopName);
 
             if (translationCounterDO.getUsedChars() < maxChars) {
-                translationCounterDO.setUsedChars(translationCounterDO.getUsedChars() + 100);
+//                translationCounterDO.setUsedChars(translationCounterDO.getUsedChars() + 100);
 //                userIpDO.setTimes(currentTimes + 1);
                 userIpDO.setAllTimes(userIpDO.getAllTimes() + 1);
                 iUserIpService.updateById(userIpDO);
-                userTokenService.addUsedToken(shopName, 100);
+//                userTokenService.addUsedToken(shopName, 100);
                 return true;
             } else {
                 return false;
