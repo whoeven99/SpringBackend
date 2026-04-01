@@ -1,5 +1,7 @@
 package com.bogda.integration.aimodel;
 
+import com.azure.ai.openai.models.ChatMessage;
+import com.azure.ai.openai.models.CompletionsFinishReason;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
@@ -61,6 +63,17 @@ public class GeminiIntegration {
             int allToken = (usage != null) ? (int) Math.ceil(usage.totalTokenCount().orElse(0) * magnification) : 0;
 
             TraceReporterHolder.report("GeminiIntegration.generateText", "Gemini  model : " + model + " 提示词 ：" + prompt + " 生成文本： " + text + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
+
+            if (text == null) {
+                response.candidates().stream().findFirst().ifPresent(candidate -> {
+                    // 获取结束原因 (例如: SAFETY, RECITATION, OTHER)
+                    TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException GeminiIntegration generateText error: "
+                            + " model: " + model + " prompt: " + prompt + " finishReason : " + candidate.get(0).finishReason() + " candidate : " + candidate);
+                    feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + " model: "
+                            + model + " prompt: " + prompt + " finishReason : " + candidate.get(0).finishReason() + " candidate : " + candidate);
+                });
+            }
+
             return new Pair<>(text, allToken);
         } catch (Exception e) {
             TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);

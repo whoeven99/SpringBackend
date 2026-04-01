@@ -104,7 +104,12 @@ public class KimiIntegration {
             TraceReporterHolder.report("KimiIntegration.chat", "KimiIntegration model : " + model + " 提示词 ：" + prompt
                     + " 翻译成：" + content + " all: " + allToken
                     + " input: " + inputTokens + " output: " + outputTokens + " target: " + target);
-
+            if (content == null) {
+                TraceReporterHolder.report("KimiIntegration.chat", "FatalException KimiIntegration chat error: "
+                        + " model: " + model + " prompt: " + prompt + " finishReason : " + root);
+                feiShuRobotIntegration.sendMessage("FatalException KimiIntegration chat error: " + " model: "
+                        + model + " prompt: " + prompt + " finishReason : " + root);
+            }
             return new Pair<>(content, allToken);
         } catch (Exception e) {
             TraceReporterHolder.report("KimiIntegration.chat", "FatalException KimiIntegration chat error: " + e.getMessage()

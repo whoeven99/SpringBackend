@@ -2,10 +2,7 @@ package com.bogda.integration.aimodel;
 
 import com.azure.ai.openai.OpenAIClient;
 import com.azure.ai.openai.OpenAIClientBuilder;
-import com.azure.ai.openai.models.ChatCompletions;
-import com.azure.ai.openai.models.ChatCompletionsOptions;
-import com.azure.ai.openai.models.ChatMessage;
-import com.azure.ai.openai.models.ChatRole;
+import com.azure.ai.openai.models.*;
 import com.azure.core.credential.AzureKeyCredential;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
@@ -75,6 +72,16 @@ public class ChatGptIntegration {
             TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译 提示词 ： " + prompt + " modelName: " + modelName
                     + " magnification: " + magnification + " token openai : " + content + " all: "
                     + allToken + " input: " + input + " output: " + output + " target: " + target);
+
+            if (content == null) {
+                CompletionsFinishReason finishReason = chatCompletions.getChoices().get(0).getFinishReason();
+                ChatMessage message = chatCompletions.getChoices().get(0).getMessage();
+                TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException ChatGptIntegration chatWithGpt error: "
+                        + " model: " + modelName + " prompt: " + prompt + " finishReason : " + finishReason + " message : " + message);
+                feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + " model: "
+                        + modelName + " prompt: " + prompt + " finishReason : " + finishReason + " message : " + message);
+            }
+
             return new Pair<>(content, allToken);
         } catch (Exception e) {
             TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage()
