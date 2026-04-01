@@ -73,11 +73,11 @@ public class PromptUtils {
     private static final Map<String, Map<String, String>> FIELD_RULES = new LinkedHashMap<>();
     static {
         FIELD_RULES.put("title", Map.of(
-                "FIELD_LENGTH", "230",
+                "FIELD_LENGTH", "210",
                 "FIELD_RULE", "title: concise, keywords"
         ));
         FIELD_RULES.put("meta_description", Map.of(
-                "FIELD_LENGTH", "300",
+                "FIELD_LENGTH", "280",
                 "FIELD_RULE", "meta_description: marketing"
         ));
     }
