@@ -6,16 +6,15 @@ import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.service.logic.TencentEmailService;
+import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
-import com.bogda.task.annotation.EnableScheduledTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +34,10 @@ public class TranslateTask {
     private ITranslatesService translatesService;
     @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
+    @Autowired
+    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+
+    private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
     private final Set<String> initializingShops = new HashSet<>();
@@ -235,5 +238,52 @@ public class TranslateTask {
         TraceReporterHolder.report("TranslateTask.cleanTask", "TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
         translateV2Service.cleanTask(cleanTask.get(0));
         translateV2Service.cleanDeleteTask(cleanTask.get(0));
+    }
+
+    /**
+     * 检查 DB 状态为 0～3 的 InitialTask：若 Redis 监控中 lastUpdatedTime（无则 initStartTime）距现在超过 30 分钟，飞书告警。
+     */
+    @Scheduled(fixedDelay = 10 * 60 * 1000)
+    public void checkInitialTaskMonitorStall() {
+        List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatusesInProgress();
+        if (CollectionUtils.isEmpty(tasks)) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        List<String> lines = new ArrayList<>();
+        for (InitialTaskV2DO task : tasks) {
+            Map<String, String> monitor = translateTaskMonitorV2RedisService.getAllByTaskId(task.getId());
+            if (monitor == null || monitor.isEmpty()) {
+                continue;
+            }
+            Long refMs = parseMonitorMillis(monitor.get("lastUpdatedTime"));
+            if (refMs == null) {
+                refMs = parseMonitorMillis(monitor.get("initStartTime"));
+            }
+            if (refMs == null) {
+                continue;
+            }
+            if (now - refMs > INITIAL_TASK_STALL_THRESHOLD_MS) {
+                lines.add("taskId=" + task.getId() + " shop=" + task.getShopName()
+                        + " status=" + task.getStatus() + " refTimeMs=" + refMs);
+            }
+        }
+        if (!lines.isEmpty()) {
+            TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
+                    + String.join("\n", lines));
+            feiShuRobotIntegration.sendMessage("InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
+                    + String.join("\n", lines));
+        }
+    }
+
+    private static Long parseMonitorMillis(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(raw.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
