@@ -496,8 +496,8 @@ public class TranslateV2Service {
                     redisStoppedRepository.manuallyStopped(shopName, autoTaskByShopNameAndTarget.getId());
                 }
             } catch (Exception e) {
-                TraceReporterHolder.report("TranslateV2Service.createManualTask", "手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target);
-                feiShuRobotIntegration.sendMessage("手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target);
+                TraceReporterHolder.report("TranslateV2Service.createManualTask", "手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
+                feiShuRobotIntegration.sendMessage("手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
             }
         }
     }

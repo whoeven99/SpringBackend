@@ -250,10 +250,14 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
     }
 
     public InitialTaskV2DO getAutoTaskByShopNameAndTarget(String shopName, String target) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<InitialTaskV2DO>().eq(InitialTaskV2DO::getShopName, shopName)
+        List<InitialTaskV2DO> initialTaskV2DOS = baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getTarget, target)
+                .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
                 .eq(InitialTaskV2DO::getTaskType, "auto")
                 .eq(InitialTaskV2DO::getIsDeleted, false)
+                .orderByDesc(InitialTaskV2DO::getCreatedAt)
         );
+        return initialTaskV2DOS.isEmpty() ? null : initialTaskV2DOS.get(0);
     }
 }
