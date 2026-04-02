@@ -80,11 +80,11 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
     }
 
     /**
-     * 进行中任务：读取 Shopify / 翻译中 / 写入 Shopify / 待发邮件（0～3）
+     * 进行中任务：读取 Shopify / 翻译中 / 写入 Shopify（0～2）
      */
     public List<InitialTaskV2DO> selectByStatusesInProgress() {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
+                .in(InitialTaskV2DO::getStatus, 0, 1, 2)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 

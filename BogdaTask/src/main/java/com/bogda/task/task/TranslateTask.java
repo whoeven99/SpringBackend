@@ -242,7 +242,7 @@ public class TranslateTask {
     }
 
     /**
-     * 检查 DB 状态为 0～3 的 InitialTask：若 Redis 监控中 lastUpdatedTime（无则 initStartTime）距现在超过 30 分钟，飞书告警。
+     * 检查 DB 状态为 0～2 的 InitialTask：若 Redis 监控中 lastUpdatedTime（无则 initStartTime）距现在超过 30 分钟，飞书告警。
      */
     @Scheduled(fixedDelay = 10 * 60 * 1000)
     @EnableScheduledTask
@@ -258,18 +258,18 @@ public class TranslateTask {
             if (monitor == null || monitor.isEmpty()) {
                 continue;
             }
+
             Long refMs = parseMonitorMillis(monitor.get("lastUpdatedTime"));
-            if (refMs == null) {
-                refMs = parseMonitorMillis(monitor.get("initStartTime"));
-            }
             if (refMs == null) {
                 continue;
             }
+
             if (now - refMs > INITIAL_TASK_STALL_THRESHOLD_MS) {
-                lines.add("taskId=" + task.getId() + " shop=" + task.getShopName()
-                        + " status=" + task.getStatus() + " refTimeMs=" + refMs);
+                lines.add("taskId=" + task.getId() + " shop=" + task.getShopName() + " status=" + task.getStatus()
+                        + " updateTime=" + refMs + "now=" + now + " taskType=" + task.getTaskType());
             }
         }
+
         if (!lines.isEmpty()) {
             TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
                     + String.join("\n", lines));
