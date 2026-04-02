@@ -10,6 +10,7 @@ import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.task.annotation.EnableScheduledTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -244,6 +245,7 @@ public class TranslateTask {
      * 检查 DB 状态为 0～3 的 InitialTask：若 Redis 监控中 lastUpdatedTime（无则 initStartTime）距现在超过 30 分钟，飞书告警。
      */
     @Scheduled(fixedDelay = 10 * 60 * 1000)
+    @EnableScheduledTask
     public void checkInitialTaskMonitorStall() {
         List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatusesInProgress();
         if (CollectionUtils.isEmpty(tasks)) {
