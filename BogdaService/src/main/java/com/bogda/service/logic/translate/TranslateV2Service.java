@@ -487,6 +487,18 @@ public class TranslateV2Service {
 
             translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, aiModel);
             translatesService.updateTranslateStatus(shopName, 2, target, source);
+
+            // 获取自动翻译任务，是否有该任务，然后停止
+            try {
+                InitialTaskV2DO autoTaskByShopNameAndTarget = initialTaskV2Repo.getAutoTaskByShopNameAndTarget(shopName, target);
+                if (autoTaskByShopNameAndTarget != null) {
+                    // 停止自动翻译任务
+                    redisStoppedRepository.manuallyStopped(shopName, autoTaskByShopNameAndTarget.getId());
+                }
+            } catch (Exception e) {
+                TraceReporterHolder.report("TranslateV2Service.createManualTask", "手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
+                feiShuRobotIntegration.sendMessage("手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
+            }
         }
     }
 

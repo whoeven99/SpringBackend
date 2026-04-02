@@ -79,6 +79,15 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
+    /**
+     * 进行中任务：读取 Shopify / 翻译中 / 写入 Shopify / 待发邮件（0～3）
+     */
+    public List<InitialTaskV2DO> selectByStatusesInProgress() {
+        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
+                .eq(InitialTaskV2DO::getIsDeleted, false));
+    }
+
     public List<InitialTaskV2DO> selectByStatusAndTaskType(int status, String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, status)
@@ -238,5 +247,17 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .lt(InitialTaskV2DO::getCreatedAt, currentTaskCreatedAt)
                 .orderByDesc(InitialTaskV2DO::getCreatedAt));
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    public InitialTaskV2DO getAutoTaskByShopNameAndTarget(String shopName, String target) {
+        List<InitialTaskV2DO> initialTaskV2DOS = baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
+                .eq(InitialTaskV2DO::getShopName, shopName)
+                .eq(InitialTaskV2DO::getTarget, target)
+                .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
+                .eq(InitialTaskV2DO::getTaskType, "auto")
+                .eq(InitialTaskV2DO::getIsDeleted, false)
+                .orderByDesc(InitialTaskV2DO::getCreatedAt)
+        );
+        return initialTaskV2DOS.isEmpty() ? null : initialTaskV2DOS.get(0);
     }
 }
