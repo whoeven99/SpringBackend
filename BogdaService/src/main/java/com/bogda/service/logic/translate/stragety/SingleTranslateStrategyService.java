@@ -104,7 +104,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
                 , ctx.getTargetLanguage(), value);
 
         if (pair == null) {
-            TraceReporterHolder.report("SingleTranslateStrategyService.translate", "翻译解析报错 译文 ： " + ctx.getPrompt());
+            TraceReporterHolder.report("SingleTranslateStrategyService.translate", "FatalException 飞书机器人报错 翻译解析报错 译文 ： " + ctx.getPrompt());
             feiShuRobotIntegration.sendMessage("FatalException SINGLE shopName : " + ctx.getShopName() + " prompt : "
                     + ctx.getPrompt() + "  module : " + ctx.getModule());
             return;

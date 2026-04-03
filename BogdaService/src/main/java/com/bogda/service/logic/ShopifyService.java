@@ -405,6 +405,7 @@ public class ShopifyService {
             return response;
         } catch (Exception e) {
             feiShuRobotIntegration.sendMessage("FatalException saveDataWithRateLimit error: " + e);
+            TraceReporterHolder.report("ShopifyService.saveDataWithRateLimit", "FatalException 飞书机器人报错 " + e);
             return null;
         }
     }

@@ -76,7 +76,7 @@ public class ChatGptIntegration {
             if (content == null) {
                 CompletionsFinishReason finishReason = chatCompletions.getChoices().get(0).getFinishReason();
                 ChatMessage message = chatCompletions.getChoices().get(0).getMessage();
-                TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException ChatGptIntegration chatWithGpt error: "
+                TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException 飞书机器人报错 ChatGptIntegration chatWithGpt error: "
                         + " model: " + modelName + " prompt: " + prompt + " finishReason : " + finishReason + " message : " + message);
                 feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + " model: "
                         + modelName + " prompt: " + prompt + " finishReason : " + finishReason + " message : " + message);
@@ -84,7 +84,7 @@ public class ChatGptIntegration {
 
             return new Pair<>(content, allToken);
         } catch (Exception e) {
-            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage()
+            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException 飞书机器人报错 ChatGptIntegration chatWithGpt error: " + e.getMessage()
                     + " model: " + modelName + " prompt: " + prompt);
             ExceptionReporterHolder.report("ChatGptIntegration.chatWithGpt", e);
             feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " model: " + modelName + " prompt: " + prompt);
