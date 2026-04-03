@@ -184,6 +184,7 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Missing parameters");
         }
 
+        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "单条翻译参数如下 request ： " + request);
         String shopName = request.getShopName();
         String key = request.getKey();
         String resourceId = request.getResourceId();
@@ -201,6 +202,7 @@ public class TranslateV2Service {
             shopifyData = taskDO.getTargetValue();
         }
 
+        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "查询shopify的翻译数据如下： " + shopifyData);
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
         if (usedToken >= maxToken) {
