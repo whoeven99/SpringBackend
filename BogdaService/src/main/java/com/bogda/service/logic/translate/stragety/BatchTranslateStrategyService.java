@@ -601,7 +601,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         if (resultMap == null) {
             feiShuRobotIntegration.sendMessage("翻译解析 报错，原文：" + input);
-            TraceReporterHolder.report("BatchTranslateStrategyService.parseOutput", "解析失败：" + input);
+            TraceReporterHolder.report("BatchTranslateStrategyService.parseOutput", "FatalException 飞书机器人报错 解析失败：" + input);
             return null;
         }
 

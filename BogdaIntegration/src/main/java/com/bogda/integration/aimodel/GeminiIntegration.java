@@ -42,7 +42,7 @@ public class GeminiIntegration {
                                     null
                             );
                         } catch (Exception e) {
-                            TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException userTranslate call errors ： " + e.getMessage() +
+                            TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException 飞书机器人报错 userTranslate call errors ： " + e.getMessage() +
                                     " translateText : " + prompt);
                             ExceptionReporterHolder.report("GeminiIntegration.generateText", e);
                             feiShuRobotIntegration.sendMessage("FatalException generateText call errors ： " + e.getMessage() + " prompt : " + prompt);
@@ -67,7 +67,7 @@ public class GeminiIntegration {
             if (text == null) {
                 response.candidates().stream().findFirst().ifPresent(candidate -> {
                     // 获取结束原因 (例如: SAFETY, RECITATION, OTHER)
-                    TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException GeminiIntegration generateText error: "
+                    TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException 飞书机器人报错 GeminiIntegration generateText error: "
                             + " model: " + model + " prompt: " + prompt + " finishReason : " + candidate.get(0).finishReason() + " candidate : " + candidate);
                     feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + " model: "
                             + model + " prompt: " + prompt + " finishReason : " + candidate.get(0).finishReason() + " candidate : " + candidate);
@@ -76,7 +76,7 @@ public class GeminiIntegration {
 
             return new Pair<>(text, allToken);
         } catch (Exception e) {
-            TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException generateText errors ： " + e.getMessage() + " translateText : " + prompt);
+            TraceReporterHolder.report("GeminiIntegration.generateText", "FatalException 飞书机器人报错 generateText errors ： " + e.getMessage() + " translateText : " + prompt);
             ExceptionReporterHolder.report("GeminiIntegration.generateText", e);
             feiShuRobotIntegration.sendMessage("FatalException generateText call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;
@@ -136,7 +136,7 @@ public class GeminiIntegration {
             TraceReporterHolder.report("GeminiIntegration.generateImage", "Gemini 提示词： " + prompt + " 生成文本： " + Base64.getEncoder().encodeToString(translatedBytes) + " 请求token: " + inputToken + " 生成token: " + outputToken + " 总token: " + allToken);
             return new Pair<>(Base64.getEncoder().encodeToString(translatedBytes), allToken);
         } catch (Exception e) {
-            TraceReporterHolder.report("GeminiIntegration.generateImage", "FatalException generateImage errors ： " + e.getMessage() + " translateText : " + prompt);
+            TraceReporterHolder.report("GeminiIntegration.generateImage", "FatalException 飞书机器人报错 generateImage errors ： " + e.getMessage() + " translateText : " + prompt);
             ExceptionReporterHolder.report("GeminiIntegration.generateImage", e);
             feiShuRobotIntegration.sendMessage("FatalException generateImage call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;

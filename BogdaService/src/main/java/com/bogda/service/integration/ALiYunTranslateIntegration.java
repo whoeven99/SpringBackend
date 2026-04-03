@@ -87,7 +87,7 @@ public class ALiYunTranslateIntegration {
                         try {
                             return gen.call(param);
                         } catch (Exception e) {
-                            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException userTranslate call errors ： " + e.getMessage() +
+                            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException 飞书机器人报错 userTranslate call errors ： " + e.getMessage() +
                                     " translateText : " + prompt);
                             ExceptionReporterHolder.report("ALiYunTranslateIntegration.userTranslate", e);
                             feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
@@ -109,7 +109,7 @@ public class ALiYunTranslateIntegration {
                     " token ali  all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
-            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
+            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException 飞书机器人报错 userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
             ExceptionReporterHolder.report("ALiYunTranslateIntegration.userTranslate", e);
             feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;
