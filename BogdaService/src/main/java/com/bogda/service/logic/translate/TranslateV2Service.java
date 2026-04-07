@@ -118,7 +118,7 @@ public class TranslateV2Service {
      */
     public static final Map<String, Double> AVG_TOKEN_PER_ITEM = new HashMap<String, Double>() {{
         put(GeminiIntegration.GEMINI_3_FLASH, 1.58);
-        put(ModuleCodeUtils.GPT_5, 0.99);
+        put(ModuleCodeUtils.GPT, 0.99);
         put(ALiYunTranslateIntegration.QWEN_MAX, 0.85);
     }};
 
@@ -127,7 +127,7 @@ public class TranslateV2Service {
      */
     public static Map<String, Double> TOKEN_PER_SECOND = new HashMap<String, Double>() {{
         put(GeminiIntegration.GEMINI_3_FLASH, 0.31);
-        put(ModuleCodeUtils.GPT_5, 0.17);
+        put(ModuleCodeUtils.GPT, 0.17);
         put(ALiYunTranslateIntegration.QWEN_MAX, 0.31);
     }};
 

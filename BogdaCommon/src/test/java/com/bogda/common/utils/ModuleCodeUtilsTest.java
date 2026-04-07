@@ -7,7 +7,7 @@ public class ModuleCodeUtilsTest {
 
     @Test
     void testGetModuleCodeWithCode2() {
-        assertEquals(ModuleCodeUtils.GPT_5, ModuleCodeUtils.getModuleCode("2"));
+        assertEquals(ModuleCodeUtils.GPT, ModuleCodeUtils.getModuleCode("2"));
     }
 
     @Test
