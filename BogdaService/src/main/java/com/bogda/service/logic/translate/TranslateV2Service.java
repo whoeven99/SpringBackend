@@ -69,8 +69,6 @@ public class TranslateV2Service {
     @Autowired
     private TranslateTaskV2Repo translateTaskV2Repo;
     @Autowired
-    private IUsersService iUsersService;
-    @Autowired
     private ShopifyService shopifyService;
     @Autowired
     private RedisStoppedRepository redisStoppedRepository;
@@ -186,16 +184,33 @@ public class TranslateV2Service {
             return BaseResponse.FailedResponse("Missing parameters");
         }
 
+        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "单条翻译参数如下 request ： " + request);
         String shopName = request.getShopName();
+        String key = request.getKey();
+        String resourceId = request.getResourceId();
+        String target = request.getTarget();
+        String shopifyData = null;
+        if (request.getResourceId() != null) {
+            UsersDO userByName = usersService.getUserByName(shopName);
+            String token = userByName.getAccessToken();
+            TranslateTaskV2DO taskDO = new TranslateTaskV2DO();
+            taskDO.setNodeKey(key);
+            taskDO.setResourceId(resourceId);
+
+            // TODO 获取shopify里面的数据
+            refreshDigestAndSourceValueFromShopify(shopName, token, target, taskDO);
+            shopifyData = taskDO.getTargetValue();
+        }
+
+        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "查询shopify的翻译数据如下： " + shopifyData);
         Integer maxToken = userTokenService.getMaxToken(shopName);
         Integer usedToken = userTokenService.getUsedToken(shopName);
         if (usedToken >= maxToken) {
             return BaseResponse.FailedResponse("Token limit reached");
         }
         String aiModel = aiModelConfigService.getSingleTranslateModel();
-        TranslateContext context = new TranslateContext(request.getContext(), request.getTarget(), request.getType(),
-                request.getKey(), glossaryService.getGlossaryDoByShopName(shopName, request.getTarget()),
-                aiModel, request.getResourceType(), request.getTargetText());
+        TranslateContext context = new TranslateContext(request.getContext(), target, request.getType(), key,
+                glossaryService.getGlossaryDoByShopName(shopName, target), aiModel, request.getResourceType(), shopifyData);
         context.setShopName(shopName);
         ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
         service.translate(context);
@@ -388,7 +403,7 @@ public class TranslateV2Service {
                 .flatMap(module -> {
                     List<TranslateResourceDTO> list = TranslateResourceDTO.TOKEN_MAP.get(module);
                     if (list == null) {
-                        TraceReporterHolder.report("TranslateV2Service.createInitialTask", "FatalException createInitialTask Warning: Unknown module: " + module);
+                        TraceReporterHolder.report("TranslateV2Service.createInitialTask", "FatalException 飞书机器人报错 createInitialTask Warning: Unknown module: " + module);
                         feiShuRobotIntegration.sendMessage("FatalException " + " shopName: " + shopName + " createInitialTask Warning: Unknown module: " + module);
                         return Stream.empty();
                     }
@@ -496,7 +511,7 @@ public class TranslateV2Service {
                     redisStoppedRepository.manuallyStopped(shopName, autoTaskByShopNameAndTarget.getId());
                 }
             } catch (Exception e) {
-                TraceReporterHolder.report("TranslateV2Service.createManualTask", "手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
+                TraceReporterHolder.report("TranslateV2Service.createManualTask", "飞书机器人报错 手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
                 feiShuRobotIntegration.sendMessage("手动翻译后，停止可能正在翻译的自动翻译任务 ： " + shopName + " target: " + target + e.getMessage());
             }
         }
@@ -701,7 +716,7 @@ public class TranslateV2Service {
         });
         assert moduleList != null;
 
-        UsersDO userDO = iUsersService.getUserByName(initialTaskV2DO.getShopName());
+        UsersDO userDO = usersService.getUserByName(initialTaskV2DO.getShopName());
 
         // 判断默认语言是否和source一致，不一致则停止任务
         String primaryLocaleData = shopifyService.getShopifyData(shopName, userDO.getAccessToken(),
@@ -865,7 +880,7 @@ public class TranslateV2Service {
         String aiModel = initialTaskV2DO.getAiModel();
 
         // 判断默认语言是否和source一致，不一致则停止任务
-        UsersDO primaryCheckUser = iUsersService.getUserByName(shopName);
+        UsersDO primaryCheckUser = usersService.getUserByName(shopName);
         String primaryLocaleData = shopifyService.getShopifyData(shopName, primaryCheckUser.getAccessToken(),
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
@@ -992,7 +1007,7 @@ public class TranslateV2Service {
 
                     // 3.3 回写数据库 todo 批量
                     if (targetValue == null || targetValue.isEmpty()) {
-                        TraceReporterHolder.report("TranslateV2Service.translateEachTask", "FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
+                        TraceReporterHolder.report("TranslateV2Service.translateEachTask", "FatalException 飞书机器人报错 targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         feiShuRobotIntegration.sendMessage("FatalException targetValue is null: " + shopName + " " + initialTaskId + " " + updatedDo.getId());
                         continue;
                     }
@@ -1043,7 +1058,7 @@ public class TranslateV2Service {
     public void saveToShopify(InitialTaskV2DO initialTaskV2DO) {
         Integer initialTaskId = initialTaskV2DO.getId();
         String shopName = initialTaskV2DO.getShopName();
-        UsersDO userDO = iUsersService.getUserByName(shopName);
+        UsersDO userDO = usersService.getUserByName(shopName);
         String token = userDO.getAccessToken();
         String target = initialTaskV2DO.getTarget();
 
@@ -1080,7 +1095,7 @@ public class TranslateV2Service {
                     })
                     .collect(Collectors.toList()));
             node.setResourceId(resourceId);
-            TraceReporterHolder.report("TranslateV2Service.saveToShopify", "shopName: " + shopName + " token: " + token + " node: " + node);
+
             String strResponse = shopifyService.saveDataWithRateLimit(shopName, token, node);
             if (strResponse == null) {
                 // 写入失败 fatalException
@@ -1091,7 +1106,7 @@ public class TranslateV2Service {
             if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")) {
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
-
+                    TraceReporterHolder.report("TranslateV2Service.saveToShopify", "飞书机器人报错 ： " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                     ShopifyRegisterResponse registerResponse = JsonUtils.jsonToObject(strResponse, ShopifyRegisterResponse.class);
                     Map<Integer, String> failedIndexToMessage = parseUserErrorIndexToMessage(registerResponse);
                     for (Map.Entry<Integer, String> e : failedIndexToMessage.entrySet()) {
@@ -1213,7 +1228,7 @@ public class TranslateV2Service {
         }
 
         String shopName = failedRecord.getShopName();
-        UsersDO userDO = iUsersService.getUserByName(shopName);
+        UsersDO userDO = usersService.getUserByName(shopName);
         if (userDO == null) {
             translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
             return;
@@ -1272,7 +1287,7 @@ public class TranslateV2Service {
                 aiModel, prompt, target, taskDO.getSourceValue());
         if (pair == null) {
             TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
-                    "Retranslation returned null: shop=" + shopName + " taskId=" + taskDO.getId());
+                    "FatalException Retranslation 飞书机器人报错 returned null: shop=" + shopName + " taskId=" + taskDO.getId());
             feiShuRobotIntegration.sendMessage("Retranslation returned null: shop=" + shopName + " taskId=" + taskDO.getId());
             translateSaveFailedTaskRepo.markRetried(failedRecord.getId());
             return;
@@ -1284,7 +1299,7 @@ public class TranslateV2Service {
         if (translatedValue == null || translatedValue.isEmpty()) {
             // 解析失败，可能是AI返回格式错误
             TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
-                    "Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
+                    "FatalException 飞书机器人报错 Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                             + " nodeKey=" + taskDO.getNodeKey() + " response=" + pair.toString());
             feiShuRobotIntegration.sendMessage("Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                     + " nodeKey=" + taskDO.getNodeKey() + " response=" + pair.toString());
@@ -1313,7 +1328,7 @@ public class TranslateV2Service {
             translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
             translateTaskMonitorV2RedisService.addSavedCount(failedRecord.getInitialTaskId(), 1);
             TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
-                    "Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
+                    "FatalException 飞书机器人报错 Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
         } else {
             feiShuRobotIntegration.sendMessage("Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                     + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
@@ -1371,7 +1386,7 @@ public class TranslateV2Service {
             translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
             translateTaskMonitorV2RedisService.addSavedCount(failedRecord.getInitialTaskId(), 1);
             TraceReporterHolder.report("TranslateV2Service.retryForInvalidTranslatableContentHash",
-                    "Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
+                    "FatalException 飞书机器人报错 Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
         } else {
             feiShuRobotIntegration.sendMessage("Retry Digest failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                     + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
@@ -1381,49 +1396,40 @@ public class TranslateV2Service {
     /**
      * 从 Shopify 拉取最新 translatableContent，并按 nodeKey 刷新 TranslateTaskV2DO 的 digest / sourceValue。
      */
-    private boolean refreshDigestAndSourceValueFromShopify(String shopName,
-                                                           String token,
-                                                           String target,
-                                                           TranslateTaskV2DO taskDO) {
-        if (taskDO == null
-                || taskDO.getResourceId() == null || taskDO.getResourceId().isEmpty()
+    private boolean refreshDigestAndSourceValueFromShopify(String shopName, String token, String target, TranslateTaskV2DO taskDO) {
+        if (taskDO == null || taskDO.getResourceId() == null || taskDO.getResourceId().isEmpty()
                 || taskDO.getNodeKey() == null || taskDO.getNodeKey().isEmpty()) {
             return false;
         }
 
         String resourceId = taskDO.getResourceId();
         String nodeKey = taskDO.getNodeKey();
+        boolean refreshData = false;
 
         // 直接按你给的 query：translatableResourcesByIds 只取 translatableContent.digest/key/value，
         // 再根据 key 找到最新 digest（以及同步 value 作为 source）。
-        String graphQuery = "query MyQuery { " +
-                "translatableResourcesByIds(resourceIds: \"" + resourceId + "\", first: 1) { " +
-                "nodes { " +
-                "resourceId " +
-                "translatableContent { digest key value } " +
-                "} " +
-                "pageInfo { endCursor hasNextPage } " +
-                "} " +
-                "}";
+        String graphQuery = ShopifyRequestUtils.singleQueryByResourceId(resourceId, target);
 
         String shopifyData = shopifyService.getShopifyData(shopName, token, TranslateConstants.API_VERSION_LAST, graphQuery);
         if (shopifyData == null || shopifyData.isEmpty()) {
-            return false;
+            return refreshData;
         }
 
         JsonNode root = JsonUtils.readTree(shopifyData);
         if (root == null) {
-            return false;
+            return refreshData;
         }
 
         JsonNode nodes = root.path("translatableResourcesByIds").path("nodes");
         if (nodes == null || !nodes.isArray() || nodes.isEmpty()) {
-            return false;
+            return refreshData;
         }
+
 
         for (JsonNode node : nodes) {
             JsonNode translatableContentList = node.path("translatableContent");
-            if (translatableContentList == null || !translatableContentList.isArray()) {
+            JsonNode translationsList = node.path("translations");
+            if (translatableContentList == null || !translatableContentList.isArray() || translationsList == null) {
                 continue;
             }
             for (JsonNode translatableContent : translatableContentList) {
@@ -1436,14 +1442,23 @@ public class TranslateV2Service {
                     if (latestSourceValue != null) {
                         taskDO.setSourceValue(latestSourceValue);
                     }
-                    return true;
+                    refreshData = true;
+                }
+            }
+
+            for (JsonNode translation : translationsList) {
+                if (nodeKey.equals(translation.path("key").asText(null))) {
+                    String latestTargetValue = translation.path("value").asText(null);
+                    if (latestTargetValue != null) {
+                        taskDO.setTargetValue(latestTargetValue);
+                    }
                 }
             }
         }
 
         TraceReporterHolder.report("TranslateV2Service.refreshDigestAndSourceValueFromShopify",
                 "Digest not found for key. shop=" + shopName + " resourceId=" + resourceId + " nodeKey=" + nodeKey);
-        return false;
+        return refreshData;
     }
 
     // 翻译 step 5, 翻译写入都完成 -> 发送邮件，is_delete部分数据
@@ -1955,7 +1970,7 @@ public class TranslateV2Service {
         }
 
         String shopName = initialTaskV2DO.getShopName();
-        UsersDO userDO = iUsersService.getUserByName(shopName);
+        UsersDO userDO = usersService.getUserByName(shopName);
         String token = userDO.getAccessToken();
         String target = initialTaskV2DO.getTarget();
 

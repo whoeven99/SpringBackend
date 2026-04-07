@@ -57,7 +57,7 @@ public class GoogleMachineIntegration {
             TraceReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", "googleTranslateWithSDK 翻译文本: " + translatedText + " all：" + totalToken);
             return new Pair<>(translatedText, totalToken);
         } catch (Exception e) {
-            TraceReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", "FatalException Google Translate SDK 翻译错误：" + e.getMessage());
+            TraceReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", "FatalException 飞书机器人报错 Google Translate SDK 翻译错误：" + e.getMessage());
             ExceptionReporterHolder.report("GoogleMachineIntegration.googleTranslateWithSDK", e);
             feiShuRobotIntegration.sendMessage("FatalException Google Translate SDK 翻译错误：" + e.getMessage() + " content: " + content);
             return null;

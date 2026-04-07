@@ -88,7 +88,7 @@ public class TranslateTask {
                         TraceReporterHolder.report("TranslateTask.process", "TranslateTaskV2 " + taskName + " success for group: " + groupKey + " , initialTaskId: " + initialTaskV2DO.getId());
                     }
                 } catch (Exception e) {
-                    TraceReporterHolder.report("TranslateTask.process", "FatalException TaskRunFailed " + taskName + " " + e.getMessage());
+                    TraceReporterHolder.report("TranslateTask.process", "FatalException 飞书机器人报错 TaskRunFailed " + taskName + " " + e.getMessage());
                     ExceptionReporterHolder.report("TranslateTask.process", e);
                     feiShuRobotIntegration.sendMessage("FatalException "  + " group: " + groupKey + " taskName: " + taskName + " 异常信息： " + e);
                 } finally {
@@ -135,7 +135,7 @@ public class TranslateTask {
             translateV2Service.retrySaveAllFailedTasks();
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateTask.retrySaveFailedTasks",
-                    "FatalException retrySaveFailedTasks: " + e.getMessage());
+                    "FatalException 飞书机器人报错 retrySaveFailedTasks: " + e.getMessage());
             ExceptionReporterHolder.report("TranslateTask.retrySaveFailedTasks", e);
             feiShuRobotIntegration.sendMessage("FatalException retrySaveFailedTasks: " + e);
         }
@@ -268,7 +268,7 @@ public class TranslateTask {
         }
 
         if (!lines.isEmpty()) {
-            TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
+            TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "飞书机器人报错 InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
                     + String.join("\n", lines));
             feiShuRobotIntegration.sendMessage("InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
                     + String.join("\n", lines));

@@ -63,7 +63,7 @@ public class EmailIntegration {
             return true;
         } catch (Exception e) {
             ExceptionReporterHolder.report("EmailIntegration.sendEmailByTencent", e);
-            TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
+            TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException 飞书机器人报错 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
             feiShuRobotIntegration.sendMessage("FatalException 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + template + " from: " + from + " to: " + to);
             return false;
         }
@@ -106,7 +106,7 @@ public class EmailIntegration {
                         try {
                             return client.SendEmail(req);
                         } catch (Exception e) {
-                            TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+                            TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 飞书机器人报错 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                             ExceptionReporterHolder.report("EmailIntegration.sendEmailByTencent", e);
                             feiShuRobotIntegration.sendMessage("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
                             return null;
@@ -125,7 +125,7 @@ public class EmailIntegration {
             TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "sendEmailByTencent 腾讯邮件信息 jsonString : " + jsonString + " data: " + tencentSendEmailRequest.getTemplateData());
         } catch (Exception e1) {
             ExceptionReporterHolder.report("EmailIntegration.sendEmailByTencent", e1);
-            TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
+            TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 飞书机器人报错 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
             feiShuRobotIntegration.sendMessage("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         }
         //判断服务的返回值是否含有RequestId
