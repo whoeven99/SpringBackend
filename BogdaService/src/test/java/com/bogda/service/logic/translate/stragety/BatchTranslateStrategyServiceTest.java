@@ -60,7 +60,7 @@ class BatchTranslateStrategyServiceTest {
     @BeforeEach
     void setUp() {
         testTarget = "zh";
-        testAiModel = "gemini-3-flash";
+        testAiModel = "kimi-k2.5";
         testModule = "product";
         testShopName = "unit-test-shop";
 
