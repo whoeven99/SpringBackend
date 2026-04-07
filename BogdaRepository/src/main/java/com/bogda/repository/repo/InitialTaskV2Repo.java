@@ -101,7 +101,7 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getShopName, shopName)
                 .eq(InitialTaskV2DO::getSource, source)
                 .eq(InitialTaskV2DO::getTarget, target)
-                .eq(InitialTaskV2DO::getTaskType, "manual")
+                .in(InitialTaskV2DO::getTaskType, "manual", "auto")
                 .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
                 .eq(InitialTaskV2DO::getIsDeleted, false)) > 0;
     }
