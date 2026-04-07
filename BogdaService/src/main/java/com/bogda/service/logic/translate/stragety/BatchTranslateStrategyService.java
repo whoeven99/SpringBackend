@@ -569,12 +569,16 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         if (translatedMap == null || translatedMap.isEmpty()) {
             aiResult = modelTranslateService.modelTranslate(KimiIntegration.KIMI_K25, prompt, targetLanguage, sourceMap);
             if (aiResult == null) {
+                TraceReporterHolder.report("BatchTranslateStrategyService.batchTranslate", "FatalException 飞书机器人报错 aiResult 再次解析失败 " + aiResult);
+                feiShuRobotIntegration.sendMessage("FatalException 飞书机器人报错 再次解析失败 " + aiResult);
                 return null;
             }
 
             translatedMap = parseOutput(aiResult.getFirst());
 
             if (translatedMap == null || translatedMap.isEmpty()) {
+                TraceReporterHolder.report("BatchTranslateStrategyService.batchTranslate", "FatalException 飞书机器人报错 translatedMap 再次解析失败 " + translatedMap);
+                feiShuRobotIntegration.sendMessage("FatalException 飞书机器人报错 再次解析失败 " + translatedMap);
                 return null;
             }
         }
@@ -593,11 +597,15 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
      * @return 解析后的译文Map（序号 -> 译文），解析失败返回null
      */
     public LinkedHashMap<Integer, String> parseOutput(String input) {
-        if (input == null) return null;
+        if (input == null) {
+            return null;
+        }
 
         // 1. 提取 JSON 块
         String jsonPart = StringUtils.extractJsonBlock(input);
-        if (jsonPart == null) return null;
+        if (jsonPart == null) {
+            return null;
+        }
 
         // 2. 基础清洗: 修复过度转义的 Unicode
         jsonPart = JsonUtils.decodeDoubleEscapedUnicode(jsonPart);
