@@ -61,9 +61,15 @@ public class TranslateTask {
             return;
         }
 
+        tasks.sort(Comparator.comparing(task ->
+                "manual".equals(task.getTaskType()) ? 0 : 1
+        ));
+
         // 按 groupByFunc 分组
         Map<T, List<InitialTaskV2DO>> tasksByGroup = tasks.stream()
-                .collect(Collectors.groupingBy(groupByFunc));
+                .collect(Collectors.groupingBy(groupByFunc,
+                        LinkedHashMap::new,        // 保留插入顺序
+                        Collectors.toList()));
 
         // 不同组并发处理，相同组顺序处理
         for (Map.Entry<T, List<InitialTaskV2DO>> entry : tasksByGroup.entrySet()) {

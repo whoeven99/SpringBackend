@@ -3,14 +3,14 @@ package com.bogda.common.utils;
 import java.util.*;
 
 public class ModuleCodeUtils {
-    public static String GPT_5 = "gpt-5-mini";
+    public static String GPT = "gpt-4.1-nano";
 
     /**
      * 判断翻译调用的模型
      */
     public static String getModuleCode(String code) {
         return switch (code) {
-            case "2" -> GPT_5; // ChatGptIntegration.GPT_4;
+            case "2" -> GPT; // ChatGptIntegration.GPT;
             case "1" -> "kimi-k2.5"; // KimiIntegration.KIMI_K25
             case "3" -> "gpt-4.1"; // ALiYunTranslateIntegration.GPT_4_1;
             case "4" -> "gemini-3-flash-preview"; // GeminiIntegration.GEMINI_3_FLASH
