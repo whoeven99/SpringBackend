@@ -3,6 +3,7 @@ package com.bogda.service.logic.translate.stragety;
 import com.bogda.common.TranslateContext;
 import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.integration.aimodel.KimiIntegration;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.GlossaryService;
@@ -168,8 +169,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 存储已翻译的结果
         Map<Integer, String> translatedResultMap = new HashMap<>();
+
         // 需要带词汇表翻译的序号列表
         List<Integer> glossarySeqList = new ArrayList<>();
+
         // 需要纯AI翻译的序号列表
         List<Integer> aiSeqList = new ArrayList<>();
 
@@ -313,7 +316,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         }
 
         // 应用翻译结果（保存到结果Map并写入缓存）
-        applyBatchResult(ctx, result, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
+        applyBatchResult(ctx, result, textsToTranslate, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
 
         // 更新词汇表命中统计（仅针对部分匹配且通过AI翻译的文本）
         for (Integer seq : textsToTranslate.keySet()) {
@@ -342,6 +345,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 当前批次的文本Map
         Map<Integer, String> currentBatch = new HashMap<>();
+
         // 当前批次累计的字符数
         int currentBatchChars = 0;
 
@@ -396,7 +400,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         }
 
         // 应用翻译结果
-        applyBatchResult(ctx, result, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
+        applyBatchResult(ctx, result, batchTexts, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
     }
 
     /**
@@ -497,6 +501,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
     private void applyBatchResult(
             TranslateContext ctx,
             Pair<Map<Integer, String>, Integer> result,
+            Map<Integer, String> requestedSourceMap,
             Map<Integer, String> actuallyTranslateMap,
             Map<Integer, String> translatedResultMap,
             String targetLanguage) {
@@ -506,6 +511,13 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 遍历翻译结果
         result.getFirst().forEach((seq, translation) -> {
+            // 只允许写入本次请求的 seq，避免模型“多吐”或跨批次串号导致回填污染
+            if (requestedSourceMap == null || !requestedSourceMap.containsKey(seq)) {
+                TraceReporterHolder.report("BatchTranslateStrategyService.applyBatchResult",
+                        "FatalException IgnoreUnexpectedSeq seq=" + seq + ", targetLanguage=" + targetLanguage);
+                return;
+            }
+
             // 保存到结果Map
             translatedResultMap.put(seq, translation);
 
@@ -551,13 +563,20 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         }
 
         // 解析AI返回的JSON结果
-        String aiResponse = aiResult.getFirst();
-        Map<Integer, String> translatedMap = parseOutput(aiResponse);
+        Map<Integer, String> translatedMap = parseOutput(aiResult.getFirst());
 
         // 检查解析结果是否有效
         if (translatedMap == null || translatedMap.isEmpty()) {
-            // 解析失败，可能是AI返回格式错误
-            return null;
+            aiResult = modelTranslateService.modelTranslate(KimiIntegration.KIMI_K25, prompt, targetLanguage, sourceMap);
+            if (aiResult == null) {
+                return null;
+            }
+
+            translatedMap = parseOutput(aiResult.getFirst());
+
+            if (translatedMap == null || translatedMap.isEmpty()) {
+                return null;
+            }
         }
 
         // 返回译文Map和token数
