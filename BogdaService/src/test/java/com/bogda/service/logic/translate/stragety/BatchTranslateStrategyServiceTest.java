@@ -60,7 +60,7 @@ class BatchTranslateStrategyServiceTest {
     @BeforeEach
     void setUp() {
         testTarget = "zh";
-        testAiModel = "gemini-3-flash";
+        testAiModel = "kimi-k2.5";
         testModule = "product";
         testShopName = "unit-test-shop";
 
@@ -569,6 +569,192 @@ class BatchTranslateStrategyServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Hello \"world\"", result.get(1));
+    }
+
+    @Test
+    void testApplyBatchResult_ShouldWriteOnlyRequestedSeq_AndCache_AndIncrementToken() throws Exception {
+        // Given
+        TranslateContext ctx = new TranslateContext(new HashMap<Integer, String>(), testTarget, new HashMap<>(), testAiModel);
+
+        Map<Integer, String> requestedSourceMap = new LinkedHashMap<>();
+        requestedSourceMap.put(1, "Hello");
+        requestedSourceMap.put(2, "World");
+
+        Map<Integer, String> actuallyTranslateMap = new HashMap<>();
+        actuallyTranslateMap.put(1, "Hello");
+        actuallyTranslateMap.put(2, "World");
+        actuallyTranslateMap.put(999, "Unexpected");
+
+        Map<Integer, String> translatedResultMap = new HashMap<>();
+
+        // 模型“多吐”一个 999（不属于本批次 requestedSourceMap），应被忽略
+        Map<Integer, String> out = new LinkedHashMap<>();
+        out.put(1, "你好");
+        out.put(2, "世界");
+        out.put(999, "不应写入");
+
+        Pair<Map<Integer, String>, Integer> result = new Pair<>(out, 12);
+
+        // When
+        invokePrivate(
+                batchTranslateStrategyService,
+                "applyBatchResult",
+                new Class<?>[]{TranslateContext.class, Pair.class, Map.class, Map.class, Map.class, String.class},
+                ctx,
+                result,
+                requestedSourceMap,
+                actuallyTranslateMap,
+                translatedResultMap,
+                testTarget
+        );
+
+        // Then: token 累计
+        assertEquals(12, ctx.getUsedToken());
+
+        // Then: 仅写入 requested 的 seq
+        assertEquals("你好", translatedResultMap.get(1));
+        assertEquals("世界", translatedResultMap.get(2));
+        assertFalse(translatedResultMap.containsKey(999));
+
+        // Then: 仅对合法 seq 写缓存
+        verify(redisProcessService).setCacheData(testTarget, "你好", "Hello");
+        verify(redisProcessService).setCacheData(testTarget, "世界", "World");
+        verify(redisProcessService, never()).setCacheData(eq(testTarget), eq("不应写入"), anyString());
+    }
+
+    @Test
+    void testApplyBatchResult_WhenAllSeqUnexpected_ShouldOnlyIncrementToken_AndNotWriteAnything() throws Exception {
+        // Given
+        TranslateContext ctx = new TranslateContext(new HashMap<Integer, String>(), testTarget, new HashMap<>(), testAiModel);
+
+        Map<Integer, String> requestedSourceMap = new LinkedHashMap<>();
+        requestedSourceMap.put(1, "Hello");
+
+        Map<Integer, String> actuallyTranslateMap = new HashMap<>();
+        actuallyTranslateMap.put(1, "Hello");
+        actuallyTranslateMap.put(2, "World");
+
+        Map<Integer, String> translatedResultMap = new HashMap<>();
+
+        Map<Integer, String> out = new LinkedHashMap<>();
+        out.put(2, "世界"); // 不属于 requestedSourceMap
+        Pair<Map<Integer, String>, Integer> result = new Pair<>(out, 5);
+
+        // When
+        invokePrivate(
+                batchTranslateStrategyService,
+                "applyBatchResult",
+                new Class<?>[]{TranslateContext.class, Pair.class, Map.class, Map.class, Map.class, String.class},
+                ctx,
+                result,
+                requestedSourceMap,
+                actuallyTranslateMap,
+                translatedResultMap,
+                testTarget
+        );
+
+        // Then
+        assertEquals(5, ctx.getUsedToken());
+        assertTrue(translatedResultMap.isEmpty());
+        verify(redisProcessService, never()).setCacheData(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void testBatchTranslate_WhenParseEmpty_ShouldRetryOnceAndReturnParsedResult() throws Exception {
+        // Given
+        BatchTranslateStrategyService spyService = spy(batchTranslateStrategyService);
+
+        Map<Integer, String> sourceMap = new LinkedHashMap<>();
+        sourceMap.put(1, "Hello");
+
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap)))
+                .thenReturn(new Pair<>("raw1", 7))
+                .thenReturn(new Pair<>("raw2", 9));
+
+        // 第一次解析为空，触发重试；第二次解析成功
+        doReturn(new LinkedHashMap<Integer, String>())
+                .doReturn(new LinkedHashMap<Integer, String>() {{
+                    put(1, "你好");
+                }})
+                .when(spyService).parseOutput(anyString());
+
+        // When
+        @SuppressWarnings("unchecked")
+        Pair<Map<Integer, String>, Integer> result = (Pair<Map<Integer, String>, Integer>) invokePrivate(
+                spyService,
+                "batchTranslate",
+                new Class<?>[]{String.class, String.class, String.class, Map.class},
+                "p",
+                testTarget,
+                testAiModel,
+                sourceMap
+        );
+
+        // Then
+        assertNotNull(result);
+        assertEquals(9, result.getSecond()); // token 取最后一次调用的
+        assertEquals("你好", result.getFirst().get(1));
+        verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap));
+    }
+
+    @Test
+    void testBatchTranslate_WhenParseEmptyTwice_ShouldReturnNull() throws Exception {
+        // Given
+        BatchTranslateStrategyService spyService = spy(batchTranslateStrategyService);
+
+        Map<Integer, String> sourceMap = new LinkedHashMap<>();
+        sourceMap.put(1, "Hello");
+
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap)))
+                .thenReturn(new Pair<>("raw1", 7))
+                .thenReturn(new Pair<>("raw2", 9));
+
+        // 两次解析都为空/空map -> 返回 null
+        doReturn(new LinkedHashMap<Integer, String>())
+                .doReturn(new LinkedHashMap<Integer, String>())
+                .when(spyService).parseOutput(anyString());
+
+        // When
+        @SuppressWarnings("unchecked")
+        Pair<Map<Integer, String>, Integer> result = (Pair<Map<Integer, String>, Integer>) invokePrivate(
+                spyService,
+                "batchTranslate",
+                new Class<?>[]{String.class, String.class, String.class, Map.class},
+                "p",
+                testTarget,
+                testAiModel,
+                sourceMap
+        );
+
+        // Then
+        assertNull(result);
+        verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap));
+    }
+
+    @Test
+    void testBatchTranslate_WhenModelTranslateNull_ShouldReturnNull() throws Exception {
+        // Given
+        Map<Integer, String> sourceMap = new LinkedHashMap<>();
+        sourceMap.put(1, "Hello");
+
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap)))
+                .thenReturn(null);
+
+        // When
+        @SuppressWarnings("unchecked")
+        Pair<Map<Integer, String>, Integer> result = (Pair<Map<Integer, String>, Integer>) invokePrivate(
+                batchTranslateStrategyService,
+                "batchTranslate",
+                new Class<?>[]{String.class, String.class, String.class, Map.class},
+                "p",
+                testTarget,
+                testAiModel,
+                sourceMap
+        );
+
+        // Then
+        assertNull(result);
+        verify(modelTranslateService, times(1)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap));
     }
 }
 
