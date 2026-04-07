@@ -2,6 +2,8 @@ package com.bogda.task.task;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.common.utils.AliyunLogSqlUtils;
+import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -37,6 +39,8 @@ public class TranslateTask {
     private FeiShuRobotIntegration feiShuRobotIntegration;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
+    @Autowired
+    private AliyunSlsIntegration aliyunSlsIntegration;
 
     private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
@@ -271,13 +275,24 @@ public class TranslateTask {
             }
 
             if (now - refMs > INITIAL_TASK_STALL_THRESHOLD_MS) {
+                // 判断日志中是否有该用户最新数据，然后觉得是否发飞书报错
+                long currentTime = System.currentTimeMillis() / 1000;
+                int from = (int) (currentTime - 0.5 * 60 * 60);
+                int to = (int) currentTime;
+                Map<String, String> map = aliyunSlsIntegration.readSingleLog(from, to, AliyunLogSqlUtils.getNewestLog(task.getShopName()));
+                if (map != null) {
+                    TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "FatalException 飞书机器人报错 error : " + map);
+                    System.out.println("FatalException 飞书机器人报错 error : " + map);
+                    continue;
+                }
+
                 lines.add("taskId=" + task.getId() + " shop=" + task.getShopName() + " status=" + task.getStatus()
                         + " updateTime=" + refMs + "now=" + now + " taskType=" + task.getTaskType());
             }
         }
 
         if (!lines.isEmpty()) {
-            TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "飞书机器人报错 InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
+            TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "FatalException 飞书机器人报错 InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
                     + String.join("\n", lines));
             feiShuRobotIntegration.sendMessage("InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
                     + String.join("\n", lines));
