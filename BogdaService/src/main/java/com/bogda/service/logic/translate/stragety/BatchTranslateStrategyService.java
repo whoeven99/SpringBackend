@@ -514,7 +514,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             // 只允许写入本次请求的 seq，避免模型“多吐”或跨批次串号导致回填污染
             if (requestedSourceMap == null || !requestedSourceMap.containsKey(seq)) {
                 TraceReporterHolder.report("BatchTranslateStrategyService.applyBatchResult",
-                        "FatalException IgnoreUnexpectedSeq seq=" + seq + ", targetLanguage=" + targetLanguage);
+                        "FatalException 飞书机器人报错 IgnoreUnexpectedSeq seq=" + seq + ", targetLanguage=" + targetLanguage + " shopName=" + ctx.getShopName());
+                feiShuRobotIntegration.sendMessage("FatalException 飞书机器人报错 IgnoreUnexpectedSeq seq=" + seq + ", targetLanguage=" + targetLanguage + " shopName=" + ctx.getShopName());
                 return;
             }
 
