@@ -8,6 +8,7 @@ import com.aliyun.openservices.log.exception.LogException;
 import com.aliyun.openservices.log.request.PutLogsRequest;
 import com.aliyun.openservices.log.request.GetLogsRequest;
 import com.aliyun.openservices.log.response.GetLogsResponse;
+import com.bogda.common.reporter.TraceReporterHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,9 @@ public class AliyunSlsIntegration {
         client = new Client(endpoint, accessKeyId, accessKeySecret);
     }
 
-    /** 替代 trackTrace：写一条普通业务 Trace 日志 */
+    /**
+     * 替代 trackTrace：写一条普通业务 Trace 日志
+     */
     public void logTrace(String traceName, String message) {
         LogItem item = new LogItem((int) (System.currentTimeMillis() / 1000));
         item.PushBack("type", "trace");
@@ -63,7 +66,9 @@ public class AliyunSlsIntegration {
         }
     }
 
-    /** 替代 trackException：记录异常信息 + 堆栈 */
+    /**
+     * 替代 trackException：记录异常信息 + 堆栈
+     */
     public void logException(String scene, Throwable ex) {
         LogItem item = new LogItem((int) (System.currentTimeMillis() / 1000));
         item.PushBack("type", "exception");
@@ -113,9 +118,31 @@ public class AliyunSlsIntegration {
                 result.add(row);
             }
         } catch (Exception e) {
+            TraceReporterHolder.report("AliyunSlsIntegration.readLogs", "FatalException 飞书机器人报错 读日志报错：" + e.getMessage());
             e.printStackTrace();
         }
 
         return result;
+    }
+
+    // 读取一条日志
+    public Map<String, String> readSingleLog(int from, int to, String query) {
+        try {
+            GetLogsRequest request = new GetLogsRequest(project, logstore, from, to, "", query, 0, 1, true);
+
+            GetLogsResponse response = client.GetLogs(request);
+
+            for (QueriedLog log : response.getLogs()) {
+                Map<String, String> row = new HashMap<>();
+                for (LogContent content : log.GetLogItem().mContents) {
+                    row.put(content.getKey(), content.getValue());
+                }
+                return row;
+            }
+        } catch (Exception e) {
+            TraceReporterHolder.report("AliyunSlsIntegration.readSingleLog", "FatalException 飞书机器人报错 读日志报错：" + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
     }
 }
