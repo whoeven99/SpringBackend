@@ -25,6 +25,10 @@ public class GoogleMachineIntegration {
     @Value("${google.machine.key.vault}")
     private String googleApiKey;
 
+    public String getGoogleApiKey() {
+        return googleApiKey;
+    }
+
     /**
      * 初始化 Google Translate 客户端
      * 支持使用 API Key 或服务账号凭证
