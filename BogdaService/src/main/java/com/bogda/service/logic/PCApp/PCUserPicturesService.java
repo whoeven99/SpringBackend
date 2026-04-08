@@ -43,6 +43,8 @@ public class PCUserPicturesService {
     private HuoShanIntegration huoShanIntegration;
     @Autowired
     private UserTokenService userTokenService;
+    @Autowired
+    private HunYuanBucketIntegration hunYuanBucketIntegration;
 
     public static String CDN_URL = "https://img.bogdatech.com";
     public static String COS_URL = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com";
@@ -75,7 +77,7 @@ public class PCUserPicturesService {
             }
 
             // 将图片上传到腾讯云
-            String afterUrl = HunYuanBucketIntegration.uploadFile(file, shopName, pcUserPicturesDO.getImageId());
+            String afterUrl = hunYuanBucketIntegration.uploadFile(file, shopName, pcUserPicturesDO.getImageId());
             pcUserPicturesDO.setImageAfterUrl(afterUrl);
 
             // 再将图片相关数据存到数据库中
@@ -273,6 +275,6 @@ public class PCUserPicturesService {
         String key = HunYuanBucketIntegration.PATH_NAME + "/" + shopName + "/" + StringUtils.generate8DigitNumber() + ".jpg";
 
         // 将这个bytes存到bucket里
-        return HunYuanBucketIntegration.uploadBytes(bytes, key, "image/jpeg");
+        return hunYuanBucketIntegration.uploadBytes(bytes, key, "image/jpeg");
     }
 }

@@ -2,7 +2,6 @@ package com.bogda.integration.aimodel;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.StringUtils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
@@ -17,10 +16,10 @@ import com.qcloud.cos.transfer.Transfer;
 import com.qcloud.cos.transfer.TransferManager;
 import com.qcloud.cos.transfer.TransferProgress;
 import com.qcloud.cos.transfer.Upload;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.tools.DiagnosticCollector;
 import java.io.ByteArrayInputStream;
 
 
@@ -28,20 +27,27 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class HunYuanBucketIntegration {
+    @Value("${tencent.bucket.secret.id}")
+    private String secretId;
 
-    private static final String SECRET_ID = ConfigUtils.getConfig("TENCENT_BUCKET_SECRET_ID");
-    private static final String SECRET_KEY = ConfigUtils.getConfig("TENCENT_BUCKET_SECRET_KEY");
+    @Value("${tencent.bucket.secret.key}")
+    private String secretKey;
+
     private static final String BUCKET_NAME = "ciwi-us-1327177217";
     private static final String COS_REGION = "na-ashburn";
     public static final String PATH_NAME = "image-Translation";
     private static final String HTTP = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com/";
 
+    public String getConfig() {
+        return secretId + " " + secretId;
+    }
+
     /**
      * 初始化用户身份信息
      */
-    private static TransferManager createTransferManager() {
+    private TransferManager createTransferManager() {
         // 1 初始化用户身份信息（secretId, secretKey）。
-        COSCredentials cred = new BasicCOSCredentials(SECRET_ID, SECRET_KEY);
+        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
         // 2 设置 bucket 的地域
         // clientConfig 中包含了设置 region, https(默认 http), 超时, 代理等 set 方法, 使用可参见源码或者常见问题 Java SDK 部分。
         Region region = new Region(COS_REGION);
@@ -72,14 +78,14 @@ public class HunYuanBucketIntegration {
             double pct = progress.getPercentTransferred();
             TraceReporterHolder.report("HunYuanBucketIntegration.showTransferProgress", "[" + soFar + " / " + total + "] = " + pct);
         } while (transfer.isDone() == false);
-        TraceReporterHolder.report("HunYuanBucketIntegration.showTransferProgress", String.valueOf(transfer.getState()));
+        TraceReporterHolder.report("HunYuanBucketIntegration.showTransferProgress", java.lang.String.valueOf(transfer.getState()));
     }
 
     /**
      * 上传文件图片
      * 上传文件, 根据文件大小自动选择简单上传或者分块上传。
      */
-    public static String uploadFile(MultipartFile file, String shopName, String imageId) {
+    public String uploadFile(MultipartFile file, String shopName, String imageId) {
         TransferManager transferManager = createTransferManager();
         String originalFilename = file.getOriginalFilename();
         String extension = "";
@@ -134,7 +140,7 @@ public class HunYuanBucketIntegration {
      * 重新实现一个存bucket桶的方法
      * 会于上面uploadFile大部分重复，先实现后面再优化
      */
-    public static String uploadBytes(byte[] bytes, String key, String contentType) {
+    public String uploadBytes(byte[] bytes, String key, String contentType) {
         TransferManager transferManager = createTransferManager();
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(bytes.length);
