@@ -3,7 +3,6 @@ package com.bogda.integration.aimodel;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.TimeOutUtils;
-import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.LiquidHtmlTranslatorUtils;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.google.cloud.translate.Translate;
@@ -11,6 +10,7 @@ import com.google.cloud.translate.TranslateOptions;
 import com.google.cloud.translate.Translation;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 
@@ -22,14 +22,17 @@ public class GoogleMachineIntegration {
     @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
 
+    @Value("${google.machine.key.vault}")
+    private String googleApiKey;
+
     /**
      * 初始化 Google Translate 客户端
      * 支持使用 API Key 或服务账号凭证
      */
     private GoogleMachineIntegration() {
-        String defaultApiKey = ConfigUtils.getConfig("GOOGLE_API_KEY");
+        TraceReporterHolder.report("GoogleMachineIntegration.GoogleMachineIntegration", "google machine key " + googleApiKey);
         translate = TranslateOptions.newBuilder()
-                .setApiKey(defaultApiKey)
+                .setApiKey(googleApiKey)
                 .build()
                 .getService();
     }

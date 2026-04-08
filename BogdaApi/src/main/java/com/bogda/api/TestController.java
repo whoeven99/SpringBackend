@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.integration.aimodel.DeepLIntegration;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -197,5 +198,12 @@ public class TestController {
             return new BaseResponse<>().CreateSuccessResponse(response);
         }
         return new BaseResponse<>().CreateErrorResponse("飞书机器人消息发送失败");
+    }
+
+    @Autowired
+    private DeepLIntegration deepLIntegration;
+    @GetMapping("/testDeepL")
+    public BaseResponse<Object> testDeepL(){
+        return new BaseResponse<>().CreateSuccessResponse(deepLIntegration.getApiKey());
     }
 }
