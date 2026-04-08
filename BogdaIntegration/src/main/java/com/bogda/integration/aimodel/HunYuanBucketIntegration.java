@@ -38,10 +38,6 @@ public class HunYuanBucketIntegration {
     public static final String PATH_NAME = "image-Translation";
     private static final String HTTP = "https://ciwi-us-1327177217.cos.na-ashburn.myqcloud.com/";
 
-    public String getConfig() {
-        return secretId + " " + secretId;
-    }
-
     /**
      * 初始化用户身份信息
      */
