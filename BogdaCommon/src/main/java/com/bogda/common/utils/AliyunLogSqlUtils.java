@@ -222,4 +222,10 @@ public class AliyunLogSqlUtils {
                 "ORDER BY \n" +
                 "    date DESC";
     }
+
+    /** 查询一条最新的翻译日志，以确定是否正在翻译 */
+    public static String getNewestLog(String shopName){
+        return "* | select message where message like '%TranslateTaskV2 rotating Shopify%' " +
+                "and message like '%" + shopName + "%'";
+    }
 }
