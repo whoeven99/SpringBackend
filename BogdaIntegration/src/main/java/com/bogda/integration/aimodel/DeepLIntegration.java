@@ -21,10 +21,6 @@ public class DeepLIntegration {
 
     DeepLClient client;
 
-    public String getApiKey() {
-        return apiKey;
-    }
-
     /**
      * 使用deepL进行翻译,计数翻译数
      */

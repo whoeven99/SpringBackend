@@ -4,8 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.integration.aimodel.DeepLIntegration;
-import com.bogda.integration.aimodel.GoogleMachineIntegration;
+import com.bogda.integration.aimodel.HunYuanBucketIntegration;
 import com.bogda.integration.aimodel.RateHttpIntegration;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.common.entity.DO.TranslatesDO;
@@ -202,11 +201,9 @@ public class TestController {
     }
 
     @Autowired
-    private DeepLIntegration deepLIntegration;
-    @Autowired
-    private GoogleMachineIntegration googleMachineIntegration;
+    private HunYuanBucketIntegration hunYuanBucketIntegration;
     @GetMapping("/testDeepL")
     public BaseResponse<Object> testDeepL(){
-        return new BaseResponse<>().CreateSuccessResponse(deepLIntegration.getApiKey() + " " + googleMachineIntegration.getGoogleApiKey());
+        return new BaseResponse<>().CreateSuccessResponse(hunYuanBucketIntegration.getConfig());
     }
 }

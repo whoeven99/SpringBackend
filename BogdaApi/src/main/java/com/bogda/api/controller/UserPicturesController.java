@@ -28,7 +28,8 @@ import java.util.List;
 public class UserPicturesController {
     @Autowired
     private IUserPicturesService iUserPicturesService;
-
+    @Autowired
+    private HunYuanBucketIntegration hunYuanBucketIntegration;
     public static List<String> allowedMimeTypes = List.of(
             "image/jpeg",
             "image/png",
@@ -57,7 +58,7 @@ public class UserPicturesController {
                 return new BaseResponse<>().CreateErrorResponse("Image format error");
             }
             //将图片上传到腾讯云
-            String afterUrl = HunYuanBucketIntegration.uploadFile(file, shopName, userPicturesDO.getImageId());
+            String afterUrl = hunYuanBucketIntegration.uploadFile(file, shopName, userPicturesDO.getImageId());
             userPicturesDO.setImageAfterUrl(afterUrl);
             //再将图片相关数据存到数据库中
             userPicturesDO.setShopName(shopName);
@@ -150,7 +151,7 @@ public class UserPicturesController {
         }
 
         // 存到腾讯云bucket桶里面
-        String afterUrl = HunYuanBucketIntegration.uploadFile(multipartFile, shopName, userPicturesDO.getImageId());
+        String afterUrl = hunYuanBucketIntegration.uploadFile(multipartFile, shopName, userPicturesDO.getImageId());
         if (afterUrl == null) {
             return new BaseResponse<>().CreateSuccessResponse(false);
         }
