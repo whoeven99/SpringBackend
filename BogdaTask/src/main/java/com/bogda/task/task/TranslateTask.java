@@ -273,7 +273,6 @@ public class TranslateTask {
                 Map<String, String> map = aliyunSlsIntegration.readSingleLog(from, to, AliyunLogSqlUtils.getNewestLog(task.getShopName()));
                 if (map != null) {
                     TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "FatalException 飞书机器人报错 error : " + map);
-                    System.out.println("FatalException 飞书机器人报错 error : " + map);
                     continue;
                 }
 

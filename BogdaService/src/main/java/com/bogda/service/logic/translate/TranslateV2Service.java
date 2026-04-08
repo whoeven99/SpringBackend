@@ -1386,10 +1386,13 @@ public class TranslateV2Service {
             translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
             translateTaskMonitorV2RedisService.addSavedCount(failedRecord.getInitialTaskId(), 1);
             TraceReporterHolder.report("TranslateV2Service.retryForInvalidTranslatableContentHash",
-                    "FatalException 飞书机器人报错 Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
+                    "FatalException Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
         } else {
             feiShuRobotIntegration.sendMessage("Retry Digest failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                     + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
+            TraceReporterHolder.report("TranslateV2Service.retryForInvalidTranslatableContentHash",
+                    "FatalException 飞书机器人 Retry Digest failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
+                            + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
         }
     }
 
