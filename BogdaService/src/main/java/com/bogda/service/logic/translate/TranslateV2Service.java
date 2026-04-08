@@ -1106,7 +1106,7 @@ public class TranslateV2Service {
             if (strResponse != null) {
                 if (!strResponse.contains("\"userErrors\":[]")) {
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
-                    TraceReporterHolder.report("TranslateV2Service.saveToShopify", "飞书机器人报错 ： " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
+                    TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed 飞书机器人报错 ： " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                     ShopifyRegisterResponse registerResponse = JsonUtils.jsonToObject(strResponse, ShopifyRegisterResponse.class);
                     Map<Integer, String> failedIndexToMessage = parseUserErrorIndexToMessage(registerResponse);
                     for (Map.Entry<Integer, String> e : failedIndexToMessage.entrySet()) {
@@ -1328,7 +1328,7 @@ public class TranslateV2Service {
             translateTaskV2Repo.updateSavedToShopify(taskDO.getId());
             translateTaskMonitorV2RedisService.addSavedCount(failedRecord.getInitialTaskId(), 1);
             TraceReporterHolder.report("TranslateV2Service.retrySaveAllFailedTasks",
-                    "FatalException 飞书机器人报错 Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
+                    "FatalException Retry success: shop=" + shopName + " taskId=" + taskDO.getId());
         } else {
             feiShuRobotIntegration.sendMessage("Retry failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                     + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
