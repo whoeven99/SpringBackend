@@ -4,9 +4,9 @@ import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.CharacterCountUtils;
-import com.bogda.common.utils.ConfigUtils;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.TextResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -16,9 +16,14 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class DeepLIntegration {
-    private static final String API_KEY = ConfigUtils.getConfig(TranslateConstants.DEEPL_API_KEY);
+    @Value("${deepl.key.vault}")
+    private String apiKey;
 
     DeepLClient client;
+
+    public String getApiKey() {
+        return apiKey;
+    }
 
     /**
      * 使用deepL进行翻译,计数翻译数
@@ -26,7 +31,7 @@ public class DeepLIntegration {
     public String translateByDeepL(String sourceText, String targetCode, CharacterCountUtils counter, String shopName
             , Integer limitChars, boolean isSingleFlag, String translateType) {
         //target要做映射
-        client = new DeepLClient(API_KEY);
+        client = new DeepLClient(apiKey);
         TextResult result;
         try {
             String target = DEEPL_LANGUAGE_MAP.get(targetCode);
