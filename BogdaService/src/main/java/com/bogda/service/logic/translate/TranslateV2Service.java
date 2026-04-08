@@ -1391,7 +1391,7 @@ public class TranslateV2Service {
             feiShuRobotIntegration.sendMessage("Retry Digest failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                     + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
             TraceReporterHolder.report("TranslateV2Service.retryForInvalidTranslatableContentHash",
-                    "FatalException 飞书机器人 Retry Digest failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
+                    "FatalException 飞书机器人报错 Retry Digest failed (no more retries): shop=" + shopName + " taskId=" + taskDO.getId()
                             + " nodeKey=" + taskDO.getNodeKey() + " response=" + strResponse);
         }
     }
