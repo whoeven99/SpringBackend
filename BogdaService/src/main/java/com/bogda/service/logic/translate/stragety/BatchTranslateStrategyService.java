@@ -316,7 +316,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         }
 
         // 应用翻译结果（保存到结果Map并写入缓存）
-        applyBatchResult(ctx, result, textsToTranslate, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
+        applyBatchResult(ctx, result, textsToTranslate, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage(), prompt);
 
         // 更新词汇表命中统计（仅针对部分匹配且通过AI翻译的文本）
         for (Integer seq : textsToTranslate.keySet()) {
@@ -400,7 +400,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         }
 
         // 应用翻译结果
-        applyBatchResult(ctx, result, batchTexts, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage());
+        applyBatchResult(ctx, result, batchTexts, actuallyTranslateMap, translatedResultMap, ctx.getTargetLanguage(), prompt);
     }
 
     /**
@@ -504,28 +504,98 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             Map<Integer, String> requestedSourceMap,
             Map<Integer, String> actuallyTranslateMap,
             Map<Integer, String> translatedResultMap,
-            String targetLanguage) {
+            String targetLanguage,
+            String prompt) {
 
-        // 累计使用的token数
+        // 防御性检查
+        if (result == null || result.getFirst() == null) {
+            String errorMsg = "FatalException result or its content is null, targetLanguage=" + targetLanguage
+                    + " shopName=" + ctx.getShopName() + " prompt : " + prompt;
+            TraceReporterHolder.report("BatchTranslateStrategyService.applyBatchResult", "FatalException 飞书机器人报错 result 传值为 null ：" + errorMsg);
+            feiShuRobotIntegration.sendMessage("result 传值为 null ：" + errorMsg);
+            return;
+        }
+
+        // 首次结果累计 token
         ctx.incrementUsedTokenCount(result.getSecond());
 
-        // 遍历翻译结果
-        result.getFirst().forEach((seq, translation) -> {
-            // 只允许写入本次请求的 seq，避免模型“多吐”或跨批次串号导致回填污染
-            if (requestedSourceMap == null || !requestedSourceMap.containsKey(seq)) {
-                TraceReporterHolder.report("BatchTranslateStrategyService.applyBatchResult",
-                        "FatalException 飞书机器人报错 IgnoreUnexpectedSeq seq=" + seq + ", targetLanguage=" + targetLanguage + " shopName=" + ctx.getShopName());
-                feiShuRobotIntegration.sendMessage("FatalException 飞书机器人报错 IgnoreUnexpectedSeq seq=" + seq + ", targetLanguage=" + targetLanguage + " shopName=" + ctx.getShopName());
+        Map<Integer, String> currentResult = result.getFirst();
+        boolean needRetry = false;
+
+        // ====================== 第一次处理 ======================
+        needRetry = processTranslateResult(currentResult, requestedSourceMap, actuallyTranslateMap,
+                translatedResultMap, targetLanguage, prompt, 0, ctx.getShopName());
+
+        // 只重试一次，且第二次强制使用 KIMI_K25
+        if (needRetry) {
+            // 重试调用（第二次使用 KIMI_K25）
+            Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(
+                    KimiIntegration.KIMI_K25, prompt, targetLanguage, requestedSourceMap);
+
+            if (aiResult == null) {
+                TraceReporterHolder.report("BatchTranslateStrategyService.batchTranslate",
+                        "FatalException 飞书机器人报错 aiResult 再次解析失败 " + aiResult);
+                feiShuRobotIntegration.sendMessage("FatalException 飞书机器人报错 aiResult 再次解析失败 " + aiResult);
                 return;
             }
 
-            // 保存到结果Map
+            // 重试结果累计 token
+            ctx.incrementUsedTokenCount(aiResult.getSecond());
+
+            // 解析重试结果
+            currentResult = parseOutput(aiResult.getFirst());
+
+            // ====================== 第二次处理（不再重试） ======================
+            processTranslateResult(currentResult, requestedSourceMap, actuallyTranslateMap,
+                    translatedResultMap, targetLanguage, prompt, 1, ctx.getShopName());
+        }
+    }
+
+    /**
+     * 提取公共处理逻辑，避免代码重复
+     * @param retryCount 0=首次  1=重试
+     * @return 是否需要重试（仅首次会返回true）
+     */
+    private boolean processTranslateResult(
+            Map<Integer, String> translateResult,
+            Map<Integer, String> requestedSourceMap,
+            Map<Integer, String> actuallyTranslateMap,
+            Map<Integer, String> translatedResultMap,
+            String targetLanguage,
+            String prompt,
+            int retryCount, String shopName) {
+
+        boolean hasUnexpectedSeq = false;
+        String retryLabel = (retryCount == 0) ? "" : "Retry 1 ";
+
+        for (Map.Entry<Integer, String> entry : translateResult.entrySet()) {
+            Integer seq = entry.getKey();
+            String translation = entry.getValue();
+
+            // 严格校验 seq，避免模型多吐或串号污染
+            if (requestedSourceMap == null || !requestedSourceMap.containsKey(seq)) {
+                String errorMsg = "FatalException 飞书机器人报错 IgnoreUnexpectedSeq " + retryLabel
+                        + "seq=" + seq + ", targetLanguage=" + targetLanguage
+                        + " shopName=" + shopName + " prompt : " + prompt;
+
+                TraceReporterHolder.report("BatchTranslateStrategyService.applyBatchResult", errorMsg);
+                feiShuRobotIntegration.sendMessage(errorMsg);
+
+                hasUnexpectedSeq = true;
+                break; // 发现异常立即停止
+            }
+
+            // 保存翻译结果
             translatedResultMap.put(seq, translation);
 
-            // 写入Redis缓存（原文 -> 译文）
+            // 写入Redis缓存（增加空指针防护）
             String originalText = actuallyTranslateMap.get(seq);
-            redisProcessService.setCacheData(targetLanguage, translation, originalText);
-        });
+            if (originalText != null) {
+                redisProcessService.setCacheData(targetLanguage, translation, originalText);
+            }
+        }
+
+        return hasUnexpectedSeq && retryCount == 0; // 只有首次失败才允许重试
     }
 
     public void finishAndGetJsonRecord(TranslateContext ctx) {
@@ -613,13 +683,15 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 3. 尝试标准解析
         LinkedHashMap<Integer, String> resultMap = JsonUtils.jsonToObjectWithNull(
-                jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {});
+                jsonPart, new TypeReference<LinkedHashMap<Integer, String>>() {
+                });
 
         // 4. 如果解析失败，启动深度修复流水线
         if (resultMap == null) {
             String repaired = JsonUtils.highlyRobustRepair(jsonPart);
             repaired = JsonUtils.fixMissingQuote(repaired);
-            resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {});
+            resultMap = JsonUtils.jsonToObjectWithNull(repaired, new TypeReference<LinkedHashMap<Integer, String>>() {
+            });
         }
 
         // 5. 如果依然失败，使用正则强行暴力提取 (兜底方案)
@@ -649,7 +721,8 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         while (m.find()) {
             try {
                 map.put(Integer.parseInt(m.group(1)), m.group(2));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         return map.isEmpty() ? null : map;
     }

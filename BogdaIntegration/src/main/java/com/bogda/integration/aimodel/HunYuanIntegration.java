@@ -12,22 +12,36 @@ import com.tencentcloudapi.hunyuan.v20230901.HunyuanClient;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsRequest;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+
+import javax.annotation.PostConstruct;
 
 import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class HunYuanIntegration {
     // 静态初始化的 Credential 和 HunyuanClient
-    private static final Credential CREDENTIAL;
-    private static final HunyuanClient CLIENT;
-    private static final String HUNYUAN_APP_ID = "HUNYUAN_APP_ID";
-    private static final String HUNYUAN_APP_KEY = "HUNYUAN_APP_KEY";
+    private Credential CREDENTIAL;
+    private HunyuanClient CLIENT;
 
-    static {
+    @Value("${hunyuan.secret.id}")
+    private String secretId;
+
+    @Value("${hunyuan.secret.key}")
+    private String secretKey;
+
+    public String getConfig() {
+        return "secretId : " + secretId + " secretKey : " + secretKey;
+    }
+
+    @PostConstruct
+    private void init() {
         // 初始化 Credential（替换为你的 SecretId 和 SecretKey）
-        CREDENTIAL = new Credential(ConfigUtils.getConfig(HUNYUAN_APP_ID), ConfigUtils.getConfig(HUNYUAN_APP_KEY));
+        TraceReporterHolder.report("HunYuanIntegration.init", "secretId : " + secretId + " secretKey : " + secretKey);
+        CREDENTIAL = new Credential(secretId, secretKey);
+
         // 初始化 ClientProfile
         ClientProfile clientProfile = new ClientProfile();
         clientProfile.setSignMethod(ClientProfile.SIGN_TC3_256); // 使用 TC3-HMAC-SHA256 签名方法
