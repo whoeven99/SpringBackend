@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IGlossaryService;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
@@ -73,12 +74,13 @@ public class DataRatingService {
     public Map<String, Integer> getTranslationStatus(String shopName, String source) {
         // 1， 从db获取用户token和相关翻译数据， 存入Map中
         Map<String, Integer> statusMap = new HashMap<>();
-        UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
+        UsersDO usersDO = iUsersService.getUserByName(shopName);
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
 
         // 2，从shopify中获取所有的语言状态数据
         String shopifyByQuery = shopifyService.getShopifyData(shopName, usersDO.getAccessToken(), TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         if (shopifyByQuery == null) {
+            TraceReporterHolder.report("DataRatingService.getTranslationStatus", "FatalException shopifyByQuery : " + shopifyByQuery);
             return null;
         }
 
@@ -88,6 +90,11 @@ public class DataRatingService {
 
         // 先转成 JSONObject
         JSONObject jsonObject = JSON.parseObject(shopifyByQuery);
+        if (jsonObject == null || jsonObject.isEmpty()) {
+            TraceReporterHolder.report("DataRatingService.getTranslationStatus", "FatalException jsonObject : " + shopifyByQuery);
+            return null;
+        }
+
         // 取出 shopLocales 数组
         JSONArray shopLocalesArr = jsonObject.getJSONArray("shopLocales");
         if (shopLocalesArr == null) {
