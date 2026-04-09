@@ -61,7 +61,7 @@ public class ChatGptIntegration {
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setFrequencyPenalty(0.0)
                 .setPresencePenalty(0.0)
-                .setTemperature(0.3)
+                .setTemperature(0.1)
                 .setStream(false);
         try {
             ChatCompletions chatCompletions = TimeOutUtils.callWithTimeoutAndRetry(() ->
