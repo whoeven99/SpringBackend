@@ -101,7 +101,7 @@ public class OrderService {
             templateData.put("End date", trialEnd + " UTC");
             emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(146220L, templateData, MailChimpConstants.PLAN_TRIALS_SUCCESSFUL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
             TraceReporterHolder.report("OrderService.sendSubscribeSuccessEmail", "sendSubscribeSuccessEmail: " + shopName + " is free trial");
-            return false;
+            return true;
         }
         Map<String, String> templateData = new HashMap<>();
         templateData.put("user", usersDO.getFirstName());
