@@ -128,7 +128,9 @@ public class EmailIntegration {
             TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "FatalException sendEmailByTencent 飞书机器人报错 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
             feiShuRobotIntegration.sendMessage("FatalException sendEmailByTencent 腾讯邮件报错信息 errors ： " + e1.getMessage() + " templateId : " + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         }
+
         //判断服务的返回值是否含有RequestId
+        TraceReporterHolder.report("EmailIntegration.sendEmailByTencent", "sendEmailByTencent 腾讯邮件报错信息 jsonString ： " + jsonString + " templatedId" + tencentSendEmailRequest.getTemplateId() + " data" + templateData.toString());
         if (jsonString == null) {
             return false;
         }
