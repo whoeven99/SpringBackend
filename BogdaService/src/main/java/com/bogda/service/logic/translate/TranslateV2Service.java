@@ -1104,7 +1104,7 @@ public class TranslateV2Service {
             }
 
             if (strResponse != null) {
-                if (!strResponse.contains("\"userErrors\":[]") && !strResponse.contains("Too many translation keys") && !strResponse.contains("Value is not the correct format")) {
+                if (!strResponse.contains("\"userErrors\":[]") && !strResponse.contains("Too many translation keys") && !strResponse.contains("Value is not the correct format") && !strResponse.contains("Translatable content hash is invalid")) {
                     feiShuRobotIntegration.sendMessage("FatalException TranslateTaskV2 saving failed: " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                     TraceReporterHolder.report("TranslateV2Service.saveToShopify", "FatalException TranslateTaskV2 saving failed 飞书机器人报错 ： " + shopName + " randomDo: " + randomDo.getId() + " response: " + strResponse + " module : " + randomDo.getModule());
                     ShopifyRegisterResponse registerResponse = JsonUtils.jsonToObject(strResponse, ShopifyRegisterResponse.class);
