@@ -75,6 +75,9 @@ public class DataRatingService {
         // 1， 从db获取用户token和相关翻译数据， 存入Map中
         Map<String, Integer> statusMap = new HashMap<>();
         UsersDO usersDO = iUsersService.getUserByName(shopName);
+        if (usersDO == null) {
+            return null;
+        }
         List<TranslatesDO> list = iTranslatesService.list(new LambdaQueryWrapper<TranslatesDO>().eq(TranslatesDO::getShopName, shopName).eq(TranslatesDO::getSource, source));
 
         // 2，从shopify中获取所有的语言状态数据
