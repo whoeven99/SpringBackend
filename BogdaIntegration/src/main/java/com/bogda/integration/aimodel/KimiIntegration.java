@@ -3,7 +3,7 @@ package com.bogda.integration.aimodel;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.JsonUtils;
-import com.bogda.common.utils.TimeOutUtils;
+import com.bogda.common.utils.RetryUtils;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
@@ -19,8 +19,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-
-import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class KimiIntegration {
@@ -69,8 +67,7 @@ public class KimiIntegration {
                     .timeout(Duration.ofMinutes(5))
                     .build();
 
-            HttpResponse<String> response = TimeOutUtils.callWithTimeoutAndRetry(
-                    () -> {
+            HttpResponse<String> response = RetryUtils.retryWithParamAndTime(() -> {
                         try {
                             return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
                         } catch (Exception e) {
@@ -81,9 +78,7 @@ public class KimiIntegration {
                             return null;
                         }
                     },
-                    DEFAULT_TIMEOUT, DEFAULT_UNIT,
-                    DEFAULT_MAX_RETRIES
-            );
+                    RetryUtils.DEFAULT_MAX_RETRIES, RetryUtils.DEFAULT_INITIAL_DELAY, RetryUtils.DEFAULT_MAX_DELAY, RetryUtils.DEFAULT_TIMEOUT, RetryUtils.DEFAULT_UNIT);
 
             if (response == null || response.statusCode() != 200) {
                 String errorBody = (response != null) ? response.body() : "null response";
