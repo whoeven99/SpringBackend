@@ -701,7 +701,7 @@ public class TranslateV2Service {
      * 初始化阶段中止时的收尾：将任务状态更新为「初始化阶段已停止」并持久化，不执行初始化完成后的逻辑。
      */
     private void doInitStoppedCleanup(InitialTaskV2DO initialTaskV2DO) {
-        initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), false, false);
+        initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), true, false);
         translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskV2DO.getId());
         TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 init stopped cleanup: shop=" + initialTaskV2DO.getShopName() + " taskId=" + initialTaskV2DO.getId());
     }
