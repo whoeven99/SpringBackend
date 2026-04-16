@@ -701,7 +701,7 @@ public class TranslateV2Service {
      * 初始化阶段中止时的收尾：将任务状态更新为「初始化阶段已停止」并持久化，不执行初始化完成后的逻辑。
      */
     private void doInitStoppedCleanup(InitialTaskV2DO initialTaskV2DO) {
-        initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), false, false);
+        initialTaskV2Repo.updateStatusAndSendEmailById(InitialTaskStatus.INIT_STOPPED.getStatus(), initialTaskV2DO.getId(), true, false);
         translateTaskMonitorV2RedisService.setTranslateEndTime(initialTaskV2DO.getId());
         TraceReporterHolder.report("TranslateV2Service.initialToTranslateTask", "TranslateTaskV2 init stopped cleanup: shop=" + initialTaskV2DO.getShopName() + " taskId=" + initialTaskV2DO.getId());
     }
@@ -2033,6 +2033,10 @@ public class TranslateV2Service {
         int status = initialTaskV2DO.getStatus();
         redisStoppedRepository.removeStoppedFlag(shopName, taskId);
         translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
+
+        // 将用户部分翻译的邮件标识改为false
+        initialTaskV2Repo.updateSendEmailById(taskId, false);
+
         if (status == InitialTaskStatus.INIT_STOPPED.getStatus()) {
             // 初始化阶段停止：按「从头重新初始化」处理
             List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
