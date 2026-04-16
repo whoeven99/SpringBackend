@@ -2034,6 +2034,10 @@ public class TranslateV2Service {
         int status = initialTaskV2DO.getStatus();
         redisStoppedRepository.removeStoppedFlag(shopName, taskId);
         translatesService.updateTranslateStatus(shopName, 2, initialTaskV2DO.getTarget(), initialTaskV2DO.getSource());
+
+        // 将用户部分翻译的邮件标识改为false
+        initialTaskV2Repo.updateSendEmailById(taskId, false);
+
         if (status == InitialTaskStatus.INIT_STOPPED.getStatus()) {
             // 初始化阶段停止：按「从头重新初始化」处理
             List<String> moduleList = JsonUtils.jsonToObject(initialTaskV2DO.getModuleList(), new TypeReference<>() {
