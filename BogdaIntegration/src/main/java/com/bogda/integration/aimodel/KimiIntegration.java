@@ -17,6 +17,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,10 +51,17 @@ public class KimiIntegration {
     }
 
     public Pair<String, Integer> chatWithKimi(String model, String prompt, String target, double magnification) {
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "user", "content", prompt));
+        return chatWithKimi(model, messages, target, magnification, null);
+    }
+
+    public Pair<String, Integer> chatWithKimi(String model, List<Map<String, String>> messages,
+                                              String target, double magnification, String sessionId) {
         try {
             Map<String, Object> requestBody = Map.of(
                     "model", model,
-                    "messages", List.of(Map.of("role", "user", "content", prompt)),
+                    "messages", messages,
                     "temperature", 0.6,
                     "thinking", Map.of("type", "disabled")
             );
@@ -72,9 +80,9 @@ public class KimiIntegration {
                             return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
                         } catch (Exception e) {
                             TraceReporterHolder.report("KimiIntegration.chat", "FatalException 飞书机器人报错 KimiIntegration call error: " + e.getMessage()
-                                    + " prompt: " + prompt);
+                                    + " sessionId: " + sessionId);
                             ExceptionReporterHolder.report("KimiIntegration.chat", e);
-                            feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error: " + e.getMessage() + " prompt: " + prompt);
+                            feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error: " + e.getMessage() + " sessionId: " + sessionId);
                             return null;
                         }
                     },
@@ -84,8 +92,8 @@ public class KimiIntegration {
                 String errorBody = (response != null) ? response.body() : "null response";
                 TraceReporterHolder.report("KimiIntegration.chat", "FatalException 飞书机器人报错 KimiIntegration HTTP error, status: "
                         + (response != null ? response.statusCode() : "null") + " body: " + errorBody
-                        + " prompt: " + prompt);
-                feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error prompt: " + prompt);
+                        + " sessionId: " + sessionId);
+                feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error sessionId: " + sessionId);
                 return null;
             }
 
@@ -96,21 +104,22 @@ public class KimiIntegration {
             int totalTokens = root.at("/usage/total_tokens").asInt(0);
             int allToken = (int) Math.ceil(totalTokens * magnification);
 
-            TraceReporterHolder.report("KimiIntegration.chat", "KimiIntegration model : " + model + " 提示词 ：" + prompt
+            TraceReporterHolder.report("KimiIntegration.chat", "KimiIntegration model : " + model
                     + " 翻译成：" + content + " all: " + allToken
-                    + " input: " + inputTokens + " output: " + outputTokens + " target: " + target);
+                    + " input: " + inputTokens + " output: " + outputTokens + " target: " + target
+                    + " sessionId: " + sessionId + " messagesSize: " + messages.size());
             if (content == null) {
                 TraceReporterHolder.report("KimiIntegration.chat", "FatalException 飞书机器人报错 KimiIntegration chat error: "
-                        + " model: " + model + " prompt: " + prompt + " finishReason : " + root);
+                        + " model: " + model + " sessionId: " + sessionId + " finishReason : " + root);
                 feiShuRobotIntegration.sendMessage("FatalException KimiIntegration chat error: " + " model: "
-                        + model + " prompt: " + prompt + " finishReason : " + root);
+                        + model + " sessionId: " + sessionId + " finishReason : " + root);
             }
             return new Pair<>(content, allToken);
         } catch (Exception e) {
             TraceReporterHolder.report("KimiIntegration.chat", "FatalException 飞书机器人报错 KimiIntegration chat error: " + e.getMessage()
-                    + " prompt: " + prompt);
+                    + " sessionId: " + sessionId);
             ExceptionReporterHolder.report("KimiIntegration.chat", e);
-            feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error: " + e.getMessage() + " prompt: " + prompt);
+            feiShuRobotIntegration.sendMessage("FatalException KimiIntegration call error: " + e.getMessage() + " sessionId: " + sessionId);
             return null;
         }
     }

@@ -67,18 +67,42 @@ public class ALiYunTranslateIntegration {
     }
 
     public Pair<String, Integer> userTranslate(String prompt, String target, double magnification) {
+        List<Map<String, String>> messages = List.of(Map.of("role", "user", "content", prompt));
+        return userTranslate(messages, target, magnification, null);
+    }
+
+    public Pair<String, Integer> userTranslate(List<Map<String, String>> messageItems, String target,
+                                               double magnification, String sessionId) {
         String model = switchModel(target);
         Generation gen = new Generation();
-        Message userMsg = Message.builder()
-                .role(Role.USER.getValue())
-                .content(prompt)
-                .build();
+        List<Message> messages = new java.util.ArrayList<>();
+        for (Map<String, String> item : messageItems) {
+            if (item == null) {
+                continue;
+            }
+            String content = item.get("content");
+            if (content == null || content.isEmpty()) {
+                continue;
+            }
+            String role = item.getOrDefault("role", "user");
+            if (!"assistant".equalsIgnoreCase(role) && !"system".equalsIgnoreCase(role)) {
+                role = Role.USER.getValue();
+            }
+            Message message = Message.builder()
+                    .role(role)
+                    .content(content)
+                    .build();
+            messages.add(message);
+        }
+        if (messages.isEmpty()) {
+            return null;
+        }
 
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
-                .messages(Collections.singletonList(userMsg))
+                .messages(messages)
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
 
@@ -88,9 +112,9 @@ public class ALiYunTranslateIntegration {
                             return gen.call(param);
                         } catch (Exception e) {
                             TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException 飞书机器人报错 userTranslate call errors ： " + e.getMessage() +
-                                    " translateText : " + prompt);
+                                    " sessionId : " + sessionId);
                             ExceptionReporterHolder.report("ALiYunTranslateIntegration.userTranslate", e);
-                            feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
+                            feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " sessionId : " + sessionId);
                             return null;
                         }
                     },
@@ -105,13 +129,14 @@ public class ALiYunTranslateIntegration {
             int totalToken = (int) (call.getUsage().getTotalTokens() * magnification);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
-            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "userTranslate 提示词 ：" + prompt + " 翻译成： " + content +
-                    " token ali  all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
+            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "userTranslate 翻译成： " + content +
+                    " token ali  all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens
+                    + " sessionId: " + sessionId + " messagesSize: " + messages.size());
             return new Pair<>(content, totalToken);
         } catch (Exception e) {
-            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException 飞书机器人报错 userTranslate errors ： " + e.getMessage() + " translateText : " + prompt);
+            TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException 飞书机器人报错 userTranslate errors ： " + e.getMessage() + " sessionId : " + sessionId);
             ExceptionReporterHolder.report("ALiYunTranslateIntegration.userTranslate", e);
-            feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
+            feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " sessionId : " + sessionId);
             return null;
         }
     }

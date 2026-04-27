@@ -20,7 +20,7 @@ import com.bogda.repository.entity.PCUserTrialsDO;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.ShopifyRequestUtils;
 import com.bogda.repository.repo.*;
-import com.bogda.service.logic.translate.TranslateV2Service;
+import com.bogda.service.logic.translate.TranslateV3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -79,7 +79,7 @@ public class TaskService {
     @Autowired
     private PCEmailService pcEmailService;
     @Autowired
-    private TranslateV2Service translateV2Service;
+    private TranslateV3Service translateV3Service;
 
     /**
      * 异步调用根据订阅信息，判断是否添加额度的方法
@@ -243,7 +243,7 @@ public class TaskService {
 
             // 继续翻译，将获取用户部分翻译的task去翻译
             // 付费后继续翻译：仅恢复自动停止（token limit）任务
-            translateV2Service.continueAutoStoppedTranslatingByShopName(userPriceRequest.getShopName());
+            translateV3Service.continueAutoStoppedTranslatingByShopName(userPriceRequest.getShopName());
 
             if ("Starter".equals(name)) {
                 return;

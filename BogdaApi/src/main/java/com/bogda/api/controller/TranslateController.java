@@ -12,9 +12,8 @@ import com.bogda.common.entity.DO.UsersDO;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.service.logic.TranslateService;
 import com.bogda.service.logic.UserTypeTokenService;
-import com.bogda.service.logic.redis.RedisStoppedRepository;
 import com.bogda.service.logic.redis.TranslationParametersRedisService;
-import com.bogda.service.logic.translate.TranslateV2Service;
+import com.bogda.service.logic.translate.TranslateV3Service;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +41,7 @@ public class TranslateController {
     @Autowired
     private IUsersService iUsersService;
     @Autowired
-    private TranslateV2Service translateV2Service;
+    private TranslateV3Service translateV3Service;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
 
@@ -50,19 +49,19 @@ public class TranslateController {
     @PutMapping("/clickTranslation")
     public BaseResponse<Object> clickTranslation(@RequestParam String shopName, @RequestBody ClickTranslateRequest request) {
         request.setShopName(shopName);
-        return translateV2Service.createInitialTask(request);
+        return translateV3Service.createInitialTask(request);
     }
 
     @PostMapping("/getAllProgressData")
     public BaseResponse<ProgressResponse> getAllProgressData(@RequestParam String shopName, @RequestParam String source) {
-        return translateV2Service.getProcess(shopName, source);
+        return translateV3Service.getProcess(shopName, source);
     }
 
     // 单条文本翻译 修改返回值类型
     @PostMapping("/singleTextTranslateV2")
     public BaseResponse<SingleReturnVO> singleTextTranslateV2(@RequestParam String shopName, @RequestBody SingleTranslateVO singleTranslateVO) {
         singleTranslateVO.setShopName(shopName);
-        return translateV2Service.singleTextTranslate(singleTranslateVO);
+        return translateV3Service.singleTextTranslate(singleTranslateVO);
     }
 
     // 用户手动点击停止翻译V2
@@ -74,7 +73,18 @@ public class TranslateController {
     // 用户手动点击继续翻译V2
     @PostMapping("/continueTranslatingV2")
     public BaseResponse<Object> continueTranslatingV2(@RequestParam String shopName, @RequestParam Integer taskId) {
-        return translateV2Service.continueTranslatingV2(shopName, taskId);
+        return translateV3Service.continueTranslatingV3(shopName, taskId);
+    }
+
+    /**
+     * 手动触发 v3 任务 AI 质量评分
+     * module 为空时，对任务内所有模块评分；否则只评分指定模块。
+     */
+    @PostMapping("/triggerV3AiScore")
+    public BaseResponse<Object> triggerV3AiScore(@RequestParam String taskId,
+                                                 @RequestParam String shopName,
+                                                 @RequestParam(required = false) String module) {
+        return translateV3Service.triggerAiScoreReport(taskId, shopName, module);
     }
 
     // 当支付成功后，调用该方法，将该用户的状态3，改为状态6
@@ -83,7 +93,7 @@ public class TranslateController {
     public BaseResponse<Object> updateStatus3To6V2(@RequestParam String shopName) {
         if (translatesService.updateStatus3To6(shopName)) {
             // 付费后继续翻译：仅恢复自动停止（token limit）任务
-            translateV2Service.continueAutoStoppedTranslatingByShopName(shopName);
+            translateV3Service.continueAutoStoppedTranslatingByShopName(shopName);
             return new BaseResponse<>().CreateSuccessResponse(true);
         } else {
             return new BaseResponse<>().CreateErrorResponse("updateStatus3To6 error");
@@ -154,9 +164,6 @@ public class TranslateController {
         }
         return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
     }
-
-    @Autowired
-    private RedisStoppedRepository redisStoppedRepository;
 
     /**
      * 将一条数据存shopify本地
