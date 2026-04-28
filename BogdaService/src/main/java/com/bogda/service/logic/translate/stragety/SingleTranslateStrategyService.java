@@ -101,7 +101,7 @@ public class SingleTranslateStrategyService implements ITranslateStrategyService
         }
 
         Pair<String, Integer> pair = modelTranslateService.modelTranslate(ctx.getAiModel(), ctx.getPrompt()
-                , ctx.getTargetLanguage(), value);
+                , ctx.getTargetLanguage(), value, ctx.getSessionId());
 
         if (pair == null) {
             TraceReporterHolder.report("SingleTranslateStrategyService.translate", "FatalException 飞书机器人报错 翻译解析报错 译文 ： " + ctx.getPrompt());

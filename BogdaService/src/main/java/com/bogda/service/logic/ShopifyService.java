@@ -100,9 +100,12 @@ public class ShopifyService {
             rotateTranslatableResourcesByIds(shopName, accessToken, resourceIds, target, consumer, setAfterEndCursorConsumer);
             return;
         }
-        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, afterEndCursor);
+        int configuredFirst = first == null ? 250 : first;
+        int pageSize = shopifyRateLimitService.getRecommendedInitPageSize(shopName, configuredFirst);
+        String graphQuery = ShopifyRequestUtils.getQuery(resourceType, String.valueOf(pageSize), target, afterEndCursor);
         ShopifyGraphResponse data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
         while (data != null) {
+            shopifyRateLimitService.onInitReadOutcome(shopName, false);
             if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getNodes())) {
                 for (ShopifyTranslationsResponse.Node node : data.getTranslatableResources().getNodes()) {
                     consumer.accept(node);
@@ -113,7 +116,8 @@ public class ShopifyService {
                     && data.getTranslatableResources().getPageInfo().isHasNextPage()) {
                 String endCursor = data.getTranslatableResources().getPageInfo().getEndCursor();
                 setAfterEndCursorConsumer.accept(endCursor);
-                graphQuery = ShopifyRequestUtils.getQuery(resourceType, first.toString(), target, endCursor);
+                pageSize = shopifyRateLimitService.getRecommendedInitPageSize(shopName, configuredFirst);
+                graphQuery = ShopifyRequestUtils.getQuery(resourceType, String.valueOf(pageSize), target, endCursor);
                 data = getShopifyDataWithRateLimit(shopName, accessToken, graphQuery);
             } else {
                 data = null;
@@ -135,13 +139,15 @@ public class ShopifyService {
             while (true) {
                 Map<String, Object> variables = new HashMap<>();
                 variables.put("resourceIds", batch);
-                variables.put("first", TRANSLATABLE_RESOURCES_BY_IDS_BATCH);
+                int pageSize = shopifyRateLimitService.getRecommendedInitPageSize(shopName, TRANSLATABLE_RESOURCES_BY_IDS_BATCH);
+                variables.put("first", pageSize);
                 variables.put("after", after);
                 variables.put("locale", target);
                 String rawResponse = getShopifyFullResponseWithRateLimitAndVariables(shopName, accessToken, query, variables);
                 if (rawResponse == null || rawResponse.isEmpty()) {
                     break;
                 }
+                shopifyRateLimitService.onInitReadOutcome(shopName, false);
                 ShopifyTranslatableResourcesByIdsResponse response = JsonUtils.jsonToObjectWithNull(rawResponse, ShopifyTranslatableResourcesByIdsResponse.class);
                 if (response == null || response.getData() == null) {
                     break;
@@ -177,6 +183,7 @@ public class ShopifyService {
     public ShopifyGraphRemoveResponse deleteShopifyDataWithRateLimit(String shopName, String accessToken,
                                                                      ShopifyTranslationsRemove remove) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+        shopifyRateLimitService.beforeRequest(shopName);
         rateLimiter.acquire();
 
         ShopifyRemoveResponse shopifyResponse = shopifyHttpIntegration.deleteShopifyData(shopName, accessToken, remove);
@@ -193,6 +200,7 @@ public class ShopifyService {
     // 获取 Shopify 数据（带速率限制，返回完整响应包括 extensions）
     private ShopifyGraphResponse getShopifyDataWithRateLimit(String shopName, String accessToken, String query) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+        shopifyRateLimitService.beforeRequest(shopName);
         rateLimiter.acquire();
 
         // 获取完整响应（包括 extensions）
@@ -211,6 +219,7 @@ public class ShopifyService {
      */
     private String getShopifyFullResponseWithRateLimitAndVariables(String shopName, String accessToken, String query, Map<String, Object> variables) {
         RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+        shopifyRateLimitService.beforeRequest(shopName);
         rateLimiter.acquire();
 
         String response = shopifyHttpIntegration.sendShopifyPost(shopName, accessToken, query, variables);
@@ -380,6 +389,7 @@ public class ShopifyService {
     public String saveDataWithRateLimit(String shopName, String token, ShopifyTranslationsResponse.Node node) {
         try {
             RateLimiter rateLimiter = shopifyRateLimitService.getOrCreateRateLimiter(shopName);
+            shopifyRateLimitService.beforeRequest(shopName);
             rateLimiter.acquire();
 
             String response = shopifyHttpIntegration.saveShopifyData(shopName, token, node);

@@ -33,6 +33,12 @@
             <version>1.57.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+            <version>12.29.0</version>
+        </dependency>
+
         <!-- MyBatis-Plus Core -->
         <dependency>
             <groupId>com.baomidou</groupId>

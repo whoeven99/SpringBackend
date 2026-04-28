@@ -14,6 +14,7 @@ import java.util.Map;
 public class TranslateContext {
     private String module; // 用户翻译模块
     private String shopName; // 用户翻译店铺
+    private String sessionId; // 会话id，用于增量翻译
 
     // Start
     private String content;

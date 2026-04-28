@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Translate V3 任务详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Translate V3 任务详情</h4>
+        <a class="btn btn-outline-secondary btn-sm"
+           th:href="@{/admin/v3/tasks(status=${selectedStatus})}">返回列表</a>
+    </div>
+
+    <div th:if="${task == null}" class="alert alert-warning mb-0">
+        未找到任务，请确认 `id` 和 `shopName` 是否正确。
+    </div>
+    <div th:if="${detailError != null}" class="alert alert-warning">
+        <span th:text="${detailError}">读取质量报告失败</span>
+    </div>
+
+    <div th:if="${task != null}">
+        <div class="card mb-3">
+            <div class="card-header">基础信息</div>
+            <div class="card-body">
+                <div class="row g-3 small">
+                    <div class="col-md-6"><strong>ID:</strong> <span th:text="${task.id}"></span></div>
+                    <div class="col-md-6"><strong>Shop:</strong> <span th:text="${task.shopName}"></span></div>
+                    <div class="col-md-6"><strong>Source:</strong> <span th:text="${task.source}"></span></div>
+                    <div class="col-md-6"><strong>Target:</strong> <span th:text="${task.target}"></span></div>
+                    <div class="col-md-6"><strong>Status:</strong> <span th:text="${task.status}"></span></div>
+                    <div class="col-md-6"><strong>Task Type:</strong> <span th:text="${task.taskType}"></span></div>
+                    <div class="col-md-6"><strong>AI Model:</strong> <span th:text="${task.aiModel}"></span></div>
+                    <div class="col-md-6"><strong>SessionId:</strong> <span th:text="${task.sessionId}"></span></div>
+                    <div class="col-md-6"><strong>CreatedAt:</strong> <span th:text="${task.createdAt}"></span></div>
+                    <div class="col-md-6"><strong>UpdatedAt:</strong> <span th:text="${task.updatedAt}"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Checkpoint</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width: 35%">Key</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${task.checkpoint == null or #maps.isEmpty(task.checkpoint)}">
+                        <td colspan="2" class="text-muted text-center py-2">无 checkpoint 数据</td>
+                    </tr>
+                    <tr th:each="entry : ${task.checkpoint}">
+                        <td class="small" th:text="${entry.key}">key</td>
+                        <td class="small text-break" th:text="${entry.value}">value</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Metrics</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width: 35%">Key</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${task.metrics == null or #maps.isEmpty(task.metrics)}">
+                        <td colspan="2" class="text-muted text-center py-2">无 metrics 数据</td>
+                    </tr>
+                    <tr th:each="entry : ${task.metrics}">
+                        <td class="small" th:text="${entry.key}">key</td>
+                        <td class="small text-break" th:text="${entry.value}">value</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">总质量报告（qa/ai-score.json）</div>
+            <div class="card-body">
+                <div th:if="${totalAiScoreReport == null}" class="text-muted small">暂无总质量报告</div>
+                <div th:if="${totalAiScoreReport != null}">
+                    <div class="row g-2 small mb-3">
+                        <div class="col-md-4"><strong>GeneratedAt:</strong> <span th:text="${totalAiScoreReport.generatedAt}"></span></div>
+                        <div class="col-md-4"><strong>Model:</strong> <span th:text="${totalAiScoreReport.model}"></span></div>
+                        <div class="col-md-4"><strong>Target:</strong> <span th:text="${totalAiScoreReport.targetLanguage}"></span></div>
+                    </div>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Module</th>
+                                <th>Status</th>
+                                <th>Score</th>
+                                <th>SampleCount</th>
+                                <th>TokenUsed</th>
+                                <th>Summary</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(totalAiModuleScores)}">
+                                <td colspan="6" class="text-muted text-center py-2">无模块评分数据</td>
+                            </tr>
+                            <tr th:each="item : ${totalAiModuleScores}">
+                                <td class="small" th:text="${item['module']}">module</td>
+                                <td class="small" th:text="${item['status']}">OK</td>
+                                <td class="small" th:text="${item['score']}">80</td>
+                                <td class="small" th:text="${item['sampleCount']}">30</td>
+                                <td class="small" th:text="${item['tokenUsed'] != null ? item['tokenUsed'] : '-'}">0</td>
+                                <td class="small text-break" th:text="${item['summary']}">summary</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">模块质量报告（chunks/{module}/ai-score.json）</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Module</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th>SampleCount</th>
+                        <th>TokenUsed</th>
+                        <th>BlobPath</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(moduleAiReports)}">
+                        <td colspan="7" class="text-muted text-center py-2">无模块质量报告</td>
+                    </tr>
+                    <tr th:each="item : ${moduleAiReports}">
+                        <td class="small" th:text="${item['module']}">PRODUCT</td>
+                        <td class="small" th:text="${item['status']}">OK</td>
+                        <td class="small" th:text="${item['score']}">90</td>
+                        <td class="small" th:text="${item['sampleCount']}">50</td>
+                        <td class="small" th:text="${item['tokenUsed'] != null ? item['tokenUsed'] : '-'}">123</td>
+                        <td class="small text-break" th:text="${item['blobPath']}">tasks/xx/chunks/module/ai-score.json</td>
+                        <td class="small">
+                            <a class="btn btn-outline-primary btn-sm"
+                               th:href="@{/admin/v3/task/module-ai-report(id=${task.id},shopName=${task.shopName},module=${item['module']},status=${selectedStatus})}">
+                                查看详情
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
