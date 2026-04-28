@@ -5,12 +5,15 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.logic.translate.TranslateV3Service;
 import com.bogda.task.annotation.EnableScheduledTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TranslateTaskV3Scheduled {
+    private static final Logger LOG = LoggerFactory.getLogger(TranslateTaskV3Scheduled.class);
     @Autowired
     private TranslateV3Service translateV3Service;
     @Autowired
@@ -19,30 +22,35 @@ public class TranslateTaskV3Scheduled {
     @Scheduled(fixedDelay = 30 * 1000)
     @EnableScheduledTask
     public void initialToTranslateTaskV3() {
+        LOG.info("v3 scheduler tick initialToTranslateTaskV3");
         translateV3Service.processInitialTasksV3();
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
     @EnableScheduledTask
     public void translateEachTaskV3() {
+        LOG.info("v3 scheduler tick translateEachTaskV3");
         translateV3Service.processTranslateTasksV3();
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
     @EnableScheduledTask
     public void saveToShopifyV3() {
+        LOG.info("v3 scheduler tick saveToShopifyV3");
         translateV3Service.processSaveTasksV3();
     }
 
     @Scheduled(fixedDelay = 60 * 1000)
     @EnableScheduledTask
     public void verifySavedToShopifyV3() {
+        LOG.info("v3 scheduler tick verifySavedToShopifyV3");
         translateV3Service.processVerifyTasksV3();
     }
 
     @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void retrySaveFailedTasksV3() {
         try {
+            LOG.info("v3 scheduler tick retrySaveFailedTasksV3");
             translateV3Service.retrySaveAllFailedTasks();
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateTaskV3Scheduled.retrySaveFailedTasksV3",

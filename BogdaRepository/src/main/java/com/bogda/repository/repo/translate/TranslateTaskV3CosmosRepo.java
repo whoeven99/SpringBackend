@@ -9,6 +9,8 @@ import com.azure.cosmos.models.SqlParameter;
 import com.azure.cosmos.models.SqlQuerySpec;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.repository.container.TranslateTaskV3DO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ import java.util.List;
 
 @Service
 public class TranslateTaskV3CosmosRepo {
+    private static final Logger LOG = LoggerFactory.getLogger(TranslateTaskV3CosmosRepo.class);
     @Autowired
     private CosmosContainer translateTaskV3Container;
 
@@ -79,6 +82,8 @@ public class TranslateTaskV3CosmosRepo {
                     .setMaxDegreeOfParallelism(1);
             List<TranslateTaskV3DO> result = new ArrayList<>();
             translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(result::add);
+            LOG.info("v3 cosmos listByStatus status={} fetched={} taskIds={}",
+                    status, result.size(), result.stream().map(TranslateTaskV3DO::getId).toList());
             return result;
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateTaskV3CosmosRepo.listByStatus",

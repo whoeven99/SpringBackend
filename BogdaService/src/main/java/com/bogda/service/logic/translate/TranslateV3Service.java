@@ -31,6 +31,8 @@ import com.bogda.service.logic.redis.TranslateTaskMonitorV3RedisService;
 import com.bogda.service.logic.token.UserTokenService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -52,6 +54,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class TranslateV3Service {
+    private static final Logger LOG = LoggerFactory.getLogger(TranslateV3Service.class);
     private static final int PROGRESS_FLUSH_INTERVAL_CHUNKS = 10;
     private static final String SAVE_PROGRESS_SUFFIX = ".save-progress";
     private static final double AI_EVAL_SAMPLE_RATIO = 0.30;
@@ -255,16 +258,24 @@ public class TranslateV3Service {
     public void processInitialTasksV3() {
         List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(0);
         if (tasks.isEmpty()) {
+            LOG.debug("v3 init poll no pending task(status=0)");
             return;
         }
+        LOG.info("v3 init poll fetched {} task(s), taskIds={}",
+                tasks.size(), tasks.stream().map(TranslateTaskV3DO::getId).collect(Collectors.toList()));
         tasks.sort(Comparator.comparing(t -> "manual".equals(t.getTaskType()) ? 0 : 1));
         for (TranslateTaskV3DO task : tasks) {
             if (!processingInitialTaskIds.add(task.getId())) {
+                LOG.info("v3 init skip duplicated processing lock, taskId={}, shop={}", task.getId(), task.getShopName());
                 continue;
             }
             try {
+                LOG.info("v3 init start, taskId={}, shop={}, source={}, target={}, checkpoint={}",
+                        task.getId(), task.getShopName(), task.getSource(), task.getTarget(), task.getCheckpoint());
                 initialToTranslateTaskV3(task);
+                LOG.info("v3 init finish, taskId={}, shop={}", task.getId(), task.getShopName());
             } catch (Exception e) {
+                LOG.error("v3 init failed, taskId={}, shop={}", task.getId(), task.getShopName(), e);
                 TraceReporterHolder.report("TranslateV3Service.processInitialTasksV3",
                         "FatalException process initial task failed, taskId=" + task.getId() + " error=" + e);
             } finally {
@@ -365,10 +376,12 @@ public class TranslateV3Service {
 
     public void initialToTranslateTaskV3(TranslateTaskV3DO task) {
         String taskId = task.getId();
+        LOG.info("v3 init reading shopify, taskId={}, shop={}", taskId, task.getShopName());
         translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_READING_SHOPIFY");
 
         UsersDO userDO = usersService.getUserByName(task.getShopName());
         if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
+            LOG.warn("v3 init stop no user/accessToken, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_FAILED_NO_USER");
             return;
         }
@@ -377,6 +390,8 @@ public class TranslateV3Service {
                 com.bogda.common.contants.TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
         if (primaryLocale != null && !primaryLocale.equals(task.getSource())) {
+            LOG.warn("v3 init stop locale mismatch, taskId={}, shop={}, primaryLocale={}, source={}",
+                    taskId, task.getShopName(), primaryLocale, task.getSource());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_STOPPED_PRIMARY_LOCALE_MISMATCH");
             translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 4);
             return;
@@ -385,10 +400,13 @@ public class TranslateV3Service {
         List<String> moduleList = JsonUtils.jsonToObject(task.getModuleList(), new com.fasterxml.jackson.core.type.TypeReference<>() {
         });
         if (CollectionUtils.isEmpty(moduleList)) {
+            LOG.info("v3 init empty modules directly move to translate, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_DONE_EMPTY_MODULES");
             translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 1);
             return;
         }
+        LOG.info("v3 init start dump modules, taskId={}, shop={}, moduleCount={}, modules={}",
+                taskId, task.getShopName(), moduleList.size(), moduleList);
 
         int totalCount = 0;
         int totalChars = 0;
@@ -418,6 +436,8 @@ public class TranslateV3Service {
 
         translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, task.getShopName(), checkpoint, metrics);
         translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 1);
+        LOG.info("v3 init done and status moved to 1, taskId={}, shop={}, totalCount={}, totalChars={}",
+                taskId, task.getShopName(), totalCount, totalChars);
     }
 
     public void translateEachTask(InitialTaskV2DO initialTaskV2DO) {
