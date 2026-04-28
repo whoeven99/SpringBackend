@@ -89,7 +89,7 @@ class SingleTranslateStrategyServiceTest {
 
             when(promptConfigService.buildHandlePrompt(anyString(), eq(testTarget), eq("hello world product"))).thenReturn("handle-prompt");
             Pair<String, Integer> mockPair = new Pair<>("你好世界产品", 50);
-            when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(context.getContent())))
+            when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), eq(context.getContent()), isNull()))
                     .thenReturn(mockPair);
 
             // When
