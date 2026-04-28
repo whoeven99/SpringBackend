@@ -12,6 +12,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * 定时任务AOP切面
@@ -26,7 +27,7 @@ import java.lang.reflect.Method;
 public class ScheduledTaskAspect {
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledTaskAspect.class);
 
-    @Value("${spring.config.activate.on-profile:local}")
+    @Value("${spring.profiles.active:${ApplicationEnv:${spring.config.activate.on-profile:local}}}")
     private String env;
 
     @Around("@annotation(org.springframework.scheduling.annotation.Scheduled)")
@@ -44,8 +45,8 @@ public class ScheduledTaskAspect {
         }
         
         // 没有注解，根据环境判断
-        // 直接获取SPRING_PROFILES_ACTIVE环境变量或配置
-        if ("test".equalsIgnoreCase(env) || "prod".equalsIgnoreCase(env)) {
+        // 兼容 spring.profiles.active / ApplicationEnv / spring.config.activate.on-profile
+        if (isCloudEnv(env)) {
             LOG.debug("执行定时任务: {} (云上环境: {})", method.getName(), env);
             return joinPoint.proceed();
         } else {
@@ -53,6 +54,15 @@ public class ScheduledTaskAspect {
             LOG.debug("跳过定时任务: {} (本地环境)", method.getName());
             return null;
         }
+    }
+
+    private boolean isCloudEnv(String rawEnv) {
+        if (rawEnv == null || rawEnv.trim().isEmpty()) {
+            return false;
+        }
+        return Arrays.stream(rawEnv.split(","))
+                .map(String::trim)
+                .anyMatch(v -> "test".equalsIgnoreCase(v) || "prod".equalsIgnoreCase(v));
     }
 }
 

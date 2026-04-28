@@ -17,6 +17,7 @@ public class TranslateTaskV3Scheduled {
     private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @Scheduled(fixedDelay = 30 * 1000)
+    @EnableScheduledTask
     public void initialToTranslateTaskV3() {
         translateV3Service.processInitialTasksV3();
     }
@@ -28,6 +29,7 @@ public class TranslateTaskV3Scheduled {
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
+    @EnableScheduledTask
     public void saveToShopifyV3() {
         translateV3Service.processSaveTasksV3();
     }
