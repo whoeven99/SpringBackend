@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -281,6 +282,42 @@ public class TranslateTaskMonitorV3RedisService {
         redisIntegration.expire(runtimeDoneKey(redisPrefix, taskId), ttlSeconds);
         redisIntegration.expire(runtimeFailKey(redisPrefix, taskId), ttlSeconds);
         redisIntegration.expire(runtimeResultKey(redisPrefix, taskId), ttlSeconds);
+        redisIntegration.expire(runtimeChunkDoneKey(redisPrefix, taskId), ttlSeconds);
+    }
+
+    /** 删除旧版存译文的 result hash；分 chunk 管线启动时可与 path-done 一并清理 */
+    public void deleteRuntimeTranslationPayloadKeys(String redisPrefix, String taskId) {
+        if (safePrefix(redisPrefix).isEmpty() || safeTaskId(taskId).isEmpty()) {
+            return;
+        }
+        redisIntegration.delete(runtimeResultKey(redisPrefix, taskId));
+    }
+
+    public void deleteRuntimePathDoneKey(String redisPrefix, String taskId) {
+        if (safePrefix(redisPrefix).isEmpty() || safeTaskId(taskId).isEmpty()) {
+            return;
+        }
+        redisIntegration.delete(runtimeDoneKey(redisPrefix, taskId));
+    }
+
+    public void addRuntimeChunkDonePath(String redisPrefix, String taskId, String chunkKey) {
+        if (safePrefix(redisPrefix).isEmpty() || safeTaskId(taskId).isEmpty() || chunkKey == null || chunkKey.isEmpty()) {
+            return;
+        }
+        redisIntegration.setSet(runtimeChunkDoneKey(redisPrefix, taskId), chunkKey);
+    }
+
+    public Set<String> getRuntimeChunkDoneSet(String redisPrefix, String taskId) {
+        Set<String> set = redisIntegration.getSet(runtimeChunkDoneKey(redisPrefix, taskId));
+        return set == null ? Collections.emptySet() : set;
+    }
+
+    private static String safePrefix(String redisPrefix) {
+        return redisPrefix == null ? "" : redisPrefix.trim();
+    }
+
+    private static String safeTaskId(String taskId) {
+        return taskId == null ? "" : taskId.trim();
     }
 
     public Map<String, String> getAll(String taskId) {
@@ -356,5 +393,10 @@ public class TranslateTaskMonitorV3RedisService {
 
     private String runtimeResultKey(String redisPrefix, String taskId) {
         return redisPrefix + ":task:" + taskId + ":result";
+    }
+
+    /** 已完成 chunk 的输入路径键（与 inputBlob 相对路径一致），不存译文 */
+    private String runtimeChunkDoneKey(String redisPrefix, String taskId) {
+        return redisPrefix + ":task:" + taskId + ":chunkDone";
     }
 }

@@ -13,5 +13,7 @@ target/
 # JARs
 !libs/aidge.jar
 /src/main/resources/application.local.properties
+**/application-local.yml
+AgentTask/src/main/resources/application.properties
 *.iml
 /.vscode

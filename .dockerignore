@@ -1,0 +1,10 @@
+AgentTask/src/main/resources/application.properties
+**/application-local.yml
+**/target/
+.git
+.gitignore
+.idea
+*.iml
+.DS_Store
+*.md
+!README.md

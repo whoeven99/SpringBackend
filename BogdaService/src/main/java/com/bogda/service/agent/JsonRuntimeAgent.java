@@ -1,4 +1,4 @@
-package com.bogda.api.agent;
+package com.bogda.service.agent;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;

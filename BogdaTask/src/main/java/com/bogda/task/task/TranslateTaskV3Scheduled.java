@@ -33,28 +33,21 @@ public class TranslateTaskV3Scheduled {
         translateV3Service.processTranslateTasksV3();
     }
 
-    @Scheduled(fixedDelay = 30 * 1000)
-//    @EnableScheduledTask
-    public void runtimeJsonTranslateTaskV3() {
-        LOG.info("v3 scheduler tick runtimeJsonTranslateTaskV3");
-        translateV3Service.processRuntimeJsonTasks();
-    }
-
-    @Scheduled(fixedDelay = 30 * 1000)
+//    @Scheduled(fixedDelay = 30 * 1000)
 //    @EnableScheduledTask
     public void saveToShopifyV3() {
         LOG.info("v3 scheduler tick saveToShopifyV3");
         translateV3Service.processSaveTasksV3();
     }
 
-    @Scheduled(fixedDelay = 60 * 1000)
+//    @Scheduled(fixedDelay = 60 * 1000)
 //    @EnableScheduledTask
     public void verifySavedToShopifyV3() {
         LOG.info("v3 scheduler tick verifySavedToShopifyV3");
         translateV3Service.processVerifyTasksV3();
     }
 
-    @Scheduled(fixedDelay = 5 * 60 * 1000)
+//    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void retrySaveFailedTasksV3() {
         try {
             LOG.info("v3 scheduler tick retrySaveFailedTasksV3");

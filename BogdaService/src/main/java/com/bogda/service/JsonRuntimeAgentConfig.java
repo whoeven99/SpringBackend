@@ -1,8 +1,8 @@
-package com.bogda.api.config;
+package com.bogda.service;
 
-import com.bogda.api.agent.JsonRuntimeAgent;
-import com.bogda.api.agent.JsonRuntimeAgentTools;
 import com.bogda.common.utils.ConfigUtils;
+import com.bogda.service.agent.JsonRuntimeAgent;
+import com.bogda.service.agent.JsonRuntimeAgentTools;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;

@@ -17,6 +17,7 @@
     <modules>
         <module>BogdaApi</module>
         <module>BogdaTask</module>
+        <module>AgentTask</module>
         <module>BogdaService</module>
         <module>BogdaIntegration</module>
         <module>BogdaRepository</module>

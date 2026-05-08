@@ -1,4 +1,4 @@
-package com.bogda.api.agent;
+package com.bogda.service.agent;
 
 import com.bogda.common.controller.request.JsonRuntimeTranslateRequest;
 import com.bogda.common.utils.JsonUtils;
