@@ -1,6 +1,7 @@
 package com.bogda.service.logic.translate;
 
 import com.bogda.common.controller.request.ClickTranslateRequest;
+import com.bogda.common.controller.request.JsonRuntimeTranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.common.contants.TranslateConstants;
@@ -10,6 +11,7 @@ import com.bogda.common.entity.DO.UsersDO;
 import com.bogda.common.entity.VO.SingleReturnVO;
 import com.bogda.common.entity.VO.SingleTranslateVO;
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.ModuleCodeUtils;
@@ -30,15 +32,21 @@ import com.bogda.service.logic.redis.ConfigRedisRepo;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV3RedisService;
 import com.bogda.service.logic.token.UserTokenService;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import kotlin.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PreDestroy;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,7 +57,26 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
@@ -60,6 +87,26 @@ public class TranslateV3Service {
     private static final double AI_EVAL_SAMPLE_RATIO = 0.30;
     private static final int MIN_EVAL_SAMPLES_PER_MODULE = 30;
     private static final int MAX_EVAL_SAMPLES_PER_MODULE = 1000;
+    private static final int SHOP_GROUP_WORKER_SIZE = 10;
+    private static final long JSON_RUNTIME_MAX_BYTES = 50L * 1024L * 1024L;
+    private static final long JSON_RUNTIME_DEFAULT_TTL_SECONDS = 72L * 3600L;
+    private static final int JSON_RUNTIME_DEFAULT_BATCH_SIZE = 80;
+    private static final int JSON_RUNTIME_DEFAULT_MAX_CHARS_PER_BATCH = 12000;
+    private static final int JSON_RUNTIME_DEFAULT_CONCURRENCY = 4;
+    private static final int JSON_RUNTIME_DEFAULT_MAX_RETRIES = 5;
+    private static final int JSON_RUNTIME_DEFAULT_BASE_BACKOFF_MS = 1000;
+    private static final int JSON_RUNTIME_HTTP_TIMEOUT_SECONDS = 120;
+    @Value("${translate.v3.init.module-limit:20}")
+    private int initModuleFetchLimit;
+    @Value("${translate.v3.chunk-translate-timeout-seconds:120}")
+    private int chunkTranslateTimeoutSeconds;
+    /** 与 JsonRuntimeAgent 共用一套 OpenAI 兼容接口配置，供仅含 init checkpoint 的 json-runtime 任务回填。 */
+    @Value("${langchain4j.openai.api-key:}")
+    private String jsonRuntimeFallbackApiKey;
+    @Value("${langchain4j.openai.base-url:https://api.deepseek.com/v1}")
+    private String jsonRuntimeFallbackBaseUrl;
+    @Value("${langchain4j.openai.model-name:deepseek-chat}")
+    private String jsonRuntimeFallbackModelName;
 
     @Autowired
     private TranslateV2Service translateV2Service;
@@ -91,11 +138,15 @@ public class TranslateV3Service {
     private final Set<String> processingTranslateTaskIds = ConcurrentHashMap.newKeySet();
     private final Set<String> processingSaveTaskIds = ConcurrentHashMap.newKeySet();
     private final Set<String> processingVerifyTaskIds = ConcurrentHashMap.newKeySet();
+    private final Set<String> processingShopNames = ConcurrentHashMap.newKeySet();
     private final Map<String, PendingProgress> pendingProgressMap = new ConcurrentHashMap<>();
+    private final List<ExecutorService> shopGroupExecutors = createShopGroupExecutors();
+    private final ExecutorService chunkTranslateExecutor = Executors.newFixedThreadPool(2);
 
     public BaseResponse<Object> createInitialTask(ClickTranslateRequest request) {
         String shopName = request.getShopName();
-        if (StringUtils.isEmpty(shopName) || StringUtils.isEmpty(request.getSource())
+        String normalizedSource = normalizeLocaleCode(request.getSource());
+        if (StringUtils.isEmpty(shopName) || StringUtils.isEmpty(normalizedSource)
                 || request.getTarget() == null || request.getTarget().length == 0
                 || CollectionUtils.isEmpty(request.getTranslateSettings3())
                 || StringUtils.isEmpty(request.getTranslateSettings1())) {
@@ -117,11 +168,15 @@ public class TranslateV3Service {
         }
 
         List<String> createdTaskIds = new ArrayList<>();
-        for (String target : request.getTarget()) {
+        for (String rawTarget : request.getTarget()) {
+            String target = normalizeLocaleCode(rawTarget);
+            if (StringUtils.isEmpty(target)) {
+                continue;
+            }
             if (configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
                 continue;
             }
-            if (translateTaskV3CosmosRepo.existsActiveTask(shopName, request.getSource(), target)) {
+            if (translateTaskV3CosmosRepo.existsActiveTask(shopName, normalizedSource, target)) {
                 continue;
             }
 
@@ -129,9 +184,10 @@ public class TranslateV3Service {
             TranslateTaskV3DO task = new TranslateTaskV3DO();
             task.setId(taskId);
             task.setShopName(shopName);
-            task.setSource(request.getSource());
+            task.setSource(normalizedSource);
             task.setTarget(target);
             task.setStatus(0);
+            task.setStatusText("INIT_PENDING");
             task.setTaskType("manual");
             task.setAiModel(aiModel);
             task.setCover(isCover);
@@ -155,8 +211,8 @@ public class TranslateV3Service {
                 continue;
             }
 
-            translateTaskMonitorV3RedisService.createRecord(taskId, shopName, request.getSource(), target, aiModel);
-            translatesService.updateTranslateStatus(shopName, 2, target, request.getSource());
+            translateTaskMonitorV3RedisService.createRecord(taskId, shopName, normalizedSource, target, aiModel);
+            translatesService.updateTranslateStatus(shopName, 2, target, normalizedSource);
             createdTaskIds.add(taskId);
         }
 
@@ -226,8 +282,8 @@ public class TranslateV3Service {
             result.put("taskId", taskId);
             result.put("shopName", effectiveShopName);
             result.put("modules", scoreModules);
-            result.put("moduleBlobPathPattern", "tasks/" + taskId + "/chunks/{module}/ai-score.json");
-            result.put("summaryBlobPath", "tasks/" + taskId + "/qa/ai-score.json");
+            result.put("moduleBlobPathPattern", "tasks/" + effectiveShopName + "/" + taskId + "/chunks/{module}/ai-score.json");
+            result.put("summaryBlobPath", "tasks/" + effectiveShopName + "/" + taskId + "/qa/ai-score.json");
             return BaseResponse.SuccessResponse(result);
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateV3Service.triggerAiScoreReport",
@@ -240,114 +296,1256 @@ public class TranslateV3Service {
         if (StringUtils.isEmpty(taskId)) {
             return null;
         }
-        List<Integer> statuses = List.of(0, 1, 2, 3, 4);
-        for (Integer status : statuses) {
-            List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(status);
-            if (tasks == null || tasks.isEmpty()) {
-                continue;
-            }
-            for (TranslateTaskV3DO task : tasks) {
-                if (task != null && taskId.equals(task.getId())) {
-                    return task;
-                }
-            }
+        List<TranslateTaskV3DO> byId = translateTaskV3CosmosRepo.listByTaskId(taskId);
+        if (byId == null || byId.isEmpty()) {
+            return null;
         }
-        return null;
+        if (byId.size() > 1) {
+            LOG.warn("v3 findTaskById: multiple documents share id={}, count={}, using first shopName={}",
+                    taskId, byId.size(), byId.get(0).getShopName());
+        }
+        return byId.get(0);
     }
 
     public void processInitialTasksV3() {
-        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(0);
-        if (tasks.isEmpty()) {
-            LOG.debug("v3 init poll no pending task(status=0)");
-            return;
-        }
-        LOG.info("v3 init poll fetched {} task(s), taskIds={}",
-                tasks.size(), tasks.stream().map(TranslateTaskV3DO::getId).collect(Collectors.toList()));
-        tasks.sort(Comparator.comparing(t -> "manual".equals(t.getTaskType()) ? 0 : 1));
-        for (TranslateTaskV3DO task : tasks) {
-            if (!processingInitialTaskIds.add(task.getId())) {
-                LOG.info("v3 init skip duplicated processing lock, taskId={}, shop={}", task.getId(), task.getShopName());
-                continue;
-            }
-            try {
-                LOG.info("v3 init start, taskId={}, shop={}, source={}, target={}, checkpoint={}",
-                        task.getId(), task.getShopName(), task.getSource(), task.getTarget(), task.getCheckpoint());
-                initialToTranslateTaskV3(task);
-                LOG.info("v3 init finish, taskId={}, shop={}", task.getId(), task.getShopName());
-            } catch (Exception e) {
-                LOG.error("v3 init failed, taskId={}, shop={}", task.getId(), task.getShopName(), e);
-                TraceReporterHolder.report("TranslateV3Service.processInitialTasksV3",
-                        "FatalException process initial task failed, taskId=" + task.getId() + " error=" + e);
-            } finally {
-                processingInitialTaskIds.remove(task.getId());
-            }
-        }
+        processTasksByShopName("INIT", 0, processingInitialTaskIds,
+                task -> false, this::initialToTranslateTaskV3,
+                () -> LOG.debug("v3 init poll no pending task(status=0)"));
     }
 
     public void processTranslateTasksV3() {
-        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(1);
-        if (tasks.isEmpty()) {
-            return;
+        processTasksByShopName("TRANSLATE", 1, processingTranslateTaskIds,
+                this::isRuntimeJsonTask, this::translateEachTaskV3, null);
+    }
+
+    public void processRuntimeJsonTasks() {
+        processTasksByShopName("RUNTIME_JSON", 1, processingTranslateTaskIds,
+                task -> !isRuntimeJsonTask(task), this::translateEachRuntimeJsonTask, null);
+    }
+
+    public Map<String, Object> executeJsonRuntimeTaskByTaskId(String taskId) {
+        String cleanTaskId = safeText(taskId);
+        if (cleanTaskId.isEmpty()) {
+            Map<String, Object> failed = baseRuntimeResponse("", "", "", "");
+            failed.put("status", "FAILED");
+            failed.put("reason", "MISSING_TASK_ID");
+            failed.put("hint", "taskId 为空");
+            return failed;
         }
-        tasks.sort(Comparator.comparing(t -> "manual".equals(t.getTaskType()) ? 0 : 1));
-        for (TranslateTaskV3DO task : tasks) {
-            if (!processingTranslateTaskIds.add(task.getId())) {
-                continue;
-            }
-            try {
-                translateEachTaskV3(task);
-            } catch (Exception e) {
-                TraceReporterHolder.report("TranslateV3Service.processTranslateTasksV3",
-                        "FatalException process translate task failed, taskId=" + task.getId() + " error=" + e);
-            } finally {
-                processingTranslateTaskIds.remove(task.getId());
+        TranslateTaskV3DO task = findTaskByIdAcrossStatuses(cleanTaskId);
+        if (task == null) {
+            Map<String, Object> failed = baseRuntimeResponse(cleanTaskId, "", "", "");
+            failed.put("status", "FAILED");
+            failed.put("reason", "TASK_NOT_FOUND");
+            failed.put("hint",
+                    "Cosmos translate_tasks_v3 中未找到该 id（已按 id 跨分区查询）。请核对环境/容器是否与 API 一致，且 id 字符串完全相等。");
+            return failed;
+        }
+        if (!isRuntimeJsonTask(task)) {
+            Map<String, Object> failed = baseRuntimeResponse(cleanTaskId, "", "", "");
+            failed.put("status", "FAILED");
+            failed.put("reason", "NOT_JSON_RUNTIME_TASK");
+            failed.put("taskType", task.getTaskType());
+            failed.put("hint", "该文档存在但 taskType 不是 json-runtime，无法用 JSON Runtime 执行器。");
+            return failed;
+        }
+        JsonRuntimeTranslateRequest request = buildRuntimeRequestFromTask(task);
+        if (safeText(request.getInputBlobUri()).isEmpty()
+                || safeText(request.getOutputBlobUri()).isEmpty()
+                || safeText(request.getReportBlobUri()).isEmpty()) {
+            Map<String, Object> failed = baseRuntimeResponse(cleanTaskId,
+                    safeText(request.getInputBlobUri()),
+                    safeText(request.getOutputBlobUri()),
+                    safeText(request.getReportBlobUri()));
+            failed.put("status", "FAILED");
+            failed.put("reason", "CHECKPOINT_MISSING_BLOB_URIS");
+            failed.put("hint",
+                    "checkpoint 中缺少 inputBlobUri / outputBlobUri / reportBlobUri（且无法根据 init 的 chunks/{module}/chunk-*.json 自动解析）。请确认已执行 init、checkpoint.modules 非空且 Blob 上存在 chunk 文件，或手写三个 URI。");
+            return failed;
+        }
+        return executeJsonRuntimeTask(request);
+    }
+
+    public Map<String, Object> getJsonRuntimeTaskProgress(String taskId, String redisPrefix) {
+        String cleanTaskId = safeText(taskId);
+        String cleanPrefix = safeText(redisPrefix);
+        if (cleanPrefix.isEmpty()) {
+            cleanPrefix = "tr:v1";
+        }
+        Map<String, Object> progress = new LinkedHashMap<>();
+        progress.put("taskId", cleanTaskId);
+        progress.put("redisPrefix", cleanPrefix);
+        progress.put("meta", translateTaskMonitorV3RedisService.getRuntimeMeta(cleanPrefix, cleanTaskId));
+        progress.put("doneSize", translateTaskMonitorV3RedisService.getRuntimeDoneSet(cleanPrefix, cleanTaskId).size());
+        progress.put("failMap", translateTaskMonitorV3RedisService.getRuntimeFailMap(cleanPrefix, cleanTaskId));
+        progress.put("resultSize", translateTaskMonitorV3RedisService.getRuntimeResultMap(cleanPrefix, cleanTaskId).size());
+        return progress;
+    }
+
+    /**
+     * 查看 json-runtime 任务在 Cosmos 中的状态、Redis 进度，以及 checkpoint 里引用的 Blob 是否存在与大小（可选文本预览）。
+     * {@code shopName} 若给出则直接点读 Cosmos，否则按各 status 扫描查找（与按 taskId 执行 runtime 一致）。
+     */
+    public BaseResponse<Object> getJsonRuntimeTaskDetail(String taskId,
+                                                         String shopName,
+                                                         String redisPrefix,
+                                                         boolean includeBlobPreview,
+                                                         int maxPreviewBytes) {
+        String cleanId = safeText(taskId);
+        if (cleanId.isEmpty()) {
+            return BaseResponse.FailedResponse("Missing parameters: taskId");
+        }
+        TranslateTaskV3DO task;
+        String cleanShop = safeText(shopName);
+        if (!cleanShop.isEmpty()) {
+            task = translateTaskV3CosmosRepo.getById(cleanId, cleanShop);
+        } else {
+            task = findTaskByIdAcrossStatuses(cleanId);
+        }
+        if (task == null) {
+            return BaseResponse.FailedResponse("Task not found: " + cleanId);
+        }
+        Map<String, Object> checkpoint = task.getCheckpoint() == null ? new HashMap<>() : task.getCheckpoint();
+        String effectiveRedis = safeText(redisPrefix);
+        if (effectiveRedis.isEmpty()) {
+            effectiveRedis = safeText(asString(checkpoint.get("redisPrefix")));
+        }
+        if (effectiveRedis.isEmpty()) {
+            effectiveRedis = "tr:v1";
+        }
+        int cap = maxPreviewBytes <= 0 ? 8192 : Math.min(Math.max(maxPreviewBytes, 256), 512 * 1024);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("cosmos", cosmosTaskV3ToMap(task));
+        body.put("resolvedRedisPrefix", effectiveRedis);
+        body.put("redisRuntime", getJsonRuntimeTaskProgress(cleanId, effectiveRedis));
+
+        Map<String, Object> blobs = new LinkedHashMap<>();
+        String inputUri = safeText(asString(checkpoint.get("inputBlobUri")));
+        String outputUri = safeText(asString(checkpoint.get("outputBlobUri")));
+        String reportUri = safeText(asString(checkpoint.get("reportBlobUri")));
+        blobs.put("input", buildRuntimeBlobSnapshot(inputUri, includeBlobPreview, cap));
+        blobs.put("output", buildRuntimeBlobSnapshot(outputUri, includeBlobPreview, cap));
+        blobs.put("report", buildRuntimeBlobSnapshot(reportUri, includeBlobPreview, cap));
+        body.put("blobs", blobs);
+
+        if (includeBlobPreview) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> reportSnap = (Map<String, Object>) blobs.get("report");
+            if (reportSnap != null) {
+                Object preview = reportSnap.get("preview");
+                if (preview instanceof String s && !s.isEmpty()) {
+                    try {
+                        body.put("reportParsed", JsonUtils.jsonToObject(s, new TypeReference<Map<String, Object>>() {
+                        }));
+                    } catch (Exception ignored) {
+                        // 报告非 JSON 或预览被截断时不解析
+                    }
+                }
             }
         }
+
+        LOG.info("json-runtime task detail taskId={} shopName={} taskType={}", cleanId, task.getShopName(), task.getTaskType());
+
+        return BaseResponse.SuccessResponse(body);
+    }
+
+    private Map<String, Object> cosmosTaskV3ToMap(TranslateTaskV3DO task) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", task.getId());
+        m.put("shopName", task.getShopName());
+        m.put("source", task.getSource());
+        m.put("target", task.getTarget());
+        m.put("status", task.getStatus());
+        m.put("statusText", task.getStatusText());
+        m.put("taskType", task.getTaskType());
+        m.put("aiModel", task.getAiModel());
+        m.put("checkpoint", task.getCheckpoint());
+        m.put("metrics", task.getMetrics());
+        m.put("createdAt", task.getCreatedAt());
+        m.put("updatedAt", task.getUpdatedAt());
+        m.put("isCover", task.isCover());
+        m.put("isHandle", task.isHandle());
+        m.put("moduleList", task.getModuleList());
+        m.put("sessionId", task.getSessionId());
+        return m;
+    }
+
+    private Map<String, Object> buildRuntimeBlobSnapshot(String uriOrPath, boolean includePreview, int maxPreviewBytes) {
+        Map<String, Object> snap = new LinkedHashMap<>();
+        String uri = safeText(uriOrPath);
+        snap.put("uri", uri);
+        if (uri.isEmpty()) {
+            snap.put("exists", false);
+            snap.put("note", "checkpoint 中无此 URI（非 json-runtime 或字段未写入）");
+            return snap;
+        }
+        String path = toBlobPath(uri);
+        snap.put("blobPath", path);
+        boolean exists = translateTaskV3BlobRepo.blobExists(path);
+        snap.put("exists", exists);
+        if (!exists) {
+            return snap;
+        }
+        Long sizeBytes = translateTaskV3BlobRepo.getBlobSizeBytes(path);
+        snap.put("sizeBytes", sizeBytes);
+        if (!includePreview) {
+            return snap;
+        }
+        String preview = translateTaskV3BlobRepo.readTextPrefix(path, maxPreviewBytes);
+        snap.put("preview", preview);
+        if (sizeBytes != null) {
+            snap.put("previewTruncated", preview != null && sizeBytes > maxPreviewBytes);
+        }
+        return snap;
     }
 
     public void processSaveTasksV3() {
-        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(2);
-        if (tasks.isEmpty()) {
+        processTasksByShopName("SAVE", 2, processingSaveTaskIds,
+                task -> false, this::saveToShopifyV3, null);
+    }
+
+    public void processVerifyTasksV3() {
+        processTasksByShopName("VERIFY", 6, processingVerifyTaskIds,
+                this::isVerifyFinal, this::verifySavedDataV3, null);
+    }
+
+    public Map<String, Object> executeJsonRuntimeTask(JsonRuntimeTranslateRequest request) {
+        JsonRuntimeTranslateRequest safeRequest = request == null ? new JsonRuntimeTranslateRequest() : request;
+        applyDefaultRuntimeLlmConfigIfMissing(safeRequest);
+        long startedMs = System.currentTimeMillis();
+        String taskId = safeText(safeRequest.getTaskId());
+        String inputBlobUri = safeText(safeRequest.getInputBlobUri());
+        String rawOutputUri = safeText(safeRequest.getOutputBlobUri());
+        String outputBlobUri = runtimeOutputUriBesideInput(inputBlobUri, rawOutputUri);
+        if (!outputBlobUri.equals(rawOutputUri)) {
+            LOG.info("json-runtime output co-located with input directory: {} -> {}", rawOutputUri, outputBlobUri);
+        }
+        safeRequest.setOutputBlobUri(outputBlobUri);
+        String reportBlobUri = safeText(safeRequest.getReportBlobUri());
+        String redisPrefix = safeText(safeRequest.getRedisPrefix());
+        if (redisPrefix.isEmpty()) {
+            redisPrefix = "tr:v1";
+        }
+
+        Map<String, Object> finalResponse = baseRuntimeResponse(taskId, inputBlobUri, outputBlobUri, reportBlobUri);
+        if (taskId.isEmpty() || inputBlobUri.isEmpty() || outputBlobUri.isEmpty() || reportBlobUri.isEmpty()) {
+            finalResponse.put("status", "FAILED");
+            finalResponse.put("durationMs", System.currentTimeMillis() - startedMs);
+            maybeSyncCosmosAfterJsonRuntime(taskId, finalResponse);
+            return finalResponse;
+        }
+
+        String inputBlobPath = toBlobPath(inputBlobUri);
+        String outputBlobPath = toBlobPath(outputBlobUri);
+        String reportBlobPath = toBlobPath(reportBlobUri);
+        JsonNode root = null;
+        Map<String, String> failMap = new LinkedHashMap<>();
+
+        try {
+            // Step 0: 读取输入 Blob，并做大小/JSON 合法性校验。
+            String inputRaw = translateTaskV3BlobRepo.readText(inputBlobPath);
+            if (inputRaw == null) {
+                failMap.put("/", "INPUT_BLOB_NOT_FOUND");
+                return finishRuntimeTaskWithFailure(
+                        redisPrefix, taskId, safeRequest, failMap, root, outputBlobPath, reportBlobPath, finalResponse, startedMs);
+            }
+            byte[] inputBytes = inputRaw.getBytes(StandardCharsets.UTF_8);
+            if (inputBytes.length > JSON_RUNTIME_MAX_BYTES) {
+                failMap.put("/", "INPUT_TOO_LARGE");
+                return finishRuntimeTaskWithFailure(
+                        redisPrefix, taskId, safeRequest, failMap, root, outputBlobPath, reportBlobPath, finalResponse, startedMs);
+            }
+            root = JsonUtils.readTree(inputRaw);
+            if (root == null) {
+                failMap.put("/", "INPUT_JSON_INVALID");
+                return finishRuntimeTaskWithFailure(
+                        redisPrefix, taskId, safeRequest, failMap, root, outputBlobPath, reportBlobPath, finalResponse, startedMs);
+            }
+
+            // Step 0(恢复): 使用 fileHash 防串任务；同 taskId 但输入文件变更则直接失败。
+            String fileHash = sha256(inputRaw);
+            Map<String, String> oldMeta = translateTaskMonitorV3RedisService.getRuntimeMeta(redisPrefix, taskId);
+            String oldHash = oldMeta.get("fileHash");
+            if (!safeText(oldHash).isEmpty() && !oldHash.equals(fileHash)) {
+                failMap.put("/", "FILE_HASH_MISMATCH");
+                Map<String, Object> mismatchMeta = new LinkedHashMap<>();
+                mismatchMeta.put("status", "FAILED");
+                mismatchMeta.put("updatedAt", Instant.now().toString());
+                translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, mismatchMeta);
+                return finishRuntimeTaskWithFailure(
+                        redisPrefix, taskId, safeRequest, failMap, root, outputBlobPath, reportBlobPath, finalResponse, startedMs);
+            }
+
+            int batchSize = positiveOrDefault(safeRequest.getBatchSize(), JSON_RUNTIME_DEFAULT_BATCH_SIZE);
+            int maxCharsPerBatch = positiveOrDefault(safeRequest.getMaxCharsPerBatch(), JSON_RUNTIME_DEFAULT_MAX_CHARS_PER_BATCH);
+            int concurrency = positiveOrDefault(safeRequest.getConcurrency(), JSON_RUNTIME_DEFAULT_CONCURRENCY);
+            int maxRetries = positiveOrDefault(safeRequest.getMaxRetries(), JSON_RUNTIME_DEFAULT_MAX_RETRIES);
+            int baseBackoffMs = positiveOrDefault(safeRequest.getBaseBackoffMs(), JSON_RUNTIME_DEFAULT_BASE_BACKOFF_MS);
+
+            String startedAt = safeText(oldMeta.get("startedAt"));
+            if (startedAt.isEmpty()) {
+                startedAt = Instant.now().toString();
+            }
+            Map<String, Object> runningMeta = new LinkedHashMap<>();
+            runningMeta.put("status", "RUNNING");
+            runningMeta.put("inputBlobUri", inputBlobUri);
+            runningMeta.put("outputBlobUri", outputBlobUri);
+            runningMeta.put("reportBlobUri", reportBlobUri);
+            runningMeta.put("fileHash", fileHash);
+            runningMeta.put("startedAt", startedAt);
+            runningMeta.put("updatedAt", Instant.now().toString());
+            runningMeta.put("doneCount", Math.max(parseInt(oldMeta.get("doneCount")), 0));
+            runningMeta.put("failCount", Math.max(parseInt(oldMeta.get("failCount")), 0));
+            translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, runningMeta);
+
+            // Step 1: 仅提取 key=sourceValue 且 value 为字符串的翻译项。
+            // 对非字符串 sourceValue 不做翻译，但会记录日志，避免静默跳过。
+            List<RuntimeSourceItem> allItems = new ArrayList<>();
+            List<RuntimeSkippedItem> skippedItems = new ArrayList<>();
+            collectSourceValueItems(root, "", allItems, skippedItems);
+            if (!skippedItems.isEmpty()) {
+                int sampleSize = Math.min(skippedItems.size(), 20);
+                LOG.warn("json-runtime skip non-text sourceValue, taskId={}, skipCount={}, samples={}",
+                        taskId, skippedItems.size(), skippedItems.subList(0, sampleSize));
+            }
+            int totalCount = allItems.size();
+            translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, Map.of(
+                    "totalCount", totalCount,
+                    "updatedAt", Instant.now().toString()
+            ));
+
+            // Step 2: 基于 done 集合做断点恢复过滤，只处理未完成路径。
+            Set<String> doneSet = translateTaskMonitorV3RedisService.getRuntimeDoneSet(redisPrefix, taskId);
+            List<RuntimeSourceItem> pending = new ArrayList<>();
+            for (RuntimeSourceItem item : allItems) {
+                if (doneSet.contains(item.path)) {
+                    continue;
+                }
+                pending.add(item);
+            }
+
+            int doneCount = Math.max(doneSet.size(), parseInt(oldMeta.get("doneCount")));
+            int failCount = parseInt(oldMeta.get("failCount"));
+            if (!pending.isEmpty()) {
+                // Step 3: 按 batchSize + maxCharsPerBatch 切批，并按 concurrency 并发处理。
+                List<List<RuntimeSourceItem>> batches = splitRuntimeBatches(pending, batchSize, maxCharsPerBatch);
+                ExecutorService executor = Executors.newFixedThreadPool(Math.max(1, concurrency));
+                CompletionService<RuntimeBatchResult> completionService = new ExecutorCompletionService<>(executor);
+                try {
+                    for (List<RuntimeSourceItem> batch : batches) {
+                        completionService.submit(() -> processRuntimeBatchWithRetry(batch, safeRequest, maxRetries, baseBackoffMs));
+                    }
+                    for (int i = 0; i < batches.size(); i++) {
+                        Future<RuntimeBatchResult> future = completionService.take();
+                        RuntimeBatchResult batchResult = future.get();
+                        if (!batchResult.successMap.isEmpty()) {
+                            // Step 5(成功批次): 原子写入 done/result/doneCount。
+                            translateTaskMonitorV3RedisService.addRuntimeDonePaths(
+                                    redisPrefix, taskId, new ArrayList<>(batchResult.successMap.keySet()));
+                            translateTaskMonitorV3RedisService.setRuntimeResultMap(redisPrefix, taskId, batchResult.successMap);
+                            translateTaskMonitorV3RedisService.incrementRuntimeDoneCount(redisPrefix, taskId, batchResult.successMap.size());
+                            doneCount += batchResult.successMap.size();
+                        }
+                        if (!batchResult.failMap.isEmpty()) {
+                            // Step 5(失败批次): 记录 fail/failCount，但不中断后续批次。
+                            translateTaskMonitorV3RedisService.setRuntimeFailMap(redisPrefix, taskId, batchResult.failMap);
+                            translateTaskMonitorV3RedisService.incrementRuntimeFailCount(redisPrefix, taskId, batchResult.failMap.size());
+                            failCount += batchResult.failMap.size();
+                        }
+                        translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, Map.of(
+                                "updatedAt", Instant.now().toString(),
+                                "status", "RUNNING"
+                        ));
+
+                        long elapsedMs = System.currentTimeMillis() - startedMs;
+                        int finished = Math.min(totalCount, doneCount + failCount);
+                        long etaSeconds = estimateEtaSeconds(totalCount, finished, elapsedMs);
+                        LOG.info("json-runtime progress taskId={}, done={}/{}, failed={}, eta={}s, batchCost={}ms",
+                                taskId, doneCount, totalCount, failCount, etaSeconds, batchResult.batchCostMs);
+                    }
+                } finally {
+                    executor.shutdown();
+                }
+            }
+
+            // Step 6: 用 result(path->text) 回填原 JSON，再写 output Blob。
+            Map<String, String> resultMap = translateTaskMonitorV3RedisService.getRuntimeResultMap(redisPrefix, taskId);
+            for (Map.Entry<String, String> entry : resultMap.entrySet()) {
+                setTextByPointer(root, entry.getKey(), entry.getValue());
+            }
+            String prettyJson = JsonUtils.OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+            boolean outputSaved = translateTaskV3BlobRepo.writeText(outputBlobPath, prettyJson);
+            if (!outputSaved) {
+                failMap.put("/", "OUTPUT_BLOB_WRITE_FAILED");
+            }
+
+            Map<String, String> redisFailMap = translateTaskMonitorV3RedisService.getRuntimeFailMap(redisPrefix, taskId);
+            if (!redisFailMap.isEmpty()) {
+                failMap.putAll(redisFailMap);
+            }
+
+            int done = translateTaskMonitorV3RedisService.getRuntimeDoneSet(redisPrefix, taskId).size();
+            int failed = failMap.size();
+            // Step 7/8: 生成报告并收尾状态，最后刷新 meta + TTL。
+            String status = failed == 0 ? "COMPLETED" : "PARTIAL_FAILED";
+            if (!outputSaved) {
+                status = "FAILED";
+            }
+            writeRuntimeReportBlob(taskId, status, totalCount, done, failed, startedMs, failMap, reportBlobPath);
+
+            Map<String, Object> finalMeta = new LinkedHashMap<>();
+            finalMeta.put("status", status);
+            finalMeta.put("inputBlobUri", inputBlobUri);
+            finalMeta.put("outputBlobUri", outputBlobUri);
+            finalMeta.put("reportBlobUri", reportBlobUri);
+            finalMeta.put("totalCount", totalCount);
+            finalMeta.put("doneCount", done);
+            finalMeta.put("failCount", failed);
+            finalMeta.put("updatedAt", Instant.now().toString());
+            translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, finalMeta);
+            translateTaskMonitorV3RedisService.expireRuntimeKeys(redisPrefix, taskId, JSON_RUNTIME_DEFAULT_TTL_SECONDS);
+
+            finalResponse.put("status", status);
+            finalResponse.put("total", totalCount);
+            finalResponse.put("done", done);
+            finalResponse.put("failed", failed);
+            finalResponse.put("durationMs", System.currentTimeMillis() - startedMs);
+            maybeSyncCosmosAfterJsonRuntime(taskId, finalResponse);
+            return finalResponse;
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateV3Service.executeJsonRuntimeTask",
+                    "FatalException json runtime failed, taskId=" + taskId + ", error=" + e);
+            failMap.put("/", "RUNTIME_EXCEPTION:" + e.getClass().getSimpleName());
+            return finishRuntimeTaskWithFailure(
+                    redisPrefix, taskId, safeRequest, failMap, root, outputBlobPath, reportBlobPath, finalResponse, startedMs);
+        }
+    }
+
+    private void translateEachRuntimeJsonTask(TranslateTaskV3DO task) {
+        if (!isRuntimeJsonTask(task)) {
             return;
         }
-        tasks.sort(Comparator.comparing(t -> "manual".equals(t.getTaskType()) ? 0 : 1));
-        for (TranslateTaskV3DO task : tasks) {
-            if (!processingSaveTaskIds.add(task.getId())) {
-                continue;
+        JsonRuntimeTranslateRequest request = buildRuntimeRequestFromTask(task);
+        executeJsonRuntimeTask(request);
+    }
+
+    /**
+     * 将 runtime 最终结果同步到 Cosmos：与 Redis/Blob 一致。无论通过定时任务、HTTP 还是 Agent 触发，只要 Cosmos 中存在同 id 的 json-runtime 任务即会 patch。
+     */
+    private void maybeSyncCosmosAfterJsonRuntime(String taskId, Map<String, Object> result) {
+        if (safeText(taskId).isEmpty() || result == null) {
+            return;
+        }
+        TranslateTaskV3DO task = findTaskByIdAcrossStatuses(taskId);
+        if (task == null || !isRuntimeJsonTask(task) || !taskId.equals(task.getId())) {
+            return;
+        }
+        String status = asString(result.get("status"));
+        Map<String, Object> checkpoint = task.getCheckpoint() == null ? new HashMap<>() : new HashMap<>(task.getCheckpoint());
+        checkpoint.put("phase", "RUNTIME_JSON_" + status);
+        checkpoint.put("updatedAt", Instant.now().toString());
+        checkpoint.put("runtimeResult", result);
+        String in = asString(result.get("inputBlobUri"));
+        String out = asString(result.get("outputBlobUri"));
+        String rep = asString(result.get("reportBlobUri"));
+        if (!in.isEmpty()) {
+            checkpoint.put("inputBlobUri", in);
+        }
+        if (!out.isEmpty()) {
+            checkpoint.put("outputBlobUri", out);
+        }
+        if (!rep.isEmpty()) {
+            checkpoint.put("reportBlobUri", rep);
+        }
+        Map<String, Object> metrics = task.getMetrics() == null ? new HashMap<>() : new HashMap<>(task.getMetrics());
+        metrics.put("totalCount", parseInt(asString(result.get("total"))));
+        metrics.put("translatedCount", parseInt(asString(result.get("done"))));
+        metrics.put("failedCount", parseInt(asString(result.get("failed"))));
+        metrics.put("durationMs", parseInt(asString(result.get("durationMs"))));
+        metrics.put("updatedAt", Instant.now().toString());
+        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
+        if ("COMPLETED".equals(status) || "PARTIAL_FAILED".equals(status)) {
+            translateTaskV3CosmosRepo.patchStatus(task.getId(), task.getShopName(), 2);
+        } else {
+            translateTaskV3CosmosRepo.patchStatus(task.getId(), task.getShopName(), 4);
+        }
+    }
+
+    private boolean isRuntimeJsonTask(TranslateTaskV3DO task) {
+        if (task == null) {
+            return false;
+        }
+        return "json-runtime".equalsIgnoreCase(task.getTaskType());
+    }
+
+    private JsonRuntimeTranslateRequest buildRuntimeRequestFromTask(TranslateTaskV3DO task) {
+        Map<String, Object> checkpoint = task.getCheckpoint() == null ? new HashMap<>() : task.getCheckpoint();
+        JsonRuntimeTranslateRequest request = new JsonRuntimeTranslateRequest();
+        request.setTaskId(task.getId());
+        request.setInputBlobUri(asString(checkpoint.get("inputBlobUri")));
+        request.setOutputBlobUri(asString(checkpoint.get("outputBlobUri")));
+        request.setReportBlobUri(asString(checkpoint.get("reportBlobUri")));
+        request.setRedisPrefix(asString(checkpoint.get("redisPrefix")));
+        request.setRedisConn(asString(checkpoint.get("redisConn")));
+        request.setProvider(asString(checkpoint.get("provider")));
+        request.setModel(asString(checkpoint.get("model")));
+        request.setApiBase(asString(checkpoint.get("apiBase")));
+        request.setApiKey(asString(checkpoint.get("apiKey")));
+        request.setSourceLang(asString(checkpoint.get("sourceLang")));
+        request.setTargetLang(asString(checkpoint.get("targetLang")));
+        request.setBatchSize(parseIntOrNull(checkpoint.get("batchSize")));
+        request.setMaxCharsPerBatch(parseIntOrNull(checkpoint.get("maxCharsPerBatch")));
+        request.setConcurrency(parseIntOrNull(checkpoint.get("concurrency")));
+        request.setMaxRetries(parseIntOrNull(checkpoint.get("maxRetries")));
+        request.setBaseBackoffMs(parseIntOrNull(checkpoint.get("baseBackoffMs")));
+        if (StringUtils.isEmpty(request.getSourceLang())) {
+            request.setSourceLang(safeText(task.getSource()));
+        }
+        if (StringUtils.isEmpty(request.getTargetLang())) {
+            request.setTargetLang(safeText(task.getTarget()));
+        }
+        ensureRuntimeBlobUrisFromInitArtifacts(task, request);
+        applyDefaultRuntimeLlmConfigIfMissing(request);
+        return request;
+    }
+
+    /**
+     * init 仅写入 modules/metrics，通常不带 provider/model/apiBase/apiKey；从 Spring 与 {@link ConfigUtils} 回填（与 {@code JsonRuntimeAgentConfig} 同源），避免整批 {@code INVALID_PROVIDER_CONFIG}。
+     */
+    private void applyDefaultRuntimeLlmConfigIfMissing(JsonRuntimeTranslateRequest request) {
+        if (request == null) {
+            return;
+        }
+        boolean hadGap = StringUtils.isEmpty(request.getProvider())
+                || StringUtils.isEmpty(request.getModel())
+                || StringUtils.isEmpty(request.getApiBase())
+                || StringUtils.isEmpty(request.getApiKey());
+        if (StringUtils.isEmpty(request.getProvider())) {
+            request.setProvider("openai-compatible");
+        }
+        if (StringUtils.isEmpty(request.getModel())) {
+            request.setModel(firstNonEmptyCfg(jsonRuntimeFallbackModelName,
+                    ConfigUtils.getConfig("langchain4j.openai.model-name"), "deepseek-chat"));
+        }
+        if (StringUtils.isEmpty(request.getApiBase())) {
+            request.setApiBase(firstNonEmptyCfg(jsonRuntimeFallbackBaseUrl,
+                    ConfigUtils.getConfig("langchain4j.openai.base-url"),
+                    "https://api.deepseek.com/v1"));
+        }
+        if (StringUtils.isEmpty(request.getApiKey())) {
+            request.setApiKey(firstNonEmptyCfg(jsonRuntimeFallbackApiKey,
+                    ConfigUtils.getConfig("langchain4j.openai.api-key"),
+                    ConfigUtils.getConfig("DEEPSEEK_API_KEY"),
+                    ConfigUtils.getConfig("deepseek")));
+        }
+        if (hadGap) {
+            LOG.info("json-runtime LLM defaults applied where checkpoint/request omitted fields, model={}, apiKeyConfigured={}",
+                    request.getModel(), !StringUtils.isEmpty(request.getApiKey()));
+        }
+    }
+
+    private static String firstNonEmptyCfg(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String v : values) {
+            if (v != null && !v.trim().isEmpty()) {
+                return v.trim();
             }
+        }
+        return "";
+    }
+
+    /**
+     * 当 checkpoint 未写 Blob URI 时，按 {@link #initialToTranslateTaskV3} / {@link #dumpModuleToBlob} 落盘规则解析：
+     * {@code tasks/{shop}/{taskId}/chunks/{module}/chunk-{n}.json}。
+     * 可选覆盖：checkpoint.runtimeModule、checkpoint.runtimeChunkIndex（从 0 开始）。
+     * 输出/报告默认与同目录：runtime-output-{chunkStem}.json、runtime-report-{chunkStem}.json。
+     */
+    private void ensureRuntimeBlobUrisFromInitArtifacts(TranslateTaskV3DO task, JsonRuntimeTranslateRequest request) {
+        if (task == null || request == null) {
+            return;
+        }
+        String shop = safeText(task.getShopName());
+        String tid = safeText(task.getId());
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        Map<String, Object> cp = task.getCheckpoint() == null ? Collections.emptyMap() : task.getCheckpoint();
+
+        if (safeText(request.getInputBlobUri()).isEmpty()) {
+            List<String> modules = parseCheckpointModulesList(cp.get("modules"));
+            if (modules.isEmpty()) {
+                LOG.debug("json-runtime derive blob: checkpoint.modules empty, taskId={}", tid);
+                return;
+            }
+            String runtimeModule = safeText(asString(cp.get("runtimeModule")));
+            String module = (!runtimeModule.isEmpty() && modules.contains(runtimeModule)) ? runtimeModule : modules.get(0);
+            List<String> chunkPaths = listInitChunkBlobPaths(shop, tid, module);
+            if (chunkPaths.isEmpty()) {
+                LOG.warn("json-runtime derive blob: no chunk-*.json under module={}, taskId={}", module, tid);
+                return;
+            }
+            Integer idx = parseIntOrNull(cp.get("runtimeChunkIndex"));
+            String chosen;
+            if (idx != null && idx >= 0) {
+                chosen = chunkPaths.stream()
+                        .filter(p -> p.endsWith("chunk-" + idx + ".json"))
+                        .findFirst()
+                        .orElse(chunkPaths.get(0));
+            } else {
+                chosen = chunkPaths.get(0);
+            }
+            request.setInputBlobUri(chosen);
+            LOG.info("json-runtime derived inputBlobUri from init layout, taskId={}, path={}", tid, chosen);
+        }
+
+        String inPath = toBlobPath(safeText(request.getInputBlobUri()));
+        if (inPath.isEmpty()) {
+            return;
+        }
+        int slash = inPath.lastIndexOf('/');
+        if (slash < 0) {
+            return;
+        }
+        String parent = inPath.substring(0, slash + 1);
+        String file = inPath.substring(slash + 1);
+        String baseStem = file.endsWith(".json") ? file.substring(0, file.length() - 5) : file;
+        if (safeText(request.getOutputBlobUri()).isEmpty()) {
+            request.setOutputBlobUri(parent + "runtime-output-" + baseStem + ".json");
+            LOG.info("json-runtime derived outputBlobUri, taskId={}, path={}", tid, request.getOutputBlobUri());
+        }
+        if (safeText(request.getReportBlobUri()).isEmpty()) {
+            request.setReportBlobUri(parent + "runtime-report-" + baseStem + ".json");
+            LOG.info("json-runtime derived reportBlobUri, taskId={}, path={}", tid, request.getReportBlobUri());
+        }
+    }
+
+    private List<String> listInitChunkBlobPaths(String shopName, String taskId, String module) {
+        String prefix = blobPath(shopName, taskId, "chunks/" + module + "/");
+        List<String> paths = translateTaskV3BlobRepo.listBlobPaths(prefix);
+        if (paths == null || paths.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return paths.stream()
+                .filter(p -> {
+                    int s = p.lastIndexOf('/');
+                    String name = s >= 0 ? p.substring(s + 1) : p;
+                    return name.startsWith("chunk-") && name.endsWith(".json");
+                })
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    private List<String> parseCheckpointModulesList(Object modulesObj) {
+        if (modulesObj == null) {
+            return Collections.emptyList();
+        }
+        if (modulesObj instanceof List<?> rawList) {
+            List<String> out = new ArrayList<>();
+            for (Object o : rawList) {
+                if (o == null) {
+                    continue;
+                }
+                String s = safeText(asString(o.toString()));
+                if (!s.isEmpty()) {
+                    out.add(s);
+                }
+            }
+            return out;
+        }
+        if (modulesObj instanceof String str && !str.isEmpty()) {
+            List<String> parsed = JsonUtils.jsonToObject(str, new TypeReference<List<String>>() {
+            });
+            if (parsed == null) {
+                return Collections.emptyList();
+            }
+            return parsed.stream().filter(x -> x != null && !safeText(x).isEmpty()).collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+
+    private Map<String, Object> finishRuntimeTaskWithFailure(String redisPrefix,
+                                                             String taskId,
+                                                             JsonRuntimeTranslateRequest request,
+                                                             Map<String, String> failMap,
+                                                             JsonNode root,
+                                                             String outputBlobPath,
+                                                             String reportBlobPath,
+                                                             Map<String, Object> finalResponse,
+                                                             long startedMs) {
+        String inputBlobUri = request == null ? "" : safeText(request.getInputBlobUri());
+        String outputBlobUri = request == null ? "" : safeText(request.getOutputBlobUri());
+        String reportBlobUri = request == null ? "" : safeText(request.getReportBlobUri());
+
+        if (root != null) {
             try {
-                saveToShopifyV3(task);
-            } catch (Exception e) {
-                TraceReporterHolder.report("TranslateV3Service.processSaveTasksV3",
-                        "FatalException process save task failed, taskId=" + task.getId() + " error=" + e);
-            } finally {
-                processingSaveTaskIds.remove(task.getId());
+                String rawOutput = JsonUtils.OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+                translateTaskV3BlobRepo.writeText(outputBlobPath, rawOutput);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (!failMap.isEmpty()) {
+            translateTaskMonitorV3RedisService.setRuntimeFailMap(redisPrefix, taskId, failMap);
+        }
+        writeRuntimeReportBlob(taskId, "FAILED", 0, 0, failMap.size(), startedMs, failMap, reportBlobPath);
+
+        Map<String, Object> failedMeta = new LinkedHashMap<>();
+        failedMeta.put("status", "FAILED");
+        failedMeta.put("inputBlobUri", inputBlobUri);
+        failedMeta.put("outputBlobUri", outputBlobUri);
+        failedMeta.put("reportBlobUri", reportBlobUri);
+        failedMeta.put("updatedAt", Instant.now().toString());
+        failedMeta.put("failCount", failMap.size());
+        translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, failedMeta);
+        translateTaskMonitorV3RedisService.expireRuntimeKeys(redisPrefix, taskId, JSON_RUNTIME_DEFAULT_TTL_SECONDS);
+
+        finalResponse.put("status", "FAILED");
+        finalResponse.put("failed", failMap.size());
+        finalResponse.put("durationMs", System.currentTimeMillis() - startedMs);
+        maybeSyncCosmosAfterJsonRuntime(taskId, finalResponse);
+        return finalResponse;
+    }
+
+    private RuntimeBatchResult processRuntimeBatchWithRetry(List<RuntimeSourceItem> batch,
+                                                            JsonRuntimeTranslateRequest request,
+                                                            int maxRetries,
+                                                            int baseBackoffMs) {
+        int attempts = 0;
+        RuntimeModelException lastError = null;
+        while (attempts < maxRetries) {
+            attempts++;
+            long begin = System.currentTimeMillis();
+            try {
+                // Step 4: 单批次调用模型翻译；返回 path->translatedText 映射。
+                Map<String, String> sourceMap = new LinkedHashMap<>();
+                for (RuntimeSourceItem item : batch) {
+                    sourceMap.put(item.path, item.text);
+                }
+                Map<String, String> translated = requestRuntimeModelTranslate(sourceMap, request);
+                Map<String, String> successMap = new LinkedHashMap<>();
+                Map<String, String> failMap = new LinkedHashMap<>();
+                for (RuntimeSourceItem item : batch) {
+                    String translatedText = translated.get(item.path);
+                    if (translatedText == null) {
+                        failMap.put(item.path, "MISSING_PATH_IN_MODEL_RESPONSE");
+                    } else {
+                        successMap.put(item.path, translatedText);
+                    }
+                }
+                return new RuntimeBatchResult(successMap, failMap, System.currentTimeMillis() - begin);
+            } catch (RuntimeModelException e) {
+                lastError = e;
+                if (!e.retryable || attempts >= maxRetries) {
+                    break;
+                }
+                // 429/5xx/网络异常使用指数退避 + 抖动。
+                long sleep = computeBackoffSleepMs(baseBackoffMs, attempts);
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        Map<String, String> failMap = new LinkedHashMap<>();
+        String reason = lastError == null ? "UNKNOWN_BATCH_ERROR" : lastError.message;
+        for (RuntimeSourceItem item : batch) {
+            failMap.put(item.path, reason);
+        }
+        return new RuntimeBatchResult(new LinkedHashMap<>(), failMap, 0L);
+    }
+
+    private Map<String, String> requestRuntimeModelTranslate(Map<String, String> sourceMap,
+                                                             JsonRuntimeTranslateRequest request) throws RuntimeModelException {
+        if (sourceMap == null || sourceMap.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        String provider = safeText(request.getProvider()).toLowerCase();
+        String model = safeText(request.getModel());
+        String apiBase = safeText(request.getApiBase());
+        String apiKey = safeText(request.getApiKey());
+        if (provider.isEmpty() || model.isEmpty() || apiBase.isEmpty() || apiKey.isEmpty()) {
+            throw new RuntimeModelException(false, "INVALID_PROVIDER_CONFIG");
+        }
+
+        String endpoint = buildRuntimeEndpoint(provider, model, apiBase);
+        String systemPrompt = "You are a translation engine. Translate text values from " + safeText(request.getSourceLang())
+                + " to " + safeText(request.getTargetLang())
+                + ". Input is a JSON object path->text. Return strict JSON object with the exact same keys only.";
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (!"azure-openai".equals(provider)) {
+            body.put("model", model);
+        }
+        body.put("temperature", 0);
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        messages.add(Map.of("role", "user", "content", JsonUtils.objectToJson(sourceMap)));
+        body.put("messages", messages);
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Content-Type", "application/json")
+                .timeout(Duration.ofSeconds(JSON_RUNTIME_HTTP_TIMEOUT_SECONDS))
+                .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.objectToJson(body), StandardCharsets.UTF_8));
+        if ("azure-openai".equals(provider)) {
+            builder.header("api-key", apiKey);
+        } else {
+            builder.header("Authorization", "Bearer " + apiKey);
+        }
+
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(JSON_RUNTIME_HTTP_TIMEOUT_SECONDS))
+                .build();
+        HttpResponse<String> response;
+        try {
+            response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new RuntimeModelException(true, "MODEL_REQUEST_TIMEOUT_OR_NETWORK");
+        }
+
+        int code = response.statusCode();
+        String responseBody = response.body();
+        if (code >= 400) {
+            boolean retryable = code == 429 || code >= 500;
+            String truncatedBody = responseBody == null ? "" : responseBody.substring(0, Math.min(responseBody.length(), 400));
+            throw new RuntimeModelException(retryable, "MODEL_HTTP_" + code + ":" + truncatedBody);
+        }
+
+        String content = parseModelContent(responseBody);
+        if (content == null || content.isEmpty()) {
+            throw new RuntimeModelException(true, "EMPTY_MODEL_CONTENT");
+        }
+        String jsonText = StringUtils.extractJsonBlock(content);
+        if (jsonText == null || jsonText.isEmpty()) {
+            jsonText = content;
+        }
+        Map<String, String> translated = JsonUtils.jsonToObjectWithNull(
+                jsonText, new TypeReference<LinkedHashMap<String, String>>() {
+                });
+        if (translated == null) {
+            String repaired = JsonUtils.highlyRobustRepair(jsonText);
+            translated = JsonUtils.jsonToObjectWithNull(
+                    repaired, new TypeReference<LinkedHashMap<String, String>>() {
+                    });
+        }
+        if (translated == null) {
+            throw new RuntimeModelException(false, "MODEL_RESPONSE_JSON_INVALID");
+        }
+        return translated;
+    }
+
+    private String parseModelContent(String responseBody) {
+        JsonNode root = JsonUtils.readTree(responseBody);
+        if (root == null) {
+            return "";
+        }
+        JsonNode choices = root.path("choices");
+        if (!choices.isArray() || choices.isEmpty()) {
+            return "";
+        }
+        JsonNode message = choices.get(0).path("message");
+        if (message.isMissingNode()) {
+            return "";
+        }
+        return message.path("content").asText("");
+    }
+
+    private String buildRuntimeEndpoint(String provider, String model, String apiBase) throws RuntimeModelException {
+        String trimmed = safeText(apiBase);
+        if (trimmed.isEmpty()) {
+            throw new RuntimeModelException(false, "EMPTY_API_BASE");
+        }
+        if ("azure-openai".equals(provider)) {
+            String lower = trimmed.toLowerCase();
+            if (lower.contains("/chat/completions")) {
+                if (lower.contains("api-version=")) {
+                    return trimmed;
+                }
+                return trimmed + (trimmed.contains("?") ? "&" : "?") + "api-version=2024-02-15-preview";
+            }
+            String base = trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+            return base + "/openai/deployments/" + model + "/chat/completions?api-version=2024-02-15-preview";
+        }
+
+        if (trimmed.toLowerCase().contains("/chat/completions")) {
+            return trimmed;
+        }
+        String base = trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+        return base + "/chat/completions";
+    }
+
+    private void collectSourceValueItems(JsonNode node,
+                                        String pointer,
+                                        List<RuntimeSourceItem> collector,
+                                        List<RuntimeSkippedItem> skippedItems) {
+        if (node == null) {
+            return;
+        }
+        if (node.isObject()) {
+            node.fields().forEachRemaining(entry -> {
+                String escaped = escapeJsonPointer(entry.getKey());
+                String nextPointer = pointer + "/" + escaped;
+                JsonNode child = entry.getValue();
+                if ("sourceValue".equals(entry.getKey()) && child != null) {
+                    if (child.isTextual()) {
+                        collector.add(new RuntimeSourceItem(nextPointer, child.asText("")));
+                    } else {
+                        skippedItems.add(new RuntimeSkippedItem(nextPointer, child.getNodeType().name()));
+                    }
+                    return;
+                }
+                collectSourceValueItems(child, nextPointer, collector, skippedItems);
+            });
+            return;
+        }
+        if (node.isArray()) {
+            for (int i = 0; i < node.size(); i++) {
+                collectSourceValueItems(node.get(i), pointer + "/" + i, collector, skippedItems);
             }
         }
     }
 
-    public void processVerifyTasksV3() {
-        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(6);
-        if (tasks.isEmpty()) {
+    private List<List<RuntimeSourceItem>> splitRuntimeBatches(List<RuntimeSourceItem> pending, int batchSize, int maxCharsPerBatch) {
+        List<List<RuntimeSourceItem>> batches = new ArrayList<>();
+        List<RuntimeSourceItem> current = new ArrayList<>();
+        int chars = 0;
+        for (RuntimeSourceItem item : pending) {
+            int length = item.text == null ? 0 : item.text.length();
+            boolean hitSize = !current.isEmpty() && current.size() >= batchSize;
+            boolean hitChars = !current.isEmpty() && (chars + length > maxCharsPerBatch);
+            if (hitSize || hitChars) {
+                batches.add(current);
+                current = new ArrayList<>();
+                chars = 0;
+            }
+            current.add(item);
+            chars += length;
+        }
+        if (!current.isEmpty()) {
+            batches.add(current);
+        }
+        return batches;
+    }
+
+    private long estimateEtaSeconds(int total, int finished, long elapsedMs) {
+        if (total <= 0 || finished <= 0 || elapsedMs <= 0) {
+            return -1;
+        }
+        double perItemMs = (double) elapsedMs / (double) finished;
+        int left = Math.max(total - finished, 0);
+        return (long) ((left * perItemMs) / 1000.0);
+    }
+
+    private long computeBackoffSleepMs(int baseBackoffMs, int attempt) {
+        long pure = (long) baseBackoffMs * (1L << Math.max(0, attempt - 1));
+        long jitter = ThreadLocalRandom.current().nextLong(Math.max(baseBackoffMs, 1));
+        return pure + jitter;
+    }
+
+    private void setTextByPointer(JsonNode root, String pointer, String text) {
+        if (root == null || pointer == null || pointer.isEmpty() || !pointer.startsWith("/")) {
             return;
         }
-        tasks.sort(Comparator.comparing(t -> "manual".equals(t.getTaskType()) ? 0 : 1));
-        for (TranslateTaskV3DO task : tasks) {
-            if (isVerifyFinal(task)) {
+        String[] segments = pointer.substring(1).split("/");
+        JsonNode current = root;
+        for (int i = 0; i < segments.length - 1; i++) {
+            String segment = unescapeJsonPointer(segments[i]);
+            if (current == null) {
+                return;
+            }
+            if (current.isObject()) {
+                current = current.get(segment);
                 continue;
             }
-            if (!processingVerifyTaskIds.add(task.getId())) {
+            if (current.isArray()) {
+                int index = safeIndex(segment);
+                if (index < 0 || index >= current.size()) {
+                    return;
+                }
+                current = current.get(index);
                 continue;
             }
-            try {
-                verifySavedDataV3(task);
-            } catch (Exception e) {
-                TraceReporterHolder.report("TranslateV3Service.processVerifyTasksV3",
-                        "FatalException process verify task failed, taskId=" + task.getId() + " error=" + e);
-            } finally {
-                processingVerifyTaskIds.remove(task.getId());
+            return;
+        }
+        if (current == null) {
+            return;
+        }
+        String lastSegment = unescapeJsonPointer(segments[segments.length - 1]);
+        TextNode textNode = JsonUtils.OBJECT_MAPPER.getNodeFactory().textNode(text == null ? "" : text);
+        if (current instanceof ObjectNode objectNode) {
+            objectNode.set(lastSegment, textNode);
+            return;
+        }
+        if (current instanceof ArrayNode arrayNode) {
+            int index = safeIndex(lastSegment);
+            if (index >= 0 && index < arrayNode.size()) {
+                arrayNode.set(index, textNode);
             }
         }
+    }
+
+    private String escapeJsonPointer(String input) {
+        return input == null ? "" : input.replace("~", "~0").replace("/", "~1");
+    }
+
+    private String unescapeJsonPointer(String input) {
+        return input == null ? "" : input.replace("~1", "/").replace("~0", "~");
+    }
+
+    private int safeIndex(String indexText) {
+        try {
+            return Integer.parseInt(indexText);
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    private String toBlobPath(String blobUriOrPath) {
+        String raw = safeText(blobUriOrPath);
+        if (raw.isEmpty()) {
+            return raw;
+        }
+        if (!raw.contains("://")) {
+            return raw;
+        }
+        try {
+            URI uri = new URI(raw);
+            String path = safeText(uri.getPath());
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            int firstSlash = path.indexOf('/');
+            if (firstSlash > 0 && firstSlash + 1 < path.length()) {
+                return path.substring(firstSlash + 1);
+            }
+            return path;
+        } catch (URISyntaxException e) {
+            return raw;
+        }
+    }
+
+    /**
+     * 将 runtime 输出 Blob 路径放到与输入 Blob 相同的目录下，仅保留输出 URI 中的文件名。
+     * 这样不会把译稿写到 qa/ 等其它目录；若输入路径无父目录或输出为空则返回原 output。
+     */
+    private String runtimeOutputUriBesideInput(String inputUriOrPath, String outputUriOrPath) {
+        String inputPath = toBlobPath(safeText(inputUriOrPath));
+        String outputPath = toBlobPath(safeText(outputUriOrPath));
+        if (inputPath.isEmpty() || outputPath.isEmpty()) {
+            return safeText(outputUriOrPath);
+        }
+        int inSlash = inputPath.lastIndexOf('/');
+        if (inSlash < 0) {
+            return safeText(outputUriOrPath);
+        }
+        String inputParent = inputPath.substring(0, inSlash + 1);
+        int outSlash = outputPath.lastIndexOf('/');
+        String fileName = outSlash >= 0 ? outputPath.substring(outSlash + 1) : outputPath;
+        if (fileName.isEmpty()) {
+            return safeText(outputUriOrPath);
+        }
+        String newRelative = inputParent + fileName;
+        return rewriteBlobUriKeepingScheme(safeText(outputUriOrPath), newRelative);
+    }
+
+    private String rewriteBlobUriKeepingScheme(String originalUriOrPath, String newContainerRelativePath) {
+        String raw = safeText(originalUriOrPath);
+        if (raw.isEmpty()) {
+            return newContainerRelativePath;
+        }
+        if (!raw.contains("://")) {
+            return newContainerRelativePath;
+        }
+        try {
+            URI uri = new URI(raw);
+            String oldPath = safeText(uri.getPath());
+            if (oldPath.startsWith("/")) {
+                oldPath = oldPath.substring(1);
+            }
+            int slash = oldPath.indexOf('/');
+            String container = slash > 0 ? oldPath.substring(0, slash) : oldPath;
+            if (container.isEmpty()) {
+                return newContainerRelativePath;
+            }
+            String authority = uri.getRawAuthority();
+            String scheme = uri.getScheme();
+            return scheme + "://" + authority + "/" + container + "/" + newContainerRelativePath;
+        } catch (URISyntaxException e) {
+            return newContainerRelativePath;
+        }
+    }
+
+    private String sha256(String value) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest((value == null ? "" : value).getBytes(StandardCharsets.UTF_8));
+        StringBuilder builder = new StringBuilder(hash.length * 2);
+        for (byte b : hash) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
+
+    private void writeRuntimeReportBlob(String taskId,
+                                        String status,
+                                        int total,
+                                        int done,
+                                        int failed,
+                                        long startedMs,
+                                        Map<String, String> failMap,
+                                        String reportBlobPath) {
+        List<Map<String, String>> failures = new ArrayList<>();
+        if (failMap != null) {
+            for (Map.Entry<String, String> entry : failMap.entrySet()) {
+                Map<String, String> item = new LinkedHashMap<>();
+                item.put("path", entry.getKey());
+                item.put("reason", entry.getValue());
+                failures.add(item);
+            }
+        }
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("taskId", taskId);
+        report.put("status", status);
+        report.put("total", total);
+        report.put("done", done);
+        report.put("failed", failed);
+        report.put("durationMs", System.currentTimeMillis() - startedMs);
+        report.put("failures", failures);
+        translateTaskV3BlobRepo.writeJson(reportBlobPath, report);
+    }
+
+    private Map<String, Object> baseRuntimeResponse(String taskId,
+                                                    String inputBlobUri,
+                                                    String outputBlobUri,
+                                                    String reportBlobUri) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("taskId", taskId);
+        map.put("status", "FAILED");
+        map.put("inputBlobUri", inputBlobUri);
+        map.put("outputBlobUri", outputBlobUri);
+        map.put("reportBlobUri", reportBlobUri);
+        map.put("total", 0);
+        map.put("done", 0);
+        map.put("failed", 0);
+        map.put("durationMs", 0);
+        return map;
+    }
+
+    private int positiveOrDefault(Integer input, int defaultValue) {
+        if (input == null || input <= 0) {
+            return defaultValue;
+        }
+        return input;
+    }
+
+    private String safeText(String text) {
+        return text == null ? "" : text.trim();
+    }
+
+    private int parseInt(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(text);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private Integer parseIntOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = asString(value);
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(text);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void processTasksByShopName(String stageName,
+                                        int status,
+                                        Set<String> processingTaskIds,
+                                        Predicate<TranslateTaskV3DO> skipTaskPredicate,
+                                        Consumer<TranslateTaskV3DO> taskHandler,
+                                        Runnable emptyTaskCallback) {
+        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(status);
+        if (tasks.isEmpty()) {
+            if (emptyTaskCallback != null) {
+                emptyTaskCallback.run();
+            }
+            return;
+        }
+
+        tasks.sort(Comparator.comparing(t -> "manual".equals(t.getTaskType()) ? 0 : 1));
+        Map<String, List<TranslateTaskV3DO>> tasksByShop = tasks.stream()
+                .filter(task -> task != null && !StringUtils.isEmpty(task.getShopName()))
+                .collect(Collectors.groupingBy(TranslateTaskV3DO::getShopName, LinkedHashMap::new, Collectors.toList()));
+
+        for (Map.Entry<String, List<TranslateTaskV3DO>> entry : tasksByShop.entrySet()) {
+            String shopName = entry.getKey();
+            if (!processingShopNames.add(shopName)) {
+                LOG.info("v3 {} skip shop lock, shop={}", stageName.toLowerCase(), shopName);
+                continue;
+            }
+
+            resolveShopExecutor(shopName).submit(() -> {
+                List<TranslateTaskV3DO> shopTasks = entry.getValue();
+                LOG.info("v3 {} group start, shop={}, taskCount={}", stageName.toLowerCase(), shopName, shopTasks.size());
+                try {
+                    for (TranslateTaskV3DO task : shopTasks) {
+                        if (skipTaskPredicate != null && skipTaskPredicate.test(task)) {
+                            continue;
+                        }
+                        if (!processingTaskIds.add(task.getId())) {
+                            LOG.info("v3 {} skip duplicated task lock, taskId={}, shop={}",
+                                    stageName.toLowerCase(), task.getId(), task.getShopName());
+                            continue;
+                        }
+                        try {
+                            taskHandler.accept(task);
+                        } catch (Exception e) {
+                            LOG.error("v3 {} failed, taskId={}, shop={}",
+                                    stageName.toLowerCase(), task.getId(), task.getShopName(), e);
+                            TraceReporterHolder.report("TranslateV3Service.processTasksByShopName",
+                                    "FatalException process " + stageName + " task failed, taskId=" + task.getId() + " error=" + e);
+                        } finally {
+                            processingTaskIds.remove(task.getId());
+                        }
+                    }
+                } finally {
+                    processingShopNames.remove(shopName);
+                    LOG.info("v3 {} group finish, shop={}", stageName.toLowerCase(), shopName);
+                }
+            });
+        }
+    }
+
+    private List<ExecutorService> createShopGroupExecutors() {
+        List<ExecutorService> executors = new ArrayList<>(SHOP_GROUP_WORKER_SIZE);
+        for (int i = 0; i < SHOP_GROUP_WORKER_SIZE; i++) {
+            int workerIndex = i;
+            executors.add(Executors.newSingleThreadExecutor(r -> {
+                Thread thread = new Thread(r);
+                thread.setName("translate-v3-shop-group-" + workerIndex);
+                return thread;
+            }));
+        }
+        return executors;
+    }
+
+    private ExecutorService resolveShopExecutor(String shopName) {
+        int index = Math.floorMod(shopName.hashCode(), SHOP_GROUP_WORKER_SIZE);
+        return shopGroupExecutors.get(index);
     }
 
     @PreDestroy
@@ -355,6 +1553,10 @@ public class TranslateV3Service {
         for (Map.Entry<String, PendingProgress> entry : pendingProgressMap.entrySet()) {
             flushPendingProgress(entry.getKey(), entry.getValue());
         }
+        for (ExecutorService executorService : shopGroupExecutors) {
+            executorService.shutdown();
+        }
+        chunkTranslateExecutor.shutdown();
     }
 
     // 兼容旧调用
@@ -362,8 +1564,8 @@ public class TranslateV3Service {
         TranslateTaskV3DO task = new TranslateTaskV3DO();
         task.setId(String.valueOf(initialTaskV2DO.getId()));
         task.setShopName(initialTaskV2DO.getShopName());
-        task.setSource(initialTaskV2DO.getSource());
-        task.setTarget(initialTaskV2DO.getTarget());
+        task.setSource(normalizeLocaleCode(initialTaskV2DO.getSource()));
+        task.setTarget(normalizeLocaleCode(initialTaskV2DO.getTarget()));
         task.setStatus(initialTaskV2DO.getStatus());
         task.setTaskType(initialTaskV2DO.getTaskType());
         task.setAiModel(initialTaskV2DO.getAiModel());
@@ -389,7 +1591,7 @@ public class TranslateV3Service {
         String primaryLocaleData = shopifyService.getShopifyData(task.getShopName(), userDO.getAccessToken(),
                 com.bogda.common.contants.TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
-        if (primaryLocale != null && !primaryLocale.equals(task.getSource())) {
+        if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, task.getSource())) {
             LOG.warn("v3 init stop locale mismatch, taskId={}, shop={}, primaryLocale={}, source={}",
                     taskId, task.getShopName(), primaryLocale, task.getSource());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_STOPPED_PRIMARY_LOCALE_MISMATCH");
@@ -407,20 +1609,39 @@ public class TranslateV3Service {
         }
         LOG.info("v3 init start dump modules, taskId={}, shop={}, moduleCount={}, modules={}",
                 taskId, task.getShopName(), moduleList.size(), moduleList);
+        translateTaskMonitorV3RedisService.setInitOverview(taskId, moduleList.size());
 
         int totalCount = 0;
         int totalChars = 0;
+        int totalChunks = 0;
         Map<String, Object> moduleSummary = new HashMap<>();
+        int moduleIndex = 0;
         for (String module : moduleList) {
+            moduleIndex++;
             ModuleInitSummary summary = dumpModuleToBlob(task, userDO, module);
             totalCount += summary.totalCount;
             totalChars += summary.totalChars;
+            totalChunks += summary.chunkCount;
             moduleSummary.put(module, summary.toMap());
+            translateTaskMonitorV3RedisService.setInitModuleProgress(
+                    taskId,
+                    module,
+                    moduleIndex,
+                    moduleIndex,
+                    summary.totalCount,
+                    summary.totalChars,
+                    summary.chunkCount,
+                    totalCount,
+                    totalChars,
+                    totalChunks
+            );
         }
 
         translateTaskMonitorV3RedisService.setTotalCount(taskId, totalCount);
+        translateTaskMonitorV3RedisService.setEstimatedCreditsRaw(taskId, totalChars);
+        translateTaskMonitorV3RedisService.setInitManifest(taskId, moduleSummary);
         translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_DONE");
-        translateTaskV3BlobRepo.writeJson(blobPath(taskId, "chunks/manifest.json"), moduleSummary);
+        translateTaskV3BlobRepo.writeJson(blobPath(task.getShopName(), taskId, "chunks/manifest.json"), moduleSummary);
 
         Map<String, Object> checkpoint = new HashMap<>();
         checkpoint.put("phase", "INIT_DONE");
@@ -444,8 +1665,8 @@ public class TranslateV3Service {
         TranslateTaskV3DO task = new TranslateTaskV3DO();
         task.setId(String.valueOf(initialTaskV2DO.getId()));
         task.setShopName(initialTaskV2DO.getShopName());
-        task.setSource(initialTaskV2DO.getSource());
-        task.setTarget(initialTaskV2DO.getTarget());
+        task.setSource(normalizeLocaleCode(initialTaskV2DO.getSource()));
+        task.setTarget(normalizeLocaleCode(initialTaskV2DO.getTarget()));
         task.setStatus(initialTaskV2DO.getStatus());
         task.setTaskType(initialTaskV2DO.getTaskType());
         task.setAiModel(initialTaskV2DO.getAiModel());
@@ -459,8 +1680,8 @@ public class TranslateV3Service {
     public void translateEachTaskV3(TranslateTaskV3DO task) {
         String taskId = task.getId();
         String shopName = task.getShopName();
-        String target = task.getTarget();
-        String source = task.getSource();
+        String target = normalizeLocaleCode(task.getTarget());
+        String source = normalizeLocaleCode(task.getSource());
 
         translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_RUNNING");
 
@@ -473,7 +1694,7 @@ public class TranslateV3Service {
         String primaryLocaleData = shopifyService.getShopifyData(shopName, userDO.getAccessToken(),
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
-        if (primaryLocale != null && !primaryLocale.equals(source)) {
+        if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, source)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_STOPPED_PRIMARY_LOCALE_MISMATCH");
             translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 4);
             return;
@@ -494,15 +1715,24 @@ public class TranslateV3Service {
         int translatedTotal = getIntMetric(baseMetrics, "translatedCount");
         int usedTokenTotal = getIntMetric(baseMetrics, "usedToken");
         int processedChunkCount = 0;
+        int totalChunkCount = 0;
+        for (String module : modules) {
+            totalChunkCount += translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/")).size();
+        }
+        translateTaskMonitorV3RedisService.setTranslateOverview(taskId, modules.size(), totalChunkCount, maxToken, currentUsedToken);
 
         boolean stoppedByTokenLimit = false;
         String currentModule = null;
         String currentChunkPath = null;
+        int moduleDone = 0;
 
         for (String module : modules) {
             currentModule = module;
-            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(taskId, "chunks/" + module + "/"));
+            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
             if (chunkPaths.isEmpty()) {
+                moduleDone++;
+                translateTaskMonitorV3RedisService.setTranslateProgress(
+                        taskId, module, moduleDone, "", processedChunkCount, translatedTotal, usedTokenTotal, 0, 0);
                 continue;
             }
             for (String chunkPath : chunkPaths) {
@@ -515,9 +1745,15 @@ public class TranslateV3Service {
                 if (rows.isEmpty()) {
                     continue;
                 }
-                TranslateChunkResult result = translateChunkRows(rows, module, task, glossaryMap, maxToken, currentUsedToken);
+                TranslateChunkResult result = translateChunkRowsWithTimeout(
+                        rows, module, task, glossaryMap, maxToken, currentUsedToken);
                 currentUsedToken = result.currentUsedToken;
                 translateTaskMonitorV3RedisService.incrementBy(taskId, result.translatedDelta, 0, result.usedTokenDelta);
+                if (result.timedOut) {
+                    LOG.warn("v3 translate chunk timeout, taskId={}, shop={}, module={}, chunkPath={}, timeoutSeconds={}",
+                            taskId, shopName, module, chunkPath, chunkTranslateTimeoutSeconds);
+                    continue;
+                }
 
                 // v3 使用同一份 chunk 文件存储翻译前后数据：翻译完成后直接覆盖当前 chunk。
                 translateTaskV3BlobRepo.writeJson(chunkPath, rows);
@@ -526,6 +1762,9 @@ public class TranslateV3Service {
                 usedTokenTotal += result.usedTokenDelta;
                 processedChunkCount++;
                 cachePendingProgress(taskId, shopName, currentModule, currentChunkPath, translatedTotal, usedTokenTotal);
+                translateTaskMonitorV3RedisService.setTranslateProgress(
+                        taskId, module, moduleDone, chunkPath, processedChunkCount,
+                        translatedTotal, usedTokenTotal, result.translatedDelta, result.usedTokenDelta);
                 if (processedChunkCount % PROGRESS_FLUSH_INTERVAL_CHUNKS == 0) {
                     flushPendingProgress(taskId);
                 }
@@ -538,6 +1777,10 @@ public class TranslateV3Service {
             if (stoppedByTokenLimit) {
                 break;
             }
+            moduleDone++;
+            translateTaskMonitorV3RedisService.setTranslateProgress(
+                    taskId, module, moduleDone, currentChunkPath, processedChunkCount,
+                    translatedTotal, usedTokenTotal, 0, 0);
         }
 
         baseMetrics.put("translatedCount", translatedTotal);
@@ -567,7 +1810,7 @@ public class TranslateV3Service {
         pendingProgressMap.remove(taskId);
 
         try {
-            generateQaReport(taskId, modules);
+            generateQaReport(taskId, shopName, modules);
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateV3Service.generateQaReport",
                     "FatalException generate qa report failed, taskId=" + taskId + " error=" + e);
@@ -619,18 +1862,27 @@ public class TranslateV3Service {
 
     private ModuleInitSummary dumpModuleToBlob(TranslateTaskV3DO task, UsersDO userDO, String module) {
         final int chunkSize = 200;
+        final int moduleFetchLimit = Math.max(1, initModuleFetchLimit);
         List<Map<String, Object>> currentChunk = new ArrayList<>();
         final int[] chunkIndex = {0};
         final int[] totalCount = {0};
         final int[] totalChars = {0};
+        AtomicBoolean stopFetch = new AtomicBoolean(false);
 
         shopifyService.rotateAllShopifyGraph(task.getShopName(), module, userDO.getAccessToken(), 250, task.getTarget(), "",
                 null,
                 node -> {
+                    if (stopFetch.get()) {
+                        return;
+                    }
                     if (node == null || CollectionUtils.isEmpty(node.getTranslatableContent())) {
                         return;
                     }
                     for (ShopifyTranslationsResponse.Node.TranslatableContent content : node.getTranslatableContent()) {
+                        if (totalCount[0] >= moduleFetchLimit) {
+                            stopFetch.set(true);
+                            break;
+                        }
                         if (!shouldStoreContent(content, node.getTranslations(), task.isCover(), task.isHandle())) {
                             continue;
                         }
@@ -649,7 +1901,7 @@ public class TranslateV3Service {
                         totalChars[0] += content.getValue() == null ? 0 : content.getValue().length();
                         if (currentChunk.size() >= chunkSize) {
                             translateTaskV3BlobRepo.writeJson(
-                                    blobPath(task.getId(), "chunks/" + module + "/chunk-" + chunkIndex[0] + ".json"),
+                                    blobPath(task.getShopName(), task.getId(), "chunks/" + module + "/chunk-" + chunkIndex[0] + ".json"),
                                     new ArrayList<>(currentChunk));
                             currentChunk.clear();
                             chunkIndex[0]++;
@@ -657,11 +1909,12 @@ public class TranslateV3Service {
                     }
                 },
                 after -> {
-                });
+                },
+                stopFetch::get);
 
         if (!currentChunk.isEmpty()) {
             translateTaskV3BlobRepo.writeJson(
-                    blobPath(task.getId(), "chunks/" + module + "/chunk-" + chunkIndex[0] + ".json"),
+                    blobPath(task.getShopName(), task.getId(), "chunks/" + module + "/chunk-" + chunkIndex[0] + ".json"),
                     currentChunk);
             chunkIndex[0]++;
         }
@@ -692,7 +1945,7 @@ public class TranslateV3Service {
                 continue;
             }
             if (currentUsedToken >= maxToken) {
-                return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, true);
+                return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, true, false);
             }
 
             boolean isHtml = asBoolean(row.get("isHtml"));
@@ -750,7 +2003,7 @@ public class TranslateV3Service {
                 usedTokenDelta += result.usedTokenDelta;
                 currentUsedToken = result.currentUsedToken;
                 if (result.hitTokenLimit || currentUsedToken >= maxToken) {
-                    return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, true);
+                    return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, true, false);
                 }
                 batchIndexes.clear();
                 batchSourceMap.clear();
@@ -768,10 +2021,37 @@ public class TranslateV3Service {
             usedTokenDelta += result.usedTokenDelta;
             currentUsedToken = result.currentUsedToken;
             if (result.hitTokenLimit) {
-                return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, true);
+                return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, true, false);
             }
         }
-        return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, false);
+        return new TranslateChunkResult(translatedDelta, usedTokenDelta, currentUsedToken, false, false);
+    }
+
+    private TranslateChunkResult translateChunkRowsWithTimeout(List<Map<String, Object>> rows,
+                                                               String module,
+                                                               TranslateTaskV3DO task,
+                                                               Map<String, GlossaryDO> glossaryMap,
+                                                               int maxToken,
+                                                               int currentUsedToken) {
+        int timeoutSeconds = Math.max(10, chunkTranslateTimeoutSeconds);
+        CompletableFuture<TranslateChunkResult> future = CompletableFuture.supplyAsync(
+                () -> translateChunkRows(rows, module, task, glossaryMap, maxToken, currentUsedToken),
+                chunkTranslateExecutor
+        );
+        try {
+            return future.get(timeoutSeconds, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            TraceReporterHolder.report("TranslateV3Service.translateChunkRowsWithTimeout",
+                    "chunk translate timeout, taskId=" + (task == null ? null : task.getId())
+                            + " shop=" + (task == null ? null : task.getShopName())
+                            + " module=" + module + " timeoutSeconds=" + timeoutSeconds
+                            + " rowCount=" + (rows == null ? 0 : rows.size()));
+            return TranslateChunkResult.timeout(currentUsedToken);
+        } catch (Exception e) {
+            future.cancel(true);
+            throw new RuntimeException("translateChunkRowsWithTimeout failed", e);
+        }
     }
 
     private TranslateChunkResult flushBatchRows(List<Map<String, Object>> rows,
@@ -782,7 +2062,7 @@ public class TranslateV3Service {
                                                 Map<String, GlossaryDO> glossaryMap,
                                                 int currentUsedToken) {
         if (batchIndexes.isEmpty()) {
-            return new TranslateChunkResult(0, 0, currentUsedToken, false);
+            return new TranslateChunkResult(0, 0, currentUsedToken, false, false);
         }
         UniversalTranslateService.BatchTranslateResult batchResult = universalTranslateService.translateBatchContent(
                 batchSourceMap,
@@ -809,7 +2089,7 @@ public class TranslateV3Service {
         }
         int tokenUsed = batchResult.getUsedToken();
         currentUsedToken = userTokenService.addUsedToken(task.getShopName(), tokenUsed);
-        return new TranslateChunkResult(translatedCount, tokenUsed, currentUsedToken, false);
+        return new TranslateChunkResult(translatedCount, tokenUsed, currentUsedToken, false, false);
     }
 
     private int getIntMetric(Map<String, Object> metrics, String key) {
@@ -861,7 +2141,7 @@ public class TranslateV3Service {
 
     private TranslateTaskV3DO findSavePendingTask(InitialTaskV2DO initialTaskV2DO) {
         List<TranslateTaskV3DO> taskList = translateTaskV3CosmosRepo.listByShopSource(
-                initialTaskV2DO.getShopName(), initialTaskV2DO.getSource());
+                initialTaskV2DO.getShopName(), normalizeLocaleCode(initialTaskV2DO.getSource()));
         if (CollectionUtils.isEmpty(taskList)) {
             return null;
         }
@@ -873,7 +2153,7 @@ public class TranslateV3Service {
             if (task.getStatus() != 2) {
                 continue;
             }
-            if (target != null && !target.equals(task.getTarget())) {
+            if (!StringUtils.isEmpty(target) && !sameLocaleCode(target, task.getTarget())) {
                 continue;
             }
             return task;
@@ -904,21 +2184,36 @@ public class TranslateV3Service {
         }
 
         Map<String, Object> metrics = task.getMetrics() == null ? new HashMap<>() : new HashMap<>(task.getMetrics());
-        int savedTotal = recoverSavedCountFromProgress(taskId, modules);
+        int savedTotal = recoverSavedCountFromProgress(shopName, taskId, modules);
         int persistedSaved = getIntMetric(metrics, "savedCount");
         if (persistedSaved > savedTotal) {
             savedTotal = persistedSaved;
         }
+        int saveChunkTotal = 0;
+        for (String module : modules) {
+            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
+            for (String path : chunkPaths) {
+                if (isChunkDataPath(path)) {
+                    saveChunkTotal++;
+                }
+            }
+        }
+        translateTaskMonitorV3RedisService.setSaveOverview(taskId, modules.size(), saveChunkTotal, savedTotal);
         metrics.put("savedCount", savedTotal);
         metrics.put("updatedAt", Instant.now().toString());
         boolean hasSaveFailure = false;
         String currentModule = null;
         String currentChunkPath = null;
+        int saveModuleDone = 0;
+        int saveChunkDone = 0;
 
         for (String module : modules) {
             currentModule = module;
-            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(taskId, "chunks/" + module + "/"));
+            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
             if (chunkPaths.isEmpty()) {
+                saveModuleDone++;
+                translateTaskMonitorV3RedisService.setSaveProgress(
+                        taskId, module, saveModuleDone, "", saveChunkDone, null, savedTotal, 0);
                 continue;
             }
             for (String chunkPath : chunkPaths) {
@@ -926,13 +2221,18 @@ public class TranslateV3Service {
                     continue;
                 }
                 currentChunkPath = chunkPath;
+                saveChunkDone++;
                 List<Map<String, Object>> rows = translateTaskV3BlobRepo.readJsonRows(chunkPath);
                 if (rows.isEmpty()) {
+                    translateTaskMonitorV3RedisService.setSaveProgress(
+                            taskId, module, saveModuleDone, chunkPath, saveChunkDone, null, savedTotal, 0);
                     continue;
                 }
                 Set<Integer> savedRowIndexes = loadSavedRowIndexes(chunkPath);
                 Map<String, List<Integer>> resourceToIndexes = groupUnsavedRowsByResource(rows, savedRowIndexes);
                 if (resourceToIndexes.isEmpty()) {
+                    translateTaskMonitorV3RedisService.setSaveProgress(
+                            taskId, module, saveModuleDone, chunkPath, saveChunkDone, null, savedTotal, 0);
                     continue;
                 }
 
@@ -945,6 +2245,8 @@ public class TranslateV3Service {
                     List<Integer> savedIndexes = saveOneResourceRows(shopName, token, task.getTarget(), rows, rowIndexes, resourceId);
                     if (savedIndexes == null) {
                         hasSaveFailure = true;
+                        translateTaskMonitorV3RedisService.setSaveFailure(
+                                taskId, module, chunkPath, resourceId, "SAVE_RESOURCE_FAILED");
                         continue;
                     }
                     int savedCount = savedIndexes.size();
@@ -952,12 +2254,17 @@ public class TranslateV3Service {
                     writeSaveProgress(chunkPath, savedRowIndexes, rows.size());
                     savedTotal += savedCount;
                     translateTaskMonitorV3RedisService.incrementBy(taskId, 0, savedCount, 0);
+                    translateTaskMonitorV3RedisService.setSaveProgress(
+                            taskId, module, saveModuleDone, chunkPath, saveChunkDone, resourceId, savedTotal, savedCount);
                     metrics.put("savedCount", savedTotal);
                     metrics.put("updatedAt", Instant.now().toString());
                     Map<String, Object> checkpoint = buildSaveCheckpoint("SAVE_RUNNING", currentModule, currentChunkPath, resourceId);
                     translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, metrics);
                 }
             }
+            saveModuleDone++;
+            translateTaskMonitorV3RedisService.setSaveProgress(
+                    taskId, module, saveModuleDone, currentChunkPath, saveChunkDone, null, savedTotal, 0);
         }
 
         if (hasSaveFailure) {
@@ -1069,13 +2376,13 @@ public class TranslateV3Service {
         return indexes;
     }
 
-    private int recoverSavedCountFromProgress(String taskId, List<String> modules) {
-        if (StringUtils.isEmpty(taskId) || CollectionUtils.isEmpty(modules)) {
+    private int recoverSavedCountFromProgress(String shopName, String taskId, List<String> modules) {
+        if (StringUtils.isEmpty(shopName) || StringUtils.isEmpty(taskId) || CollectionUtils.isEmpty(modules)) {
             return 0;
         }
         int total = 0;
         for (String module : modules) {
-            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(taskId, "chunks/" + module + "/"));
+            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
             if (chunkPaths.isEmpty()) {
                 continue;
             }
@@ -1171,7 +2478,7 @@ public class TranslateV3Service {
         List<Map<String, Object>> mismatchSamples = new ArrayList<>();
 
         for (String module : modules) {
-            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(taskId, "chunks/" + module + "/"));
+            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
             if (chunkPaths.isEmpty()) {
                 continue;
             }
@@ -1242,7 +2549,7 @@ public class TranslateV3Service {
         verifyReport.put("verifyMissing", verifyMissing);
         verifyReport.put("mismatchSamples", mismatchSamples);
         verifyReport.put("updatedAt", Instant.now().toString());
-        translateTaskV3BlobRepo.writeJson(blobPath(taskId, "qa/save-verify.json"), verifyReport);
+        translateTaskV3BlobRepo.writeJson(blobPath(shopName, taskId, "qa/save-verify.json"), verifyReport);
 
         Map<String, Object> metrics = task.getMetrics() == null ? new HashMap<>() : new HashMap<>(task.getMetrics());
         metrics.put("verifyTotal", verifyTotal);
@@ -1257,7 +2564,7 @@ public class TranslateV3Service {
         Map<String, Object> checkpoint = new HashMap<>();
         checkpoint.put("phase", phase);
         checkpoint.put("updatedAt", Instant.now().toString());
-        checkpoint.put("verifyReportPath", blobPath(taskId, "qa/save-verify.json"));
+        checkpoint.put("verifyReportPath", blobPath(shopName, taskId, "qa/save-verify.json"));
         translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, metrics);
     }
 
@@ -1378,8 +2685,8 @@ public class TranslateV3Service {
         translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, progress.shopName, checkpoint, metrics);
     }
 
-    private void generateQaReport(String taskId, List<String> modules) {
-        if (taskId == null || taskId.isEmpty() || CollectionUtils.isEmpty(modules)) {
+    private void generateQaReport(String taskId, String shopName, List<String> modules) {
+        if (taskId == null || taskId.isEmpty() || shopName == null || shopName.isEmpty() || CollectionUtils.isEmpty(modules)) {
             return;
         }
 
@@ -1400,7 +2707,7 @@ public class TranslateV3Service {
         Map<String, Object> moduleStats = new LinkedHashMap<>();
 
         for (String module : modules) {
-            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(taskId, "chunks/" + module + "/"));
+            List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
             if (chunkPaths.isEmpty()) {
                 continue;
             }
@@ -1476,7 +2783,7 @@ public class TranslateV3Service {
         summary.put("moduleStats", moduleStats);
         summary.put("issueSamples", issueSamples);
 
-        translateTaskV3BlobRepo.writeJson(blobPath(taskId, "chunks/qa-report.json"), summary);
+        translateTaskV3BlobRepo.writeJson(blobPath(shopName, taskId, "chunks/qa-report.json"), summary);
     }
 
     private void addIssueSample(List<Map<String, Object>> issueSamples,
@@ -1554,17 +2861,17 @@ public class TranslateV3Service {
             moduleReport.put("model", task.getAiModel());
             moduleReport.put("module", module);
             moduleReport.put("result", scoreResult);
-            translateTaskV3BlobRepo.writeJson(blobPath(task.getId(), "chunks/" + module + "/ai-score.json"), moduleReport);
+            translateTaskV3BlobRepo.writeJson(blobPath(task.getShopName(), task.getId(), "chunks/" + module + "/ai-score.json"), moduleReport);
         }
         report.put("moduleScores", moduleScores);
-        translateTaskV3BlobRepo.writeJson(blobPath(task.getId(), "qa/ai-score.json"), report);
+        translateTaskV3BlobRepo.writeJson(blobPath(task.getShopName(), task.getId(), "qa/ai-score.json"), report);
     }
 
     private Map<String, Object> scoreOneModuleByAi(TranslateTaskV3DO task, String module) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("module", module);
 
-        List<Map<String, Object>> samples = collectTranslatedSamples(task.getId(), module);
+        List<Map<String, Object>> samples = collectTranslatedSamples(task.getShopName(), task.getId(), module);
         result.put("sampleCount", samples.size());
         if (samples.isEmpty()) {
             result.put("status", "NO_SAMPLES");
@@ -1597,9 +2904,9 @@ public class TranslateV3Service {
         return result;
     }
 
-    private List<Map<String, Object>> collectTranslatedSamples(String taskId, String module) {
+    private List<Map<String, Object>> collectTranslatedSamples(String shopName, String taskId, String module) {
         List<Map<String, Object>> allSamples = new ArrayList<>();
-        List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(taskId, "chunks/" + module + "/"));
+        List<String> chunkPaths = translateTaskV3BlobRepo.listBlobPaths(blobPath(shopName, taskId, "chunks/" + module + "/"));
         for (String chunkPath : chunkPaths) {
             List<Map<String, Object>> rows = translateTaskV3BlobRepo.readJsonRows(chunkPath);
             for (Map<String, Object> row : rows) {
@@ -1741,6 +3048,41 @@ public class TranslateV3Service {
         return null;
     }
 
+    private static String normalizeLocaleCode(String locale) {
+        if (StringUtils.isEmpty(locale)) {
+            return locale;
+        }
+        String cleaned = locale.trim().replace('_', '-');
+        if (cleaned.isEmpty()) {
+            return cleaned;
+        }
+        String[] parts = cleaned.split("-");
+        if (parts.length == 0) {
+            return cleaned;
+        }
+        StringBuilder normalized = new StringBuilder(parts[0].toLowerCase());
+        for (int i = 1; i < parts.length; i++) {
+            if (parts[i] == null || parts[i].isEmpty()) {
+                continue;
+            }
+            normalized.append("-");
+            if (parts[i].length() <= 3) {
+                normalized.append(parts[i].toUpperCase());
+            } else {
+                normalized.append(Character.toUpperCase(parts[i].charAt(0)));
+                normalized.append(parts[i].substring(1).toLowerCase());
+            }
+        }
+        return normalized.toString();
+    }
+
+    private static boolean sameLocaleCode(String left, String right) {
+        if (StringUtils.isEmpty(left) || StringUtils.isEmpty(right)) {
+            return false;
+        }
+        return normalizeLocaleCode(left).equals(normalizeLocaleCode(right));
+    }
+
     private List<String> resolveModuleList(List<String> settings) {
         List<String> modules = settings.stream()
                 .filter(s -> s != null && !"handle".equals(s))
@@ -1767,8 +3109,55 @@ public class TranslateV3Service {
         return modules;
     }
 
-    private static String blobPath(String taskId, String tail) {
-        return "tasks/" + taskId + "/" + tail;
+    private static String blobPath(String shopName, String taskId, String tail) {
+        return "tasks/" + shopName + "/" + taskId + "/" + tail;
+    }
+
+    private static class RuntimeSourceItem {
+        private final String path;
+        private final String text;
+
+        private RuntimeSourceItem(String path, String text) {
+            this.path = path;
+            this.text = text;
+        }
+    }
+
+    private static class RuntimeSkippedItem {
+        private final String path;
+        private final String nodeType;
+
+        private RuntimeSkippedItem(String path, String nodeType) {
+            this.path = path;
+            this.nodeType = nodeType;
+        }
+
+        @Override
+        public String toString() {
+            return path + ":" + nodeType;
+        }
+    }
+
+    private static class RuntimeBatchResult {
+        private final Map<String, String> successMap;
+        private final Map<String, String> failMap;
+        private final long batchCostMs;
+
+        private RuntimeBatchResult(Map<String, String> successMap, Map<String, String> failMap, long batchCostMs) {
+            this.successMap = successMap == null ? new LinkedHashMap<>() : successMap;
+            this.failMap = failMap == null ? new LinkedHashMap<>() : failMap;
+            this.batchCostMs = batchCostMs;
+        }
+    }
+
+    private static class RuntimeModelException extends Exception {
+        private final boolean retryable;
+        private final String message;
+
+        private RuntimeModelException(boolean retryable, String message) {
+            this.retryable = retryable;
+            this.message = message == null ? "UNKNOWN_MODEL_ERROR" : message;
+        }
     }
 
     private static class ModuleInitSummary {
@@ -1796,12 +3185,19 @@ public class TranslateV3Service {
         private final int usedTokenDelta;
         private final int currentUsedToken;
         private final boolean hitTokenLimit;
+        private final boolean timedOut;
 
-        private TranslateChunkResult(int translatedDelta, int usedTokenDelta, int currentUsedToken, boolean hitTokenLimit) {
+        private TranslateChunkResult(int translatedDelta, int usedTokenDelta, int currentUsedToken,
+                                     boolean hitTokenLimit, boolean timedOut) {
             this.translatedDelta = translatedDelta;
             this.usedTokenDelta = usedTokenDelta;
             this.currentUsedToken = currentUsedToken;
             this.hitTokenLimit = hitTokenLimit;
+            this.timedOut = timedOut;
+        }
+
+        private static TranslateChunkResult timeout(int currentUsedToken) {
+            return new TranslateChunkResult(0, 0, currentUsedToken, false, true);
         }
     }
 

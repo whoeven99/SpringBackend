@@ -4,6 +4,7 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.bogda.common.utils.ConfigUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,9 @@ public class TranslateV3BlobConfig {
         if (connectionString == null || connectionString.isEmpty()) {
             connectionString = ConfigUtils.getConfig("BLOB_TRANSLATE_V3_CONNECTION_STRING");
         }
+        if (connectionString == null || connectionString.isEmpty()) {
+            connectionString = ConfigUtils.getConfig("AZURE_BLOB_CONNECTION_STRING");
+        }
 
         String endpointValue = endpoint;
         if (endpointValue == null || endpointValue.isEmpty()) {
@@ -50,7 +54,7 @@ public class TranslateV3BlobConfig {
     }
 
     @Bean
-    public BlobContainerClient translateV3BlobContainerClient(BlobServiceClient blobServiceClient) {
+    public BlobContainerClient translateV3BlobContainerClient(@Qualifier("translateV3BlobServiceClient") BlobServiceClient translateV3BlobServiceClient) {
         String containerValue = container;
         if (containerValue == null || containerValue.isEmpty()) {
             containerValue = ConfigUtils.getConfig("blob.translate-v3.container");
@@ -59,10 +63,13 @@ public class TranslateV3BlobConfig {
             containerValue = ConfigUtils.getConfig("BLOB_TRANSLATE_V3_CONTAINER");
         }
         if (containerValue == null || containerValue.isEmpty()) {
+            containerValue = ConfigUtils.getConfig("AZURE_BLOB_TRANSLATION_CONTAINER");
+        }
+        if (containerValue == null || containerValue.isEmpty()) {
             containerValue = "translate-v3";
         }
 
-        BlobContainerClient blobContainerClient = blobServiceClient.getBlobContainerClient(containerValue);
+        BlobContainerClient blobContainerClient = translateV3BlobServiceClient.getBlobContainerClient(containerValue);
         if (!blobContainerClient.exists()) {
             blobContainerClient.create();
         }

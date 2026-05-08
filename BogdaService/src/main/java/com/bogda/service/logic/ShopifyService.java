@@ -42,6 +42,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -96,6 +97,16 @@ public class ShopifyService {
                                       List<String> resourceIds,
                                       Consumer<ShopifyTranslationsResponse.Node> consumer,
                                       Consumer<String> setAfterEndCursorConsumer) {
+        rotateAllShopifyGraph(shopName, resourceType, accessToken, first, target, afterEndCursor,
+                resourceIds, consumer, setAfterEndCursorConsumer, () -> false);
+    }
+
+    public void rotateAllShopifyGraph(String shopName, String resourceType, String accessToken,
+                                      Integer first, String target, String afterEndCursor,
+                                      List<String> resourceIds,
+                                      Consumer<ShopifyTranslationsResponse.Node> consumer,
+                                      Consumer<String> setAfterEndCursorConsumer,
+                                      BooleanSupplier stopSupplier) {
         if (!CollectionUtils.isEmpty(resourceIds)) {
             rotateTranslatableResourcesByIds(shopName, accessToken, resourceIds, target, consumer, setAfterEndCursorConsumer);
             return;
@@ -108,12 +119,22 @@ public class ShopifyService {
             shopifyRateLimitService.onInitReadOutcome(shopName, false);
             if (data.getTranslatableResources() != null && !CollectionUtils.isEmpty(data.getTranslatableResources().getNodes())) {
                 for (ShopifyTranslationsResponse.Node node : data.getTranslatableResources().getNodes()) {
+                    if (stopSupplier != null && stopSupplier.getAsBoolean()) {
+                        data = null;
+                        break;
+                    }
                     consumer.accept(node);
+                }
+                if (data == null) {
+                    break;
                 }
             }
             if (data.getTranslatableResources() != null
                     && data.getTranslatableResources().getPageInfo() != null
                     && data.getTranslatableResources().getPageInfo().isHasNextPage()) {
+                if (stopSupplier != null && stopSupplier.getAsBoolean()) {
+                    break;
+                }
                 String endCursor = data.getTranslatableResources().getPageInfo().getEndCursor();
                 setAfterEndCursorConsumer.accept(endCursor);
                 pageSize = shopifyRateLimitService.getRecommendedInitPageSize(shopName, configuredFirst);

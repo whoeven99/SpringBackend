@@ -8,9 +8,11 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,6 +22,7 @@ import java.util.Map;
 @Service
 public class TranslateTaskV3BlobRepo {
     @Autowired
+    @Qualifier("translateV3BlobContainerClient")
     private BlobContainerClient translateV3BlobContainerClient;
 
     public boolean writeJson(String blobPath, Object data) {
@@ -49,6 +52,67 @@ public class TranslateTaskV3BlobRepo {
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateTaskV3BlobRepo.readText",
                     "FatalException read blob failed: path=" + blobPath + " error=" + e);
+            return null;
+        }
+    }
+
+    public boolean blobExists(String blobPath) {
+        if (blobPath == null || blobPath.isEmpty()) {
+            return false;
+        }
+        try {
+            return translateV3BlobContainerClient.getBlobClient(blobPath).getBlockBlobClient().exists();
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3BlobRepo.blobExists",
+                    "FatalException blob exists check failed: path=" + blobPath + " error=" + e);
+            return false;
+        }
+    }
+
+    public Long getBlobSizeBytes(String blobPath) {
+        if (blobPath == null || blobPath.isEmpty()) {
+            return null;
+        }
+        try {
+            BlockBlobClient client = translateV3BlobContainerClient.getBlobClient(blobPath).getBlockBlobClient();
+            if (!client.exists()) {
+                return null;
+            }
+            return client.getProperties().getBlobSize();
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3BlobRepo.getBlobSizeBytes",
+                    "FatalException blob size failed: path=" + blobPath + " error=" + e);
+            return null;
+        }
+    }
+
+    /**
+     * 仅读取前 maxBytes 字节为 UTF-8 文本，用于大文件预览，避免整对象下载进内存。
+     */
+    public String readTextPrefix(String blobPath, int maxBytes) {
+        if (blobPath == null || blobPath.isEmpty() || maxBytes <= 0) {
+            return null;
+        }
+        try {
+            BlockBlobClient client = translateV3BlobContainerClient.getBlobClient(blobPath).getBlockBlobClient();
+            if (!client.exists()) {
+                return null;
+            }
+            byte[] buf = new byte[maxBytes];
+            try (InputStream input = client.openInputStream()) {
+                int total = 0;
+                while (total < maxBytes) {
+                    int n = input.read(buf, total, maxBytes - total);
+                    if (n < 0) {
+                        break;
+                    }
+                    total += n;
+                }
+                return new String(buf, 0, total, StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3BlobRepo.readTextPrefix",
+                    "FatalException read blob prefix failed: path=" + blobPath + " error=" + e);
             return null;
         }
     }

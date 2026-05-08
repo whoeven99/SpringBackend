@@ -12,6 +12,7 @@ import com.bogda.common.entity.DO.UsersDO;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.service.logic.TranslateService;
 import com.bogda.service.logic.UserTypeTokenService;
+import com.bogda.service.logic.redis.TranslateTaskMonitorV3RedisService;
 import com.bogda.service.logic.redis.TranslationParametersRedisService;
 import com.bogda.service.logic.translate.TranslateV3Service;
 import com.bogda.common.controller.response.BaseResponse;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.bogda.common.enums.ErrorEnum.*;
@@ -44,6 +46,8 @@ public class TranslateController {
     private TranslateV3Service translateV3Service;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
+    @Autowired
+    private TranslateTaskMonitorV3RedisService translateTaskMonitorV3RedisService;
 
     // 创建手动翻译任务
     @PutMapping("/clickTranslation")
@@ -77,6 +81,21 @@ public class TranslateController {
     }
 
     /**
+     * 与 BogdaTask 中 {@code TranslateTaskV3Scheduled#initialToTranslateTaskV3} 相同逻辑：拉取 status=0 的 v3 任务并执行初始化（转译前置阶段）。
+     */
+    @PostMapping("/v3/triggerInitialTasks")
+    public BaseResponse<Object> triggerInitialTasksV3() {
+        try {
+            translateV3Service.processInitialTasksV3();
+            return BaseResponse.SuccessResponse("processInitialTasksV3 invoked");
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateController.triggerInitialTasksV3",
+                    "FatalException manual trigger initial tasks failed: " + e);
+            return BaseResponse.FailedResponse("Trigger initial tasks failed: " + e.getMessage());
+        }
+    }
+
+    /**
      * 手动触发 v3 任务 AI 质量评分
      * module 为空时，对任务内所有模块评分；否则只评分指定模块。
      */
@@ -85,6 +104,57 @@ public class TranslateController {
                                                  @RequestParam String shopName,
                                                  @RequestParam(required = false) String module) {
         return translateV3Service.triggerAiScoreReport(taskId, shopName, module);
+    }
+
+    /**
+     * 从 Redis 读取某个商店下的全部 v3 任务监控信息
+     */
+    @GetMapping("/v3/redisTasksByShop")
+    public BaseResponse<Object> getV3RedisTasksByShop(@RequestParam String shopName) {
+        if (shopName == null || shopName.isEmpty()) {
+            return BaseResponse.FailedResponse("Missing parameters: shopName");
+        }
+        List<Map<String, String>> taskMonitors = translateTaskMonitorV3RedisService.listByShopName(shopName);
+        return BaseResponse.SuccessResponse(taskMonitors);
+    }
+
+    /**
+     * JSON 翻译执行 Agent（Runtime Worker）
+     */
+    @PostMapping("/v3/runtimeJsonTranslate")
+    public Map<String, Object> runtimeJsonTranslate(@RequestBody JsonRuntimeTranslateRequest request) {
+        if (request == null) {
+            Map<String, Object> failed = new LinkedHashMap<>();
+            failed.put("taskId", "");
+            failed.put("status", "FAILED");
+            failed.put("inputBlobUri", "");
+            failed.put("outputBlobUri", "");
+            failed.put("reportBlobUri", "");
+            failed.put("total", 0);
+            failed.put("done", 0);
+            failed.put("failed", 0);
+            failed.put("durationMs", 0);
+            return failed;
+        }
+        return translateV3Service.executeJsonRuntimeTask(request);
+    }
+
+    /**
+     * 查看 JSON runtime 任务：Cosmos 文档、Redis 进度、checkpoint 中三个 Blob 的存在性/大小；可选返回预览（前缀读取，避免整文件下载）。
+     *
+     * @param taskId            Cosmos 任务 id
+     * @param shopName          可选，传入则单点读取分区；不传则扫描 status 查找（较慢）
+     * @param redisPrefix       可选，默认任务 checkpoint.redisPrefix，再否则 tr:v1
+     * @param includeBlobPreview 为 true 时读取各 Blob 前 maxPreviewBytes 字节为 UTF-8 预览
+     * @param maxPreviewBytes   预览最大字节数，默认 8192，上限 512KB
+     */
+    @GetMapping("/v3/jsonRuntimeTaskDetail")
+    public BaseResponse<Object> jsonRuntimeTaskDetail(@RequestParam String taskId,
+                                                      @RequestParam(required = false) String shopName,
+                                                      @RequestParam(required = false) String redisPrefix,
+                                                      @RequestParam(required = false, defaultValue = "false") boolean includeBlobPreview,
+                                                      @RequestParam(required = false, defaultValue = "8192") int maxPreviewBytes) {
+        return translateV3Service.getJsonRuntimeTaskDetail(taskId, shopName, redisPrefix, includeBlobPreview, maxPreviewBytes);
     }
 
     // 当支付成功后，调用该方法，将该用户的状态3，改为状态6

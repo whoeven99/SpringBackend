@@ -57,7 +57,7 @@ public class TranslateTaskPageController {
         if (task != null) {
             try {
                 String taskId = task.getId();
-                Map<String, Object> totalAiScoreReport = readJsonMap(blobPath(taskId, "qa/ai-score.json"));
+                Map<String, Object> totalAiScoreReport = readJsonMap(blobPath(task.getShopName(), taskId, "qa/ai-score.json"));
                 model.addAttribute("totalAiScoreReport", totalAiScoreReport);
                 model.addAttribute("totalAiModuleScores", extractModuleScores(totalAiScoreReport));
                 model.addAttribute("moduleAiReports", buildModuleAiReports(task));
@@ -89,7 +89,7 @@ public class TranslateTaskPageController {
             return "translate-v3-module-ai-report";
         }
 
-        String moduleBlobPath = blobPath(id, "chunks/" + module + "/ai-score.json");
+        String moduleBlobPath = blobPath(task.getShopName(), id, "chunks/" + module + "/ai-score.json");
         Map<String, Object> moduleAiReport = readJsonMap(moduleBlobPath);
         Map<String, Object> result = moduleAiReport == null
                 ? new LinkedHashMap<>()
@@ -117,7 +117,7 @@ public class TranslateTaskPageController {
         }
 
         for (String module : modules) {
-            String path = blobPath(task.getId(), "chunks/" + module + "/ai-score.json");
+            String path = blobPath(task.getShopName(), task.getId(), "chunks/" + module + "/ai-score.json");
             Map<String, Object> report = readJsonMap(path);
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("module", module);
@@ -181,8 +181,8 @@ public class TranslateTaskPageController {
         }
     }
 
-    private String blobPath(String taskId, String tail) {
-        return "tasks/" + taskId + "/" + tail;
+    private String blobPath(String shopName, String taskId, String tail) {
+        return "tasks/" + shopName + "/" + taskId + "/" + tail;
     }
 
     private Map<String, Object> toStringObjectMap(Object input) {

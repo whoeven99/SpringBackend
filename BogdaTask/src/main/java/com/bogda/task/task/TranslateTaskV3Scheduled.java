@@ -20,28 +20,35 @@ public class TranslateTaskV3Scheduled {
     private FeiShuRobotIntegration feiShuRobotIntegration;
 
     @Scheduled(fixedDelay = 30 * 1000)
-    @EnableScheduledTask
+//    @EnableScheduledTask
     public void initialToTranslateTaskV3() {
         LOG.info("v3 scheduler tick initialToTranslateTaskV3");
         translateV3Service.processInitialTasksV3();
     }
 
-    @Scheduled(fixedDelay = 30 * 1000)
-    @EnableScheduledTask
+    @Scheduled(fixedDelay = 3000 * 1000)
+//    @EnableScheduledTask
     public void translateEachTaskV3() {
         LOG.info("v3 scheduler tick translateEachTaskV3");
         translateV3Service.processTranslateTasksV3();
     }
 
     @Scheduled(fixedDelay = 30 * 1000)
-    @EnableScheduledTask
+//    @EnableScheduledTask
+    public void runtimeJsonTranslateTaskV3() {
+        LOG.info("v3 scheduler tick runtimeJsonTranslateTaskV3");
+        translateV3Service.processRuntimeJsonTasks();
+    }
+
+    @Scheduled(fixedDelay = 30 * 1000)
+//    @EnableScheduledTask
     public void saveToShopifyV3() {
         LOG.info("v3 scheduler tick saveToShopifyV3");
         translateV3Service.processSaveTasksV3();
     }
 
     @Scheduled(fixedDelay = 60 * 1000)
-    @EnableScheduledTask
+//    @EnableScheduledTask
     public void verifySavedToShopifyV3() {
         LOG.info("v3 scheduler tick verifySavedToShopifyV3");
         translateV3Service.processVerifyTasksV3();

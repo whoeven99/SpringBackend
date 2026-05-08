@@ -12,6 +12,7 @@ import com.bogda.repository.container.TranslateTaskV3DO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,17 +20,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class TranslateTaskV3CosmosRepo {
     private static final Logger LOG = LoggerFactory.getLogger(TranslateTaskV3CosmosRepo.class);
     @Autowired
+    @Qualifier("translateTaskV3Container")
     private CosmosContainer translateTaskV3Container;
 
     public boolean upsert(TranslateTaskV3DO task) {
         try {
             if (task.getCreatedAt() == null || task.getCreatedAt().isEmpty()) {
                 task.setCreatedAt(Instant.now().toString());
+            }
+            if (task.getStatusText() == null || task.getStatusText().isEmpty()) {
+                task.setStatusText(toStatusText(task.getStatus()));
             }
             task.setUpdatedAt(Instant.now().toString());
             CosmosItemRequestOptions options = new CosmosItemRequestOptions()
@@ -55,17 +61,24 @@ public class TranslateTaskV3CosmosRepo {
 
     public List<TranslateTaskV3DO> listByShopSource(String shopName, String source) {
         try {
-            String sql = "SELECT * FROM c WHERE c.shopName = @shopName AND c.source = @source";
-            SqlQuerySpec spec = new SqlQuerySpec(sql, Arrays.asList(
-                    new SqlParameter("@shopName", shopName),
-                    new SqlParameter("@source", source)
+            String sql = "SELECT * FROM c WHERE c.shopName = @shopName";
+            SqlQuerySpec spec = new SqlQuerySpec(sql, List.of(
+                    new SqlParameter("@shopName", shopName)
             ));
             CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
                     .setPartitionKey(new PartitionKey(shopName))
                     .setMaxDegreeOfParallelism(1);
 
             List<TranslateTaskV3DO> result = new ArrayList<>();
-            translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(result::add);
+            String normalizedSource = normalizeLocaleCode(source);
+            translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(item -> {
+                if (item == null) {
+                    return;
+                }
+                if (normalizedSource.equals(normalizeLocaleCode(item.getSource()))) {
+                    result.add(item);
+                }
+            });
             return result;
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateTaskV3CosmosRepo.listByShopSource",
@@ -92,21 +105,53 @@ public class TranslateTaskV3CosmosRepo {
         }
     }
 
+    /**
+     * 按文档 {@code id} 跨分区查询，不限制 status。同一 id 在不同 shopName 分区下可共存，此时返回多条，由调用方处理。
+     */
+    public List<TranslateTaskV3DO> listByTaskId(String id) {
+        if (id == null || id.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            String sql = "SELECT * FROM c WHERE c.id = @id";
+            SqlQuerySpec spec = new SqlQuerySpec(sql, List.of(new SqlParameter("@id", id)));
+            CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
+                    .setMaxDegreeOfParallelism(1);
+            List<TranslateTaskV3DO> result = new ArrayList<>();
+            translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(result::add);
+            LOG.info("v3 cosmos listByTaskId id={} fetched={}", id, result.size());
+            return result;
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3CosmosRepo.listByTaskId",
+                    "FatalException query v3 task by id failed: id=" + id + " error=" + e);
+            return Collections.emptyList();
+        }
+    }
+
     public boolean existsActiveTask(String shopName, String source, String target) {
         try {
-            String sql = "SELECT VALUE COUNT(1) FROM c WHERE c.shopName = @shopName AND c.source = @source " +
-                    "AND c.target = @target AND c.status IN (0,1,2,3)";
+            String sql = "SELECT * FROM c WHERE c.shopName = @shopName AND c.status IN (0,1,2,3)";
             SqlQuerySpec spec = new SqlQuerySpec(sql, Arrays.asList(
-                    new SqlParameter("@shopName", shopName),
-                    new SqlParameter("@source", source),
-                    new SqlParameter("@target", target)
+                    new SqlParameter("@shopName", shopName)
             ));
             CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
                     .setPartitionKey(new PartitionKey(shopName))
                     .setMaxDegreeOfParallelism(1);
-            List<Integer> count = new ArrayList<>();
-            translateTaskV3Container.queryItems(spec, options, Integer.class).forEach(count::add);
-            return !count.isEmpty() && count.get(0) != null && count.get(0) > 0;
+            String normalizedSource = normalizeLocaleCode(source);
+            String normalizedTarget = normalizeLocaleCode(target);
+            for (TranslateTaskV3DO item : translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class)) {
+                if (item == null) {
+                    continue;
+                }
+                if (!normalizedSource.equals(normalizeLocaleCode(item.getSource()))) {
+                    continue;
+                }
+                if (!normalizedTarget.equals(normalizeLocaleCode(item.getTarget()))) {
+                    continue;
+                }
+                return true;
+            }
+            return false;
         } catch (Exception e) {
             TraceReporterHolder.report("TranslateTaskV3CosmosRepo.existsActiveTask",
                     "FatalException check active v3 task failed: shop=" + shopName + " source=" + source + " target=" + target + " error=" + e);
@@ -118,6 +163,7 @@ public class TranslateTaskV3CosmosRepo {
         try {
             CosmosPatchOperations patch = CosmosPatchOperations.create()
                     .replace("/status", status)
+                    .set("/statusText", toStatusText(status))
                     .replace("/updatedAt", Instant.now().toString());
             translateTaskV3Container.patchItem(id, new PartitionKey(shopName), patch, Object.class);
             return true;
@@ -141,5 +187,48 @@ public class TranslateTaskV3CosmosRepo {
                     "FatalException patch checkpoint/metrics failed: id=" + id + " shop=" + shopName + " error=" + e);
             return false;
         }
+    }
+
+    private String toStatusText(Integer status) {
+        if (status == null) {
+            return "UNKNOWN";
+        }
+        return switch (status) {
+            case 0 -> "INIT_PENDING";
+            case 1 -> "TRANSLATE_PENDING";
+            case 2 -> "SAVE_PENDING";
+            case 3 -> "STOPPED_TOKEN_LIMIT";
+            case 4 -> "STOPPED";
+            case 6 -> "VERIFY_PENDING";
+            default -> "UNKNOWN";
+        };
+    }
+
+    private static String normalizeLocaleCode(String locale) {
+        if (locale == null) {
+            return "";
+        }
+        String cleaned = locale.trim().replace('_', '-');
+        if (cleaned.isEmpty()) {
+            return "";
+        }
+        String[] parts = cleaned.split("-");
+        if (parts.length == 0) {
+            return cleaned.toLowerCase(Locale.ROOT);
+        }
+        StringBuilder normalized = new StringBuilder(parts[0].toLowerCase(Locale.ROOT));
+        for (int i = 1; i < parts.length; i++) {
+            if (parts[i] == null || parts[i].isEmpty()) {
+                continue;
+            }
+            normalized.append("-");
+            if (parts[i].length() <= 3) {
+                normalized.append(parts[i].toUpperCase(Locale.ROOT));
+            } else {
+                normalized.append(parts[i].substring(0, 1).toUpperCase(Locale.ROOT));
+                normalized.append(parts[i].substring(1).toLowerCase(Locale.ROOT));
+            }
+        }
+        return normalized.toString();
     }
 }

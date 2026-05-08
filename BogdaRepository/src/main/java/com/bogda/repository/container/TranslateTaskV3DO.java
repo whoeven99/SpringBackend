@@ -24,6 +24,7 @@ public class TranslateTaskV3DO {
     private String source;
     private String target;
     private Integer status;
+    private String statusText;
     private String taskType;
     private String aiModel;
     private boolean isCover;
