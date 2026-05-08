@@ -9,7 +9,7 @@ import java.util.Map;
 @RestController
 public class AgentRootController {
 
-    @Value("${spring.application.name}")
+    @Value("${spring.application.name:agent-task}")
     private String applicationName;
 
     @GetMapping("/")
