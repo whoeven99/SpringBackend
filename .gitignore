@@ -15,5 +15,8 @@ target/
 /src/main/resources/application.local.properties
 **/application-local.yml
 AgentTask/src/main/resources/application.properties
+AgentTask/src/main/resources/application-prod.properties
+AgentTask/src/main/resources/bootstrap.yml
+AgentTask/src/main/resources/application.local.properties
 *.iml
 /.vscode

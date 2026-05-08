@@ -22,6 +22,10 @@ COPY BogdaTask/pom.xml BogdaTask/
 
 RUN mvn dependency:go-offline -B -q -pl AgentTask -am || true
 
+COPY BogdaCommon/src BogdaCommon/src
+COPY BogdaRepository/src BogdaRepository/src
+COPY BogdaIntegration/src BogdaIntegration/src
+COPY BogdaService/src BogdaService/src
 COPY AgentTask/src AgentTask/src
 
 RUN mvn -pl AgentTask -am package -DskipTests -B

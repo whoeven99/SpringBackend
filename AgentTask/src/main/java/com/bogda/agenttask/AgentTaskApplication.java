@@ -8,11 +8,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Agent 进程：内嵌 Web（Render 健康检查 / 探针）+ 定时任务。
- * 当前仅扫描本模块；接入 Cosmos/Redis/Blob 时再打开 com.bogda.repository、com.bogda.common。
+ * 扫描范围与 {@code BogdaTask.TaskApplication} 对齐，以加载 TranslateV3Service、仓储与集成层。
  */
 @SpringBootApplication(
         exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class},
-        scanBasePackages = {"com.bogda.agenttask"}
+        scanBasePackages = {"com.bogda.agenttask", "com.bogda.repository", "com.bogda.common",
+                "com.bogda.integration", "com.bogda.service"}
 )
 @EnableScheduling
 public class AgentTaskApplication {

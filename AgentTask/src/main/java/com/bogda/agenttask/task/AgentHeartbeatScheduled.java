@@ -15,6 +15,6 @@ public class AgentHeartbeatScheduled {
 
     @Scheduled(fixedDelayString = "${agent.task.heartbeat-ms:20000}")
     public void heartbeat() {
-        LOG.debug("AgentTask heartbeat");
+        LOG.info("AgentTask heartbeat");
     }
 }

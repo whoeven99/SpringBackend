@@ -1,25 +1,23 @@
-package com.bogda.service.agent;
+package com.bogda.agenttask.agent;
 
+import com.bogda.common.agent.JsonRuntimeAgentRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * 封装 {@link JsonRuntimeAgent#chat}，供 BogdaApi（HTTP）与 BogdaTask（定时/消息等）复用。
- * 自然语言示例：「执行翻译任务 taskId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx」
+ * 封装 {@link JsonRuntimeAgent#chat}，实现 {@link JsonRuntimeAgentRunner}。
  */
 @Service
-public class JsonRuntimeAgentRunner {
-    private static final Logger LOG = LoggerFactory.getLogger(JsonRuntimeAgentRunner.class);
+public class DefaultJsonRuntimeAgentRunner implements JsonRuntimeAgentRunner {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultJsonRuntimeAgentRunner.class);
 
     @Autowired
     private JsonRuntimeAgent jsonRuntimeAgent;
 
-    /**
-     * @param message 自然语言或带 taskId / 完整 JSON 的文本（与 Api /agent/json-runtime/run 一致）
-     * @return finalizeTrace 产出的 JSON 字符串
-     */
+    @Override
     public String run(String message) {
         if (message == null || message.trim().isEmpty()) {
             throw new IllegalArgumentException("Missing parameters: message");

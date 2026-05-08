@@ -1,14 +1,14 @@
-package com.bogda.api.controller;
+package com.bogda.agenttask.web;
 
-import com.bogda.service.agent.JsonRuntimeAgentRunner;
+import com.bogda.common.agent.JsonRuntimeAgentRunner;
 import com.bogda.common.controller.response.BaseResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/agent/json-runtime")

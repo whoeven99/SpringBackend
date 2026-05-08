@@ -30,7 +30,7 @@ import com.bogda.service.logic.ShopifyRateLimitService;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.redis.ConfigRedisRepo;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV3RedisService;
-import com.bogda.service.agent.JsonRuntimeAgentRunner;
+import com.bogda.common.agent.JsonRuntimeAgentRunner;
 import com.bogda.service.logic.token.UserTokenService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -141,9 +141,9 @@ public class TranslateV3Service {
     private UniversalTranslateService universalTranslateService;
     @Autowired
     private ModelTranslateService modelTranslateService;
-    /** 与 JsonRuntimeAgentTools 同依赖本类，Lazy 破除循环装配 */
+    /** 与 JsonRuntimeAgentTools 同依赖本类；Runner 仅在 AgentTask 模块装配，其它进程可为 null */
     @Lazy
-    @Autowired
+    @Autowired(required = false)
     private JsonRuntimeAgentRunner jsonRuntimeAgentRunner;
     private final Set<String> processingInitialTaskIds = ConcurrentHashMap.newKeySet();
     private final Set<String> processingTranslateTaskIds = ConcurrentHashMap.newKeySet();
@@ -1182,7 +1182,7 @@ public class TranslateV3Service {
     }
 
     /**
-     * init 仅写入 modules/metrics，通常不带 provider/model/apiBase/apiKey；从 Spring 与 {@link ConfigUtils} 回填（与 {@code JsonRuntimeAgentConfig} 同源），避免整批 {@code INVALID_PROVIDER_CONFIG}。
+     * init 仅写入 modules/metrics，通常不带 provider/model/apiBase/apiKey；从 Spring 与 {@link ConfigUtils} 回填（与 {@code com.bogda.agenttask.config.JsonRuntimeAgentConfig} 同源），避免整批 {@code INVALID_PROVIDER_CONFIG}。
      */
     private void applyDefaultRuntimeLlmConfigIfMissing(JsonRuntimeTranslateRequest request) {
         if (request == null) {
@@ -2104,22 +2104,6 @@ public class TranslateV3Service {
                 taskId, task.getShopName(), totalCount, totalChars);
     }
 
-    public void translateEachTask(InitialTaskV2DO initialTaskV2DO) {
-        TranslateTaskV3DO task = new TranslateTaskV3DO();
-        task.setId(String.valueOf(initialTaskV2DO.getId()));
-        task.setShopName(initialTaskV2DO.getShopName());
-        task.setSource(normalizeLocaleCode(initialTaskV2DO.getSource()));
-        task.setTarget(normalizeLocaleCode(initialTaskV2DO.getTarget()));
-        task.setStatus(initialTaskV2DO.getStatus());
-        task.setTaskType(initialTaskV2DO.getTaskType());
-        task.setAiModel(initialTaskV2DO.getAiModel());
-        task.setCover(initialTaskV2DO.isCover());
-        task.setHandle(initialTaskV2DO.isHandle());
-        task.setModuleList(initialTaskV2DO.getModuleList());
-        task.setSessionId(initialTaskV2DO.getShopName() + ":" + initialTaskV2DO.getId());
-        translateEachTaskV3(task);
-    }
-
     /**
      * 将 JsonRuntimeAgent 最终回复（finalizeTrace 的 JSON）写入 Blob，便于对照 HTTP API 返回排查 Planner/执行轨迹。
      * 路径：{@code tasks/{shop}/{taskId}/qa/agent-runtime-trace-{utcTs}.json} 与 {@code .../agent-runtime-trace-latest.json}。
@@ -2184,6 +2168,11 @@ public class TranslateV3Service {
         if (isRuntimeJsonTask(task)) { // agent 模式的翻译
             String agentMsg = "执行taskId=" + taskId + "的json翻译任务";
             try {
+                if (jsonRuntimeAgentRunner == null) {
+                    LOG.error("JsonRuntimeAgentRunner 未装配（仅 AgentTask 进程提供），taskId={}, shop={}", taskId, shopName);
+                    translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_AGENT_UNAVAILABLE");
+                    return;
+                }
                 LOG.info("v3 translate json-runtime via agent, taskId={}, shop={}", taskId, shopName);
                 String agentTrace = jsonRuntimeAgentRunner.run(agentMsg);
                 persistJsonRuntimeAgentTraceBlob(task, agentMsg, agentTrace);
