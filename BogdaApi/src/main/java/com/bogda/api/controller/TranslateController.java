@@ -139,23 +139,7 @@ public class TranslateController {
         return translateV3Service.executeJsonRuntimeTask(request);
     }
 
-    /**
-     * 查看 JSON runtime 任务：Cosmos 文档、Redis 进度、checkpoint 中三个 Blob 的存在性/大小；可选返回预览（前缀读取，避免整文件下载）。
-     *
-     * @param taskId            Cosmos 任务 id
-     * @param shopName          可选，传入则单点读取分区；不传则扫描 status 查找（较慢）
-     * @param redisPrefix       可选，默认任务 checkpoint.redisPrefix，再否则 tr:v1
-     * @param includeBlobPreview 为 true 时读取各 Blob 前 maxPreviewBytes 字节为 UTF-8 预览
-     * @param maxPreviewBytes   预览最大字节数，默认 8192，上限 512KB
-     */
-    @GetMapping("/v3/jsonRuntimeTaskDetail")
-    public BaseResponse<Object> jsonRuntimeTaskDetail(@RequestParam String taskId,
-                                                      @RequestParam(required = false) String shopName,
-                                                      @RequestParam(required = false) String redisPrefix,
-                                                      @RequestParam(required = false, defaultValue = "false") boolean includeBlobPreview,
-                                                      @RequestParam(required = false, defaultValue = "8192") int maxPreviewBytes) {
-        return translateV3Service.getJsonRuntimeTaskDetail(taskId, shopName, redisPrefix, includeBlobPreview, maxPreviewBytes);
-    }
+    // jsonRuntimeTaskDetail 已迁至 AgentTask {@code JsonRuntimeTaskDetailController}（/translate/v3/jsonRuntimeTaskDetail）
 
     // 当支付成功后，调用该方法，将该用户的状态3，改为状态6
     // 支付之后，前端调用api，停止状态改为继续翻译
