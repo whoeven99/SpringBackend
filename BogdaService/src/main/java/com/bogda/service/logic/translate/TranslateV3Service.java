@@ -459,6 +459,7 @@ public class TranslateV3Service {
                 }
             }
         }
+        enrichJsonRuntimeDetailWithReportFailures(body, reportUri);
 
         LOG.info("json-runtime task detail taskId={} shopName={} taskType={}", cleanId, task.getShopName(), task.getTaskType());
 
@@ -593,6 +594,40 @@ public class TranslateV3Service {
             snap.put("previewTruncated", preview != null && sizeBytes > maxPreviewBytes);
         }
         return snap;
+    }
+
+    /**
+     * 从 report Blob 解析 {@code failures} 数组供详情页展示（不依赖 includeBlobPreview）。
+     * 与 Redis failMap 互补：跨 chunk 相同 JSON path 在 Redis 中会覆盖，完整列表以各 chunk 的 report 为准。
+     */
+    private void enrichJsonRuntimeDetailWithReportFailures(Map<String, Object> body, String reportUri) {
+        String uri = safeText(reportUri);
+        if (uri.isEmpty()) {
+            return;
+        }
+        String path = toBlobPath(uri);
+        if (!translateTaskV3BlobRepo.blobExists(path)) {
+            return;
+        }
+        Long sz = translateTaskV3BlobRepo.getBlobSizeBytes(path);
+        final long maxBytes = 512 * 1024;
+        if (sz != null && sz > maxBytes) {
+            body.put("runtimeReportFailuresTruncated", true);
+            return;
+        }
+        String raw = translateTaskV3BlobRepo.readText(path);
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        try {
+            Map<String, Object> rep = JsonUtils.jsonToObject(raw, new TypeReference<Map<String, Object>>() {
+            });
+            Object failures = rep == null ? null : rep.get("failures");
+            if (failures instanceof List<?> list && !list.isEmpty()) {
+                body.put("runtimeReportFailures", failures);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     public void processSaveTasksV3() {
@@ -1011,7 +1046,9 @@ public class TranslateV3Service {
                             effectiveDone += batchResult.successMap.size();
                         }
                         if (!batchResult.failMap.isEmpty()) {
-                            translateTaskMonitorV3RedisService.setRuntimeFailMap(redisPrefix, taskId, batchResult.failMap);
+                            translateTaskMonitorV3RedisService.setRuntimeFailMap(redisPrefix, taskId,
+                                    prefixRuntimeFailKeysForChunk(batchResult.failMap, chunkFileLabel,
+                                            chunkOrdinal, runtimeChunksTotal));
                             translateTaskMonitorV3RedisService.incrementRuntimeFailCount(redisPrefix, taskId, batchResult.failMap.size());
                             failCount += batchResult.failMap.size();
                         }
@@ -1077,6 +1114,7 @@ public class TranslateV3Service {
             finalMeta.put("totalCountThisBlob", totalCount);
             finalMeta.put("doneCountThisBlob", translationAcc.size());
             finalMeta.put("failCountThisBlob", failedBucket);
+            finalMeta.put("currentFailThisBlob", String.valueOf(failedBucket));
             finalMeta.put(hashFieldKey, fileHash);
             finalMeta.put("updatedAt", Instant.now().toString());
             finalMeta.put("llmPromptTokens", String.valueOf(tokenTotal.promptTokens));
@@ -1441,6 +1479,34 @@ public class TranslateV3Service {
             return parsed.stream().filter(x -> x != null && !safeText(x).isEmpty()).collect(Collectors.toList());
         }
         return Collections.emptyList();
+    }
+
+    /**
+     * Redis fail hash 以 path 为 field；跨 chunk 若 JSON pointer 相同会互相覆盖。
+     * 多分块或能从 Blob 文件名区分时，为 key 加上 chunk 文件名前缀。
+     */
+    private static Map<String, String> prefixRuntimeFailKeysForChunk(Map<String, String> failMap,
+                                                                     String chunkFileLabel,
+                                                                     int chunkOrdinal,
+                                                                     int chunksTotal) {
+        if (failMap == null || failMap.isEmpty()) {
+            return failMap;
+        }
+        String label = safeText(chunkFileLabel);
+        boolean multiChunk = chunksTotal > 1 || chunkOrdinal > 1;
+        if (!multiChunk && (label.isEmpty() || "-".equals(label))) {
+            return failMap;
+        }
+        String scope = (!label.isEmpty() && !"-".equals(label)) ? label : ("chunk#" + chunkOrdinal);
+        String pfx = scope + "::";
+        Map<String, String> out = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : failMap.entrySet()) {
+            if (e.getKey() == null) {
+                continue;
+            }
+            out.put(pfx + e.getKey(), e.getValue() == null ? "UNKNOWN_ERROR" : e.getValue());
+        }
+        return out;
     }
 
     private Map<String, Object> finishRuntimeTaskWithFailure(String redisPrefix,
