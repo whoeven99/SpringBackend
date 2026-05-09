@@ -7,9 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * 从 {@code BogdaTask.TranslateTaskV3Scheduled} 迁出的 V3 调度：initial 队列与逐条翻译。
- */
 @Component
 public class TranslateTaskV3AgentScheduled {
 
@@ -21,14 +18,14 @@ public class TranslateTaskV3AgentScheduled {
         this.translateV3Service = translateV3Service;
     }
 
-   @Scheduled(fixedDelay = 30 * 1000)
+    @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTaskV3() {
         LOG.info("v3 scheduler tick initialToTranslateTaskV3");
         translateV3Service.processInitialTasksV3();
     }
 
-    //  @Scheduled(fixedDelay = 3000 * 1000)
-    //  @EnableScheduledTask
+    @Scheduled(fixedDelay = 3000 * 1000)
+    @EnableScheduledTask
     public void translateEachTaskV3() {
         LOG.info("v3 scheduler tick translateEachTaskV3");
         translateV3Service.processTranslateTasksV3();
