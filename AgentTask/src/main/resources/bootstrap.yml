@@ -41,6 +41,8 @@ cosmos:
   endpoint: https://springbackend-cosmos-test.documents.azure.com:443/
   database: bogdatechtest
   container: discount
+  # Render / CI：设置环境变量 COSMOS_KEY（或通过 Key Vault 写入 cosmos-key）；勿提交明文
+  key: ${COSMOS_KEY}
 
 blob:
   translate-v3:
@@ -49,23 +51,24 @@ blob:
 
 ---
 # prod环境覆盖
-spring:
-  config:
-    activate:
-      on-profile: prod
+# spring:
+#   config:
+#     activate:
+#       on-profile: prod
 
-keyvault:
-  endpoint: https://userprivatekeyprod.vault.azure.net/
+# keyvault:
+#   endpoint: https://userprivatekeyprod.vault.azure.net/
 
-datasource:
-  url: ${DATASOURCE_URL:jdbc:sqlserver://bogdatechsqlserverprod.database.windows.net:1433;database=bogdatech-prod;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;}
-  username: bogdatechsqlserverprod@bogdatechsqlserverprod
-  password: Bogda1234
-  connection-properties: ${DATASOURCE_CONNECTION_PROPERTIES:}
+# datasource:
+#   url: ${DATASOURCE_URL:jdbc:sqlserver://bogdatechsqlserverprod.database.windows.net:1433;database=bogdatech-prod;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;}
+#   username: bogdatechsqlserverprod@bogdatechsqlserverprod
+#   password: Bogda1234
+#   connection-properties: ${DATASOURCE_CONNECTION_PROPERTIES:}
 
-redis:
-  hostname: azurecache-redis-prod.redis.cache.windows.net
+# redis:
+#   hostname: azurecache-redis-prod.redis.cache.windows.net
 
-cosmos:
-  endpoint: https://bogdaprodcosmos.documents.azure.com:443/
-  database: bogdaprodcosmos
+# cosmos:
+#   endpoint: https://bogdaprodcosmos.documents.azure.com:443/
+#   database: bogdaprodcosmos
+  # key: ${COSMOS_KEY:Prod}
