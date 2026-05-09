@@ -16,7 +16,7 @@ target/
 **/application-local.yml
 AgentTask/src/main/resources/application.properties
 AgentTask/src/main/resources/application-prod.properties
-AgentTask/src/main/resources/bootstrap.yml
+# 勿忽略 bootstrap.yml：需提交到仓库，CI/Render 否则打不出该文件，application.yml 的 spring.config.import 会报 “bootstrap.yml does not exist”
 AgentTask/src/main/resources/application.local.properties
 *.iml
 /.vscode
