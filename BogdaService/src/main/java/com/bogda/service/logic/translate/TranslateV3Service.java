@@ -463,6 +463,7 @@ public class TranslateV3Service {
             }
         }
         enrichJsonRuntimeDetailWithReportFailures(body, reportUri);
+        enrichJsonRuntimeDetailWithChunksFailedJson(body, task.getShopName(), cleanId);
 
         LOG.info("json-runtime task detail taskId={} shopName={} taskType={}", cleanId, task.getShopName(), task.getTaskType());
 
@@ -628,6 +629,41 @@ public class TranslateV3Service {
             Object failures = rep == null ? null : rep.get("failures");
             if (failures instanceof List<?> list && !list.isEmpty()) {
                 body.put("runtimeReportFailures", failures);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * 附加 chunks/failed.json（合并写入，含每条失败的 sourceValue），便于详情页定位原文。
+     */
+    private void enrichJsonRuntimeDetailWithChunksFailedJson(Map<String, Object> body,
+                                                           String shopName,
+                                                           String taskId) {
+        String shop = safeText(shopName);
+        String tid = safeText(taskId);
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        String blobRel = blobPath(shop, tid, JSON_RUNTIME_CHUNKS_FAILED_JSON);
+        if (!translateTaskV3BlobRepo.blobExists(blobRel)) {
+            return;
+        }
+        Long sz = translateTaskV3BlobRepo.getBlobSizeBytes(blobRel);
+        final long maxBytes = 512 * 1024;
+        if (sz != null && sz > maxBytes) {
+            body.put("runtimeFailedJsonTruncated", true);
+            return;
+        }
+        String raw = translateTaskV3BlobRepo.readText(blobRel);
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        try {
+            Map<String, Object> doc = JsonUtils.jsonToObject(raw, new TypeReference<Map<String, Object>>() {
+            });
+            if (doc != null && !doc.isEmpty()) {
+                body.put("runtimeFailedJson", doc);
             }
         } catch (Exception ignored) {
         }
@@ -801,6 +837,7 @@ public class TranslateV3Service {
         d.setOpenaiUser(src.getOpenaiUser());
         d.setBatchSize(src.getBatchSize());
         d.setMaxCharsPerBatch(src.getMaxCharsPerBatch());
+        d.setMaxCompletionTokens(src.getMaxCompletionTokens());
         d.setConcurrency(src.getConcurrency());
         d.setMaxRetries(src.getMaxRetries());
         d.setBaseBackoffMs(src.getBaseBackoffMs());
@@ -1441,6 +1478,7 @@ public class TranslateV3Service {
         request.setOpenaiUser(openaiUser);
         request.setBatchSize(parseIntOrNull(checkpoint.get("batchSize")));
         request.setMaxCharsPerBatch(parseIntOrNull(checkpoint.get("maxCharsPerBatch")));
+        request.setMaxCompletionTokens(parseIntOrNull(checkpoint.get("maxCompletionTokens")));
         request.setConcurrency(parseIntOrNull(checkpoint.get("concurrency")));
         request.setMaxRetries(parseIntOrNull(checkpoint.get("maxRetries")));
         request.setBaseBackoffMs(parseIntOrNull(checkpoint.get("baseBackoffMs")));
@@ -1781,6 +1819,11 @@ public class TranslateV3Service {
         String traceUser = safeText(request.getOpenaiUser());
         if (!traceUser.isEmpty()) {
             body.put("user", traceUser.length() > 128 ? traceUser.substring(0, 128) : traceUser);
+        }
+        Integer maxOut = request.getMaxCompletionTokens();
+        if (maxOut != null && maxOut > 0) {
+            // OpenAI 兼容 Chat Completions；与 maxCharsPerBatch 不同，这是「单次补全」输出 token 上限。
+            body.put("max_tokens", maxOut);
         }
 
         HttpRequest.Builder builder = HttpRequest.newBuilder()

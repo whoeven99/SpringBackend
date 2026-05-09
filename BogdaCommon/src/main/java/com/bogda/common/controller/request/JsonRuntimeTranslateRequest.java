@@ -27,6 +27,11 @@ public class JsonRuntimeTranslateRequest {
     private String openaiUser;
     private Integer batchSize;
     private Integer maxCharsPerBatch;
+    /**
+     * 可选。写入 Chat Completions 请求体的 {@code max_tokens}（输出上限）。大块 JSON 字符串翻译时若不设置，
+     * 默认 completion 可能被网关截断，导致返回无法解析为合法 JSON（{@code MODEL_RESPONSE_JSON_INVALID}）。
+     */
+    private Integer maxCompletionTokens;
     private Integer concurrency;
     private Integer maxRetries;
     private Integer baseBackoffMs;
