@@ -21,8 +21,7 @@ public class TranslateTaskV3AgentScheduled {
         this.translateV3Service = translateV3Service;
     }
 
-//    @Scheduled(fixedDelay = 30 * 1000)
-//    @EnableScheduledTask
+   @Scheduled(fixedDelay = 30 * 1000)
     public void initialToTranslateTaskV3() {
         LOG.info("v3 scheduler tick initialToTranslateTaskV3");
         translateV3Service.processInitialTasksV3();
