@@ -59,6 +59,36 @@ public class TranslateTaskV3CosmosRepo {
         }
     }
 
+    /**
+     * 列出某店铺分区下的全部 v3 任务（不筛 source/target）。
+     */
+    public List<TranslateTaskV3DO> listByShopName(String shopName) {
+        if (shopName == null || shopName.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            String sql = "SELECT * FROM c WHERE c.shopName = @shopName";
+            SqlQuerySpec spec = new SqlQuerySpec(sql, List.of(
+                    new SqlParameter("@shopName", shopName)
+            ));
+            CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
+                    .setPartitionKey(new PartitionKey(shopName))
+                    .setMaxDegreeOfParallelism(1);
+
+            List<TranslateTaskV3DO> result = new ArrayList<>();
+            translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(item -> {
+                if (item != null) {
+                    result.add(item);
+                }
+            });
+            return result;
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3CosmosRepo.listByShopName",
+                    "FatalException query v3 task list failed: shop=" + shopName + " error=" + e);
+            return Collections.emptyList();
+        }
+    }
+
     public List<TranslateTaskV3DO> listByShopSource(String shopName, String source) {
         try {
             String sql = "SELECT * FROM c WHERE c.shopName = @shopName";
