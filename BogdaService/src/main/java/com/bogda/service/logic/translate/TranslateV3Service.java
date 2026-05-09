@@ -56,10 +56,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
+import java.util.Random;
 import java.util.UUID;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -101,6 +102,8 @@ public class TranslateV3Service {
     private static final int JSON_RUNTIME_DEFAULT_BASE_BACKOFF_MS = 1000;
     /** 人工可读的总览，置于 tasks/{shop}/{taskId}/chunks/ 下供 Blob 控制台直接打开编辑 */
     private static final String JSON_RUNTIME_TRANSLATION_SUMMARY_TXT = "chunks/translation-summary.txt";
+    /** 所有分片汇总的失败条目（含 sourceValue），便于在 Blob 中直接查看 */
+    private static final String JSON_RUNTIME_CHUNKS_FAILED_JSON = "chunks/failed.json";
     private static final int JSON_RUNTIME_HTTP_TIMEOUT_SECONDS = 120;
     @Value("${translate.v3.init.module-limit:20}")
     private int initModuleFetchLimit;
@@ -630,6 +633,123 @@ public class TranslateV3Service {
         }
     }
 
+    /**
+     * 解析 {@code tasks/{shop}/{taskId}/...} 容器路径前缀。
+     */
+    private static String[] parseTasksBlobShopAndTaskId(String blobPath) {
+        String p = safeText(blobPath);
+        if (p.isEmpty() || !p.startsWith("tasks/")) {
+            return null;
+        }
+        String rest = p.substring("tasks/".length());
+        int s1 = rest.indexOf('/');
+        int s2 = rest.indexOf('/', s1 + 1);
+        if (s1 <= 0 || s2 <= s1) {
+            return null;
+        }
+        return new String[]{rest.substring(0, s1), rest.substring(s1 + 1, s2)};
+    }
+
+    private static String stripRuntimeFailStorageKeyToPointer(String storageKey) {
+        String k = safeText(storageKey);
+        int sep = k.indexOf("::");
+        if (sep > 0 && sep < k.length() - 2) {
+            return k.substring(sep + 2);
+        }
+        return k;
+    }
+
+    private static String failedJsonDedupeKey(Map<String, Object> row) {
+        return safeText(asString(row.get("chunkFile"))) + "|"
+                + safeText(asString(row.get("storageKey"))) + "|"
+                + safeText(asString(row.get("reason")));
+    }
+
+    /**
+     * 将本分片的失败条目合并写入 {@code tasks/{shop}/{taskId}/chunks/failed.json}（跨 chunk 累积）。
+     */
+    private void mergeWriteChunksFailedJson(String shopName,
+                                            String taskId,
+                                            String moduleName,
+                                            String chunkFileLabel,
+                                            int chunkOrdinal,
+                                            Map<String, String> failMap,
+                                            Map<String, String> pathToSource,
+                                            JsonNode root) {
+        if (failMap == null || failMap.isEmpty()) {
+            return;
+        }
+        String shop = safeText(shopName);
+        String tid = safeText(taskId);
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        String blobRel = blobPath(shop, tid, JSON_RUNTIME_CHUNKS_FAILED_JSON);
+        List<Map<String, Object>> existingItems = new ArrayList<>();
+        String rawExisting = translateTaskV3BlobRepo.readText(blobRel);
+        if (rawExisting != null && !rawExisting.isBlank()) {
+            try {
+                Map<String, Object> doc = JsonUtils.jsonToObject(rawExisting, new TypeReference<Map<String, Object>>() {
+                });
+                Object arr = doc == null ? null : doc.get("items");
+                if (arr instanceof List<?> list) {
+                    for (Object o : list) {
+                        if (o instanceof Map<?, ?> m) {
+                            Map<String, Object> row = new LinkedHashMap<>();
+                            for (Map.Entry<?, ?> e : m.entrySet()) {
+                                if (e.getKey() != null) {
+                                    row.put(String.valueOf(e.getKey()), e.getValue());
+                                }
+                            }
+                            existingItems.add(row);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        Set<String> seen = new LinkedHashSet<>();
+        for (Map<String, Object> row : existingItems) {
+            seen.add(failedJsonDedupeKey(row));
+        }
+        Instant now = Instant.now();
+        Map<String, String> srcMap = pathToSource == null ? Collections.emptyMap() : pathToSource;
+        String modLabel = safeText(moduleName).isEmpty() ? "-" : moduleName;
+        for (Map.Entry<String, String> e : failMap.entrySet()) {
+            String storageKey = e.getKey();
+            String reason = e.getValue();
+            String pointer = stripRuntimeFailStorageKeyToPointer(storageKey);
+            String sourceVal = safeText(srcMap.get(pointer));
+            if (sourceVal.isEmpty() && root != null && pointer.startsWith("/")) {
+                sourceVal = safeText(getTextAtPointer(root, pointer));
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("module", modLabel);
+            row.put("chunkFile", safeText(chunkFileLabel).isEmpty() ? "-" : chunkFileLabel);
+            row.put("chunkOrdinal", chunkOrdinal);
+            row.put("storageKey", storageKey);
+            row.put("path", pointer);
+            row.put("reason", reason == null ? "" : reason);
+            row.put("sourceValue", sourceVal);
+            row.put("recordedAt", now.toString());
+            String dedupe = failedJsonDedupeKey(row);
+            if (seen.contains(dedupe)) {
+                continue;
+            }
+            seen.add(dedupe);
+            existingItems.add(row);
+        }
+        Map<String, Object> outDoc = new LinkedHashMap<>();
+        outDoc.put("taskId", tid);
+        outDoc.put("shopName", shop);
+        outDoc.put("updatedAt", now.toString());
+        outDoc.put("itemCount", existingItems.size());
+        outDoc.put("items", existingItems);
+        translateTaskV3BlobRepo.writeJson(blobRel, outDoc);
+        LOG.info("json-runtime merged chunks/failed.json taskId={}, path={}, sliceFailures={}, totalItems={}",
+                tid, blobRel, failMap.size(), existingItems.size());
+    }
+
     public void processSaveTasksV3() {
         processTasksByShopName("SAVE", 2, processingSaveTaskIds,
                 task -> false, this::saveToShopifyV3, null);
@@ -1093,11 +1213,21 @@ public class TranslateV3Service {
             }
 
             Map<String, String> redisFailMap = translateTaskMonitorV3RedisService.getRuntimeFailMap(redisPrefix, taskId);
-            if (!redisFailMap.isEmpty()) {
-                failMap.putAll(redisFailMap);
+            // 合并 Redis 前 failMap 仅含本分片结构性错误（如写 Blob 失败）；翻译失败只记在 failCount / Redis hash 里
+            int structuralFailKeysBeforeRedisMerge = failMap.size();
+            failMap.putAll(redisFailMap);
+            // 禁止用合并后的 failMap.size()：Redis 含所有 chunk 的累积键，会与本分片 total/done 不一致（例如 total=90 done=89 failed 显示成 2）
+            int failedBucket = failCount + structuralFailKeysBeforeRedisMerge;
+            Map<String, String> pathToSource = new LinkedHashMap<>();
+            for (RuntimeSourceItem it : allItems) {
+                pathToSource.put(it.path, it.text == null ? "" : it.text);
+            }
+            String[] shopTask = parseTasksBlobShopAndTaskId(inputBlobPath);
+            if (shopTask != null && !failMap.isEmpty()) {
+                mergeWriteChunksFailedJson(shopTask[0], shopTask[1], runtimeModuleName, chunkFileLabel,
+                        chunkOrdinal, failMap, pathToSource, root);
             }
 
-            int failedBucket = Math.max(failCount, failMap.size());
             String status = failedBucket == 0 ? "COMPLETED" : "PARTIAL_FAILED";
             if (!outputSaved) {
                 status = "FAILED";
@@ -1536,6 +1666,13 @@ public class TranslateV3Service {
             writeRuntimeReportBlob(taskId, "FAILED", 0, 0, failMap.size(), startedMs, failMap, reportBlobPath,
                     RuntimeLlmTokenUsage.ZERO, 0);
 
+        String inPathEarly = toBlobPath(inputBlobUri);
+        String[] shopTaskEarly = parseTasksBlobShopAndTaskId(inPathEarly);
+        if (shopTaskEarly != null && !failMap.isEmpty()) {
+            mergeWriteChunksFailedJson(shopTaskEarly[0], shopTaskEarly[1], "", "-", 0,
+                    failMap, Collections.emptyMap(), root);
+        }
+
         Map<String, Object> failedMeta = new LinkedHashMap<>();
         failedMeta.put("status", "FAILED");
         failedMeta.put("inputBlobUri", inputBlobUri);
@@ -1873,6 +2010,41 @@ public class TranslateV3Service {
         }
     }
 
+    /** 按 JSON Pointer 读取叶子文本（用于失败条目的 sourceValue 回填） */
+    private String getTextAtPointer(JsonNode root, String pointer) {
+        if (root == null || pointer == null || pointer.isEmpty() || !pointer.startsWith("/")) {
+            return "";
+        }
+        String[] segments = pointer.substring(1).split("/");
+        JsonNode current = root;
+        for (String segment : segments) {
+            String seg = unescapeJsonPointer(segment);
+            if (current == null) {
+                return "";
+            }
+            if (current.isObject()) {
+                current = current.get(seg);
+                continue;
+            }
+            if (current.isArray()) {
+                int index = safeIndex(seg);
+                if (index < 0 || index >= current.size()) {
+                    return "";
+                }
+                current = current.get(index);
+                continue;
+            }
+            return "";
+        }
+        if (current == null || current.isNull()) {
+            return "";
+        }
+        if (current.isValueNode()) {
+            return current.asText("");
+        }
+        return "";
+    }
+
     private String escapeJsonPointer(String input) {
         return input == null ? "" : input.replace("~", "~0").replace("/", "~1");
     }
@@ -2056,6 +2228,10 @@ public class TranslateV3Service {
         sb.append("条目汇总 — total: ").append(totalItems)
                 .append("  done: ").append(doneItems)
                 .append("  failed: ").append(failedItems).append('\n');
+        long balance = totalItems - doneItems - failedItems;
+        if (balance != 0) {
+            sb.append("提示: total ≈ done + failed（条目）；若不相差为 0，多为「写输出 Blob 等非翻译条目失败」已计入 failed，或分片汇总舍入；以各 chunk 的 runtime-report JSON 为准。\n");
+        }
         if (chunkedMode) {
             sb.append('\n');
             sb.append("分块 — 计划 chunk 文件数: ").append(plannedChunkFiles).append('\n');
