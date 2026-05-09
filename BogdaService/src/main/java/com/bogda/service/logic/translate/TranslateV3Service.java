@@ -99,6 +99,8 @@ public class TranslateV3Service {
     private static final int JSON_RUNTIME_DEFAULT_CONCURRENCY = 4;
     private static final int JSON_RUNTIME_DEFAULT_MAX_RETRIES = 5;
     private static final int JSON_RUNTIME_DEFAULT_BASE_BACKOFF_MS = 1000;
+    /** 人工可读的总览，置于 tasks/{shop}/{taskId}/chunks/ 下供 Blob 控制台直接打开编辑 */
+    private static final String JSON_RUNTIME_TRANSLATION_SUMMARY_TXT = "chunks/translation-summary.txt";
     private static final int JSON_RUNTIME_HTTP_TIMEOUT_SECONDS = 120;
     @Value("${translate.v3.init.module-limit:20}")
     private int initModuleFetchLimit;
@@ -464,6 +466,49 @@ public class TranslateV3Service {
     }
 
     /**
+     * 列出某店铺在 Cosmos 中已存在的 json-runtime 任务（摘要，不含 checkpoint/metrics 大字段）。
+     */
+    public BaseResponse<Object> listJsonRuntimeTasksByShop(String shopName) {
+        String cleanShop = safeText(shopName);
+        if (cleanShop.isEmpty()) {
+            return BaseResponse.FailedResponse("Missing parameters: shopName");
+        }
+        List<TranslateTaskV3DO> all = translateTaskV3CosmosRepo.listByShopName(cleanShop);
+        List<TranslateTaskV3DO> runtime = all.stream()
+                .filter(this::isRuntimeJsonTask)
+                .sorted(Comparator.comparing(TranslateTaskV3DO::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+        List<Map<String, Object>> rows = new ArrayList<>(runtime.size());
+        for (TranslateTaskV3DO t : runtime) {
+            rows.add(jsonRuntimeTaskSummaryForList(t));
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("shopName", cleanShop);
+        body.put("total", rows.size());
+        body.put("tasks", rows);
+        LOG.info("json-runtime task list shopName={} total={}", cleanShop, rows.size());
+        return BaseResponse.SuccessResponse(body);
+    }
+
+    private Map<String, Object> jsonRuntimeTaskSummaryForList(TranslateTaskV3DO task) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", task.getId());
+        m.put("shopName", task.getShopName());
+        m.put("source", task.getSource());
+        m.put("target", task.getTarget());
+        m.put("status", task.getStatus());
+        m.put("statusText", task.getStatusText());
+        m.put("taskType", task.getTaskType());
+        m.put("aiModel", task.getAiModel());
+        m.put("createdAt", task.getCreatedAt());
+        m.put("updatedAt", task.getUpdatedAt());
+        m.put("sessionId", task.getSessionId());
+        m.put("moduleList", task.getModuleList());
+        return m;
+    }
+
+    /**
      * checkpoint 在 SAVE 等阶段可能被覆盖，丢失顶层 input/output/report URI；依次尝试 checkpoint 顶层、runtimeResult、Redis meta。
      */
     private String firstNonEmptyRuntimeBlobUri(Map<String, Object> checkpoint,
@@ -565,12 +610,19 @@ public class TranslateV3Service {
         final String inputUri;
         final String outputUri;
         final String reportUri;
+        /** checkpoint.modules 中的模块目录名 */
+        final String moduleName;
+        /** 全部 chunk 文件中的序号，从 1 开始 */
+        final int chunkOrdinal;
 
-        RuntimeChunkPlan(String progressKey, String inputUri, String outputUri, String reportUri) {
+        RuntimeChunkPlan(String progressKey, String inputUri, String outputUri, String reportUri,
+                         String moduleName, int chunkOrdinal) {
             this.progressKey = progressKey;
             this.inputUri = inputUri;
             this.outputUri = outputUri;
             this.reportUri = reportUri;
+            this.moduleName = moduleName;
+            this.chunkOrdinal = chunkOrdinal;
         }
     }
 
@@ -615,6 +667,7 @@ public class TranslateV3Service {
         if (modules.isEmpty()) {
             return jobs;
         }
+        int chunkOrdinal = 1;
         for (String module : modules) {
             List<String> chunkPaths = listInitChunkBlobPaths(shop, tid, module);
             for (String blobPath : chunkPaths) {
@@ -629,7 +682,8 @@ public class TranslateV3Service {
                 String file = blobPath.substring(slash + 1);
                 String baseStem = file.endsWith(".json") ? file.substring(0, file.length() - 5) : file;
                 jobs.add(new RuntimeChunkPlan(blobPath, blobPath, parent + "runtime-output-" + baseStem + ".json",
-                        parent + "runtime-report-" + baseStem + ".json"));
+                        parent + "runtime-report-" + baseStem + ".json", module, chunkOrdinal));
+                chunkOrdinal++;
             }
         }
         return jobs;
@@ -720,6 +774,7 @@ public class TranslateV3Service {
         )));
 
         int processedSlices = 0;
+        List<String> perChunkLines = new ArrayList<>();
         for (RuntimeChunkPlan plan : plans) {
             if (translateTaskMonitorV3RedisService.getRuntimeChunkDoneSet(redisPrefix, taskId).contains(plan.progressKey)) {
                 LOG.info("json-runtime chunked skip chunk (redis chunkDone), taskId={}, key={}", taskId, plan.progressKey);
@@ -734,8 +789,21 @@ public class TranslateV3Service {
             Map<String, Object> sliceResp = baseRuntimeResponse(taskId,
                     sliceReq.getInputBlobUri(), sliceReq.getOutputBlobUri(), sliceReq.getReportBlobUri());
 
-            sliceResp = translateJsonRuntimeSingleBlob(sliceReq, sliceResp, redisPrefix, startedOuter, suffix);
+            sliceResp = translateJsonRuntimeSingleBlob(sliceReq, sliceResp, redisPrefix, startedOuter, suffix,
+                    plan.moduleName, plan.chunkOrdinal, plans.size());
             processedSlices++;
+
+            String chunkFileOnly = plan.progressKey;
+            int ckSlash = chunkFileOnly.lastIndexOf('/');
+            if (ckSlash >= 0 && ckSlash < chunkFileOnly.length() - 1) {
+                chunkFileOnly = chunkFileOnly.substring(ckSlash + 1);
+            }
+            perChunkLines.add(String.format("[%d/%d] module=%s file=%s status=%s total=%s done=%s failed=%s",
+                    plan.chunkOrdinal, plans.size(), plan.moduleName, chunkFileOnly,
+                    safeText(asString(sliceResp.get("status"))),
+                    String.valueOf(sliceResp.get("total")),
+                    String.valueOf(sliceResp.get("done")),
+                    String.valueOf(sliceResp.get("failed"))));
 
             grandTok = grandTok.add(RuntimeLlmTokenUsage.ofTotals(
                     parseLongFlexible(sliceResp.get("llmPromptTokens")),
@@ -800,6 +868,12 @@ public class TranslateV3Service {
         translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, meta);
         translateTaskMonitorV3RedisService.expireRuntimeKeys(redisPrefix, taskId, JSON_RUNTIME_DEFAULT_TTL_SECONDS);
 
+        writeJsonRuntimeTranslationSummaryTxt(cosmosTask, true, aggregate,
+                System.currentTimeMillis() - startedOuter,
+                plans.size(),
+                translateTaskMonitorV3RedisService.getRuntimeChunkDoneSet(redisPrefix, taskId).size(),
+                perChunkLines);
+
         maybeSyncCosmosAfterJsonRuntime(taskId, aggregate);
         return aggregate;
     }
@@ -812,10 +886,18 @@ public class TranslateV3Service {
                                                                Map<String, Object> finalResponse,
                                                                String redisPrefix,
                                                                long outerStartedMsForEta,
-                                                               String chunkHashSuffixOrEmpty) {
+                                                               String chunkHashSuffixOrEmpty,
+                                                               String runtimeModuleName,
+                                                               int chunkOrdinal,
+                                                               int runtimeChunksTotal) {
         long startedMs = System.currentTimeMillis();
         String taskId = safeText(safeRequest.getTaskId());
         String inputBlobUri = safeText(safeRequest.getInputBlobUri());
+        String chunkFileLabel = "-";
+        int uriSlash = inputBlobUri.lastIndexOf('/');
+        if (uriSlash >= 0 && uriSlash < inputBlobUri.length() - 1) {
+            chunkFileLabel = inputBlobUri.substring(uriSlash + 1);
+        }
         String rawOutputUri = safeText(safeRequest.getOutputBlobUri());
         String outputBlobUri = runtimeOutputUriBesideInput(inputBlobUri, rawOutputUri);
         safeRequest.setOutputBlobUri(outputBlobUri);
@@ -950,8 +1032,12 @@ public class TranslateV3Service {
 
                         long elapsedOuter = System.currentTimeMillis() - outerStartedMsForEta;
                         int finished = Math.min(totalCount, effectiveDone + failCount);
-                        LOG.info("json-runtime blob batch progress taskId={}, done={}/{}, failed={}, eta={}s, llmCalls={}",
-                                taskId, effectiveDone, totalCount, failCount,
+                        String modLabel = safeText(runtimeModuleName).isEmpty() ? "-" : runtimeModuleName;
+                        int chunksTot = runtimeChunksTotal > 0 ? runtimeChunksTotal : 1;
+                        int chunkIdx = chunkOrdinal > 0 ? chunkOrdinal : 1;
+                        LOG.info("json-runtime blob batch progress taskId={}, module={}, chunk={}/{}, chunkFile={}, done={}/{}, failed={}, eta={}s, llmCalls={}",
+                                taskId, modLabel, chunkIdx, chunksTot, chunkFileLabel,
+                                effectiveDone, totalCount, failCount,
                                 estimateEtaSeconds(totalCount, finished, elapsedOuter), llmApiCallCount);
                     }
                 } finally {
@@ -1080,7 +1166,27 @@ public class TranslateV3Service {
         }
 
         Map<String, Object> result = translateJsonRuntimeSingleBlob(
-                safeRequest, finalResponse, redisPrefix, startedMs, "");
+                safeRequest, finalResponse, redisPrefix, startedMs, "", "", 1, 1);
+        if (cosmosTask != null) {
+            List<String> oneChunk = new ArrayList<>();
+            String inputUri = safeText(asString(result.get("inputBlobUri")));
+            String fn = inputUri;
+            int us = fn.lastIndexOf('/');
+            if (us >= 0 && us < fn.length() - 1) {
+                fn = fn.substring(us + 1);
+            }
+            oneChunk.add(String.format("[1/1] file=%s status=%s total=%s done=%s failed=%s",
+                    fn.isEmpty() ? "-" : fn,
+                    safeText(asString(result.get("status"))),
+                    String.valueOf(result.get("total")),
+                    String.valueOf(result.get("done")),
+                    String.valueOf(result.get("failed"))));
+            writeJsonRuntimeTranslationSummaryTxt(cosmosTask, false, result,
+                    parseLongFlexible(result.get("durationMs")),
+                    1,
+                    1,
+                    oneChunk);
+        }
         maybeSyncCosmosAfterJsonRuntime(taskId, result);
         return result;
     }
@@ -1837,6 +1943,81 @@ public class TranslateV3Service {
         usageMap.put("totalTokens", u.totalTokens);
         report.put("tokenUsage", usageMap);
         translateTaskV3BlobRepo.writeJson(reportBlobPath, report);
+    }
+
+    /**
+     * 在 {@code tasks/{shop}/{taskId}/chunks/translation-summary.txt} 写入 UTF-8 纯文本总览，便于在 Blob 存储中直接预览/编辑。
+     */
+    private void writeJsonRuntimeTranslationSummaryTxt(TranslateTaskV3DO task,
+                                                       boolean chunkedMode,
+                                                       Map<String, Object> aggregate,
+                                                       long durationMs,
+                                                       int plannedChunkFiles,
+                                                       int redisChunksDone,
+                                                       List<String> perChunkLines) {
+        if (task == null || aggregate == null) {
+            return;
+        }
+        String shop = safeText(task.getShopName());
+        String tid = safeText(task.getId());
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        String status = safeText(asString(aggregate.get("status")));
+        long totalItems = parseLongFlexible(aggregate.get("total"));
+        long doneItems = parseLongFlexible(aggregate.get("done"));
+        long failedItems = parseLongFlexible(aggregate.get("failed"));
+        long prompt = parseLongFlexible(aggregate.get("llmPromptTokens"));
+        long completion = parseLongFlexible(aggregate.get("llmCompletionTokens"));
+        long totalTok = parseLongFlexible(aggregate.get("llmTotalTokens"));
+        long llmCalls = parseLongFlexible(aggregate.get("llmApiCallCount"));
+
+        StringBuilder sb = new StringBuilder(768);
+        sb.append("JSON Runtime 翻译总览\n");
+        sb.append("====================\n");
+        sb.append("任务 ID: ").append(tid).append('\n');
+        sb.append("店铺: ").append(shop).append('\n');
+        sb.append("生成时间(UTC): ").append(Instant.now().toString()).append('\n');
+        sb.append("运行模式: ").append(chunkedMode ? "分块 (chunked)" : "单 Blob").append('\n');
+        sb.append('\n');
+        sb.append("整体状态: ").append(status.isEmpty() ? "-" : status).append('\n');
+        sb.append("总耗时(毫秒): ").append(durationMs).append('\n');
+        sb.append("LLM 调用次数: ").append(llmCalls).append('\n');
+        sb.append("Token — prompt: ").append(prompt)
+                .append("  completion: ").append(completion)
+                .append("  total: ").append(totalTok).append('\n');
+        sb.append('\n');
+        sb.append("条目汇总 — total: ").append(totalItems)
+                .append("  done: ").append(doneItems)
+                .append("  failed: ").append(failedItems).append('\n');
+        if (chunkedMode) {
+            sb.append('\n');
+            sb.append("分块 — 计划 chunk 文件数: ").append(plannedChunkFiles).append('\n');
+            sb.append("分块 — Redis 已完成 chunk 数: ").append(redisChunksDone).append('\n');
+            Object rcd = aggregate.get("runtimeChunkDoneSize");
+            if (rcd != null) {
+                sb.append("结果里的 runtimeChunkDoneSize: ").append(rcd).append('\n');
+            }
+        }
+        sb.append('\n');
+        sb.append("--- 各 chunk / 分片明细（一行一条）---\n");
+        if (perChunkLines != null && !perChunkLines.isEmpty()) {
+            for (String line : perChunkLines) {
+                sb.append(line).append('\n');
+            }
+        } else {
+            sb.append("（无分片明细）\n");
+        }
+        sb.append('\n');
+        String blobRel = blobPath(shop, tid, JSON_RUNTIME_TRANSLATION_SUMMARY_TXT);
+        sb.append("本文件路径: ").append(blobRel).append('\n');
+
+        boolean ok = translateTaskV3BlobRepo.writeText(blobRel, sb.toString());
+        if (ok) {
+            LOG.info("json-runtime wrote translation summary txt, taskId={}, path={}", tid, blobRel);
+        } else {
+            LOG.warn("json-runtime failed to write translation summary txt, taskId={}, path={}", tid, blobRel);
+        }
     }
 
     private Map<String, Object> baseRuntimeResponse(String taskId,
