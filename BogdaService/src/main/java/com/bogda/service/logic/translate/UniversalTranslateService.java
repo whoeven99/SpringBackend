@@ -5,6 +5,7 @@ import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.JsoupUtils;
 import com.bogda.common.utils.StringUtils;
+import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,20 @@ public class UniversalTranslateService {
 
     private static final Pattern LEADING_WHITESPACE = Pattern.compile("^(\\s+)");
     private static final Pattern TRAILING_WHITESPACE = Pattern.compile("(\\s+)$");
+
+    /**
+     * 与 TranslateV3Service 普通行批处理一致：
+     * 结构化（HTML/JSON）多条文本一次塞进模型易触发上游超时，按估算 token 分批请求。
+     */
+    private static final int STRUCTURED_PROMPT_TOKEN_BUDGET = 600;
+    /**
+     * 单条叶子文本超过该阈值（或字符过长）时先切段再译，避免单次 completion 过大。
+     */
+    private static final int LONG_SINGLE_VALUE_TOKEN_THRESHOLD = 800;
+    /** 超长文本按字符切块上限（避免 tokenizer 处理超大 string；略小于常见 8k 窗口留出 prompt） */
+    private static final int LONG_TEXT_CHAR_CHUNK = 3500;
+    /** 触发分段前不再调用 tokenizer 的字符下限（超大文本直接按字符切） */
+    private static final int SKIP_TOKENIZER_MIN_CHARS = 4000;
 
     public boolean shouldUseStructuredTranslation(String sourceValue, boolean isJson, boolean isHtml, String shopifyType) {
         return isJson
@@ -243,6 +259,52 @@ public class UniversalTranslateService {
         if (sourceMap == null || sourceMap.isEmpty()) {
             return new BatchTranslateResult(new LinkedHashMap<>(), 0);
         }
+        Map<Integer, String> pendingBatch = new LinkedHashMap<>();
+        Map<Integer, String> finishedEarly = new LinkedHashMap<>();
+        int preprocessToken = 0;
+        for (Map.Entry<Integer, String> entry : sourceMap.entrySet()) {
+            String v = entry.getValue();
+            Integer key = entry.getKey();
+            if (v == null || v.isEmpty()) {
+                finishedEarly.put(key, v);
+                continue;
+            }
+            if (needsLongPlainTextSegmentation(v)) {
+                Pair<String, Integer> seg = translateSegmentedLongPlainText(v, targetLanguage, aiModel, module, sessionId);
+                finishedEarly.put(key, seg.getFirst());
+                preprocessToken += Math.max(seg.getSecond(), 0);
+            } else {
+                pendingBatch.put(key, v);
+            }
+        }
+
+        Map<Integer, String> merged = new LinkedHashMap<>(finishedEarly);
+        int batchTokenSum = 0;
+        if (!pendingBatch.isEmpty()) {
+            List<Map<Integer, String>> batches = partitionMapByTokenBudget(pendingBatch, STRUCTURED_PROMPT_TOKEN_BUDGET);
+            for (Map<Integer, String> batch : batches) {
+                BatchTranslateResult one = translateTextMapSingleBatch(batch, targetLanguage, aiModel, module, sessionId);
+                batchTokenSum += one.getUsedToken();
+                merged.putAll(one.getTranslatedMap());
+            }
+        }
+
+        Map<Integer, String> finalMap = new LinkedHashMap<>();
+        for (Map.Entry<Integer, String> entry : sourceMap.entrySet()) {
+            String translated = merged.get(entry.getKey());
+            finalMap.put(entry.getKey(), (translated == null || translated.isEmpty()) ? entry.getValue() : translated);
+        }
+        return new BatchTranslateResult(finalMap, preprocessToken + batchTokenSum);
+    }
+
+    private BatchTranslateResult translateTextMapSingleBatch(Map<Integer, String> sourceMap,
+                                                             String targetLanguage,
+                                                             String aiModel,
+                                                             String module,
+                                                             String sessionId) {
+        if (sourceMap == null || sourceMap.isEmpty()) {
+            return new BatchTranslateResult(new LinkedHashMap<>(), 0);
+        }
         String prompt = promptConfigService.buildPlainJsonPrompt(module, targetLanguage, sourceMap);
         Pair<String, Integer> modelResult = modelTranslateService.modelTranslate(
                 aiModel, prompt, targetLanguage, sourceMap, sessionId
@@ -259,6 +321,114 @@ public class UniversalTranslateService {
         }
         int usedToken = modelResult == null || modelResult.getSecond() == null ? 0 : Math.max(modelResult.getSecond(), 0);
         return new BatchTranslateResult(finalMap, usedToken);
+    }
+
+    private static boolean needsLongPlainTextSegmentation(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        if (value.length() > LONG_TEXT_CHAR_CHUNK) {
+            return true;
+        }
+        if (value.length() >= SKIP_TOKENIZER_MIN_CHARS) {
+            return true;
+        }
+        return safeEstimateTokens(value) > LONG_SINGLE_VALUE_TOKEN_THRESHOLD;
+    }
+
+    private static int safeEstimateTokens(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        try {
+            Integer n = ALiYunTranslateIntegration.calculateBaiLianToken(text);
+            return n == null ? text.length() : Math.max(n, 0);
+        } catch (Throwable ignored) {
+            return text.length();
+        }
+    }
+
+    /**
+     * 将超长纯文本切成多段分别走批量 JSON 翻译协议，再顺序拼接（用于 JSON 叶子 / HTML 文本节点）。
+     */
+    private Pair<String, Integer> translateSegmentedLongPlainText(String value,
+                                                                  String targetLanguage,
+                                                                  String aiModel,
+                                                                  String module,
+                                                                  String sessionId) {
+        List<String> chunks = splitIntoTranslationChunks(value);
+        if (chunks.isEmpty()) {
+            return new Pair<>(value, 0);
+        }
+        StringBuilder out = new StringBuilder();
+        int tokens = 0;
+        for (String chunk : chunks) {
+            BatchTranslateResult part = translateTextMapSingleBatch(
+                    Collections.singletonMap(0, chunk),
+                    targetLanguage,
+                    aiModel,
+                    module,
+                    sessionId
+            );
+            String t = part.getTranslatedMap().get(0);
+            out.append(t == null || t.isEmpty() ? chunk : t);
+            tokens += part.getUsedToken();
+        }
+        return new Pair<>(out.toString(), tokens);
+    }
+
+    private static List<String> splitIntoTranslationChunks(String text) {
+        if (text == null || text.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (text.length() <= LONG_TEXT_CHAR_CHUNK && safeEstimateTokens(text) <= LONG_SINGLE_VALUE_TOKEN_THRESHOLD) {
+            return Collections.singletonList(text);
+        }
+        List<String> parts = new ArrayList<>();
+        int start = 0;
+        while (start < text.length()) {
+            int end = Math.min(text.length(), start + LONG_TEXT_CHAR_CHUNK);
+            if (end < text.length()) {
+                int breakAt = text.lastIndexOf(' ', end);
+                if (breakAt > start + LONG_TEXT_CHAR_CHUNK / 2) {
+                    end = breakAt;
+                }
+            }
+            parts.add(text.substring(start, end));
+            start = end;
+        }
+        return parts;
+    }
+
+    private static List<Map<Integer, String>> partitionMapByTokenBudget(Map<Integer, String> map, int budget) {
+        if (map == null || map.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Map<Integer, String>> batches = new ArrayList<>();
+        Map<Integer, String> current = new LinkedHashMap<>();
+        int sum = 0;
+        for (Map.Entry<Integer, String> e : map.entrySet()) {
+            String v = e.getValue();
+            int est = v == null || v.isEmpty() ? 0 : safeEstimateTokens(v);
+            if (est > budget && current.isEmpty()) {
+                current.put(e.getKey(), v);
+                batches.add(current);
+                current = new LinkedHashMap<>();
+                sum = 0;
+                continue;
+            }
+            if (!current.isEmpty() && sum + est > budget) {
+                batches.add(current);
+                current = new LinkedHashMap<>();
+                sum = 0;
+            }
+            current.put(e.getKey(), v);
+            sum += est;
+        }
+        if (!current.isEmpty()) {
+            batches.add(current);
+        }
+        return batches.isEmpty() ? Collections.singletonList(map) : batches;
     }
 
     private Map<Integer, String> parseMapResult(String raw) {
