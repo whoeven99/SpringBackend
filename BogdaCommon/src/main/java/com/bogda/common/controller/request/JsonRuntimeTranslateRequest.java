@@ -28,8 +28,9 @@ public class JsonRuntimeTranslateRequest {
     private Integer batchSize;
     private Integer maxCharsPerBatch;
     /**
-     * 可选。写入 Chat Completions 请求体的 {@code max_tokens}（输出上限）。大块 JSON 字符串翻译时若不设置，
-     * 默认 completion 可能被网关截断，导致返回无法解析为合法 JSON（{@code MODEL_RESPONSE_JSON_INVALID}）。
+     * 可选。写入 Chat Completions 请求体的 {@code max_tokens}（输出上限）。
+     * 若不设置，TranslateV3Service 会根据当批请求 JSON 体量自动估算 {@code max_tokens}（上限 32768），
+     * 降低大块 path→text 映射被截断导致无法解析（{@code MODEL_RESPONSE_JSON_INVALID}）的概率。
      */
     private Integer maxCompletionTokens;
     private Integer concurrency;

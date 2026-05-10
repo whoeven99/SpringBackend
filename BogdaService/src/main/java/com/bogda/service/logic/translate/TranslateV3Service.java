@@ -105,6 +105,12 @@ public class TranslateV3Service {
     /** 所有分片汇总的失败条目（含 sourceValue），便于在 Blob 中直接查看 */
     private static final String JSON_RUNTIME_CHUNKS_FAILED_JSON = "chunks/failed.json";
     private static final int JSON_RUNTIME_HTTP_TIMEOUT_SECONDS = 120;
+    /**
+     * {@code sourceValue} 内若为字符串化的大 JSON，展开成多条叶子再分批调用模型；
+     * 否则单次返回必须与输入同体量，易被 max_tokens 截断导致 {@code MODEL_RESPONSE_JSON_INVALID}。
+     */
+    private static final int JSON_RUNTIME_EXPAND_STRINGIFIED_JSON_MIN_CHARS = 2000;
+    private static final String RUNTIME_INNER_JSON_MARKER = "::INNER::";
     @Value("${translate.v3.init.module-limit:20}")
     private int initModuleFetchLimit;
     @Value("${translate.v3.chunk-translate-timeout-seconds:120}")
@@ -1168,6 +1174,10 @@ public class TranslateV3Service {
             List<RuntimeSourceItem> allItems = new ArrayList<>();
             List<RuntimeSkippedItem> skippedItems = new ArrayList<>();
             collectSourceValueItems(root, "", allItems, skippedItems);
+            if (allItems.stream().anyMatch(it -> it.path.contains(RUNTIME_INNER_JSON_MARKER))) {
+                LOG.info("json-runtime expanded stringified JSON inside sourceValue into {} leaf paths, taskId={}",
+                        allItems.size(), taskId);
+            }
             if (!skippedItems.isEmpty()) {
                 int sampleSize = Math.min(skippedItems.size(), 20);
                 LOG.warn("json-runtime skip non-text sourceValue, taskId={}, skipCount={}, samples={}",
@@ -1824,6 +1834,12 @@ public class TranslateV3Service {
         if (maxOut != null && maxOut > 0) {
             // OpenAI 兼容 Chat Completions；与 maxCharsPerBatch 不同，这是「单次补全」输出 token 上限。
             body.put("max_tokens", maxOut);
+        } else {
+            String payloadJson = JsonUtils.objectToJson(sourceMap);
+            int inChars = payloadJson == null ? 0 : payloadJson.length();
+            // 模型返回与输入同 keys 的 JSON，体量相近；默认给足 completion 余量避免截断无法 parse
+            int derived = Math.min(32768, Math.max(4096, (int) (inChars * 1.25) + 4096));
+            body.put("max_tokens", derived);
         }
 
         HttpRequest.Builder builder = HttpRequest.newBuilder()
@@ -1957,7 +1973,15 @@ public class TranslateV3Service {
                 JsonNode child = entry.getValue();
                 if ("sourceValue".equals(entry.getKey()) && child != null) {
                     if (child.isTextual()) {
-                        collector.add(new RuntimeSourceItem(nextPointer, child.asText("")));
+                        String raw = child.asText("");
+                        if (shouldExpandStringifiedJsonForRuntime(raw)) {
+                            JsonNode inner = JsonUtils.readTree(raw);
+                            if (inner != null && (inner.isObject() || inner.isArray())) {
+                                collectRuntimeInnerJsonLeaves(inner, nextPointer, "", collector, skippedItems);
+                                return;
+                            }
+                        }
+                        collector.add(new RuntimeSourceItem(nextPointer, raw));
                     } else {
                         skippedItems.add(new RuntimeSkippedItem(nextPointer, child.getNodeType().name()));
                     }
@@ -1970,6 +1994,57 @@ public class TranslateV3Service {
         if (node.isArray()) {
             for (int i = 0; i < node.size(); i++) {
                 collectSourceValueItems(node.get(i), pointer + "/" + i, collector, skippedItems);
+            }
+        }
+    }
+
+    private static boolean shouldExpandStringifiedJsonForRuntime(String raw) {
+        if (raw == null || raw.length() < JSON_RUNTIME_EXPAND_STRINGIFIED_JSON_MIN_CHARS) {
+            return false;
+        }
+        return JsonUtils.isJson(raw);
+    }
+
+    /**
+     * 将字符串化 JSON 内的每一个字符串叶子映射为独立翻译条目；路径形如
+     * {@code /0/sourceValue::INNER::/region_language_selector_dict/AE/region_name}。
+     */
+    private void collectRuntimeInnerJsonLeaves(JsonNode node,
+                                               String outerPointer,
+                                               String innerPrefix,
+                                               List<RuntimeSourceItem> collector,
+                                               List<RuntimeSkippedItem> skippedItems) {
+        if (node == null) {
+            return;
+        }
+        if (node.isObject()) {
+            node.fields().forEachRemaining(entry -> {
+                String escaped = escapeJsonPointer(entry.getKey());
+                String nextInner = innerPrefix.isEmpty() ? "/" + escaped : innerPrefix + "/" + escaped;
+                JsonNode ch = entry.getValue();
+                if (ch != null && ch.isTextual()) {
+                    String t = ch.asText("");
+                    if (!t.trim().isEmpty()) {
+                        collector.add(new RuntimeSourceItem(outerPointer + RUNTIME_INNER_JSON_MARKER + nextInner, t));
+                    }
+                } else {
+                    collectRuntimeInnerJsonLeaves(ch, outerPointer, nextInner, collector, skippedItems);
+                }
+            });
+            return;
+        }
+        if (node.isArray()) {
+            for (int i = 0; i < node.size(); i++) {
+                String nextInner = innerPrefix.isEmpty() ? "/" + i : innerPrefix + "/" + i;
+                JsonNode ch = node.get(i);
+                if (ch != null && ch.isTextual()) {
+                    String t = ch.asText("");
+                    if (!t.trim().isEmpty()) {
+                        collector.add(new RuntimeSourceItem(outerPointer + RUNTIME_INNER_JSON_MARKER + nextInner, t));
+                    }
+                } else {
+                    collectRuntimeInnerJsonLeaves(ch, outerPointer, nextInner, collector, skippedItems);
+                }
             }
         }
     }
@@ -2015,6 +2090,37 @@ public class TranslateV3Service {
         if (root == null || pointer == null || pointer.isEmpty() || !pointer.startsWith("/")) {
             return;
         }
+        int innerMark = pointer.indexOf(RUNTIME_INNER_JSON_MARKER);
+        if (innerMark > 0) {
+            String outerPointer = pointer.substring(0, innerMark);
+            String innerPointer = pointer.substring(innerMark + RUNTIME_INNER_JSON_MARKER.length());
+            if (!innerPointer.startsWith("/")) {
+                innerPointer = "/" + innerPointer;
+            }
+            JsonNode outerNode = getNodeAtPointer(root, outerPointer);
+            if (outerNode == null || !outerNode.isTextual()) {
+                return;
+            }
+            String embedded = outerNode.asText("");
+            JsonNode innerRoot = JsonUtils.readTree(embedded);
+            if (innerRoot == null) {
+                return;
+            }
+            setLeafTextAtPointer(innerRoot, innerPointer, text);
+            String newJson = JsonUtils.objectToJson(innerRoot);
+            if (newJson == null) {
+                return;
+            }
+            setLeafTextAtPointer(root, outerPointer, newJson);
+            return;
+        }
+        setLeafTextAtPointer(root, pointer, text);
+    }
+
+    private void setLeafTextAtPointer(JsonNode root, String pointer, String text) {
+        if (root == null || pointer == null || pointer.isEmpty() || !pointer.startsWith("/")) {
+            return;
+        }
         String[] segments = pointer.substring(1).split("/");
         JsonNode current = root;
         for (int i = 0; i < segments.length - 1; i++) {
@@ -2053,10 +2159,55 @@ public class TranslateV3Service {
         }
     }
 
+    private JsonNode getNodeAtPointer(JsonNode root, String pointer) {
+        if (root == null || pointer == null || pointer.isEmpty() || !pointer.startsWith("/")) {
+            return null;
+        }
+        String[] segments = pointer.substring(1).split("/");
+        JsonNode current = root;
+        for (String segment : segments) {
+            String seg = unescapeJsonPointer(segment);
+            if (current == null) {
+                return null;
+            }
+            if (current.isObject()) {
+                current = current.get(seg);
+                continue;
+            }
+            if (current.isArray()) {
+                int index = safeIndex(seg);
+                if (index < 0 || index >= current.size()) {
+                    return null;
+                }
+                current = current.get(index);
+                continue;
+            }
+            return null;
+        }
+        return current;
+    }
+
     /** 按 JSON Pointer 读取叶子文本（用于失败条目的 sourceValue 回填） */
     private String getTextAtPointer(JsonNode root, String pointer) {
         if (root == null || pointer == null || pointer.isEmpty() || !pointer.startsWith("/")) {
             return "";
+        }
+        int innerMark = pointer.indexOf(RUNTIME_INNER_JSON_MARKER);
+        if (innerMark > 0) {
+            String outerPointer = pointer.substring(0, innerMark);
+            String innerPointer = pointer.substring(innerMark + RUNTIME_INNER_JSON_MARKER.length());
+            if (!innerPointer.startsWith("/")) {
+                innerPointer = "/" + innerPointer;
+            }
+            JsonNode outerNode = getNodeAtPointer(root, outerPointer);
+            if (outerNode == null || !outerNode.isTextual()) {
+                return "";
+            }
+            JsonNode innerRoot = JsonUtils.readTree(outerNode.asText(""));
+            if (innerRoot == null) {
+                return "";
+            }
+            return getTextAtPointer(innerRoot, innerPointer);
         }
         String[] segments = pointer.substring(1).split("/");
         JsonNode current = root;
