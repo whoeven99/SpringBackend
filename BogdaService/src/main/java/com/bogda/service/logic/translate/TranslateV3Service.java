@@ -102,6 +102,8 @@ public class TranslateV3Service {
     private static final int JSON_RUNTIME_DEFAULT_BASE_BACKOFF_MS = 1000;
     /** 人工可读的总览，置于 tasks/{shop}/{taskId}/chunks/ 下供 Blob 控制台直接打开编辑 */
     private static final String JSON_RUNTIME_TRANSLATION_SUMMARY_TXT = "chunks/translation-summary.txt";
+    /** LLM 汇总所有模块/chunk 后生成的 Markdown 翻译报告，便于直接阅读 */
+    private static final String JSON_RUNTIME_TRANSLATION_REPORT_MD = "chunks/translation-report.md";
     /** 所有分片汇总的失败条目（含 sourceValue），便于在 Blob 中直接查看 */
     private static final String JSON_RUNTIME_CHUNKS_FAILED_JSON = "chunks/failed.json";
     private static final int JSON_RUNTIME_HTTP_TIMEOUT_SECONDS = 120;
@@ -125,6 +127,13 @@ public class TranslateV3Service {
     /** 更短的 system 指令，略省 token；服务端不保存多轮上下文，此开关不能替代「会话记忆」。 */
     @Value("${translate.v3.runtime.compact-system-prompt:true}")
     private boolean jsonRuntimeCompactSystemPrompt;
+    /** 翻译结束后是否调用 LLM 生成 chunks/translation-report.md（关闭时仅写入摘要版 Markdown） */
+    @Value("${translate.v3.runtime.translation-report.enabled:true}")
+    private boolean jsonRuntimeTranslationReportEnabled;
+    @Value("${translate.v3.runtime.translation-report.max-input-chars:48000}")
+    private int jsonRuntimeTranslationReportMaxInputChars;
+    @Value("${translate.v3.runtime.translation-report.max-completion-tokens:8192}")
+    private int jsonRuntimeTranslationReportMaxCompletionTokens;
 
     @Autowired
     private TranslateV2Service translateV2Service;
@@ -451,6 +460,8 @@ public class TranslateV3Service {
         blobs.put("input", buildRuntimeBlobSnapshot(inputUri, includeBlobPreview, cap));
         blobs.put("output", buildRuntimeBlobSnapshot(outputUri, includeBlobPreview, cap));
         blobs.put("report", buildRuntimeBlobSnapshot(reportUri, includeBlobPreview, cap));
+        String translationReportRel = blobPath(task.getShopName(), cleanId, JSON_RUNTIME_TRANSLATION_REPORT_MD);
+        blobs.put("translationReportMd", buildRuntimeBlobSnapshot(translationReportRel, includeBlobPreview, cap));
         body.put("blobs", blobs);
 
         if (includeBlobPreview) {
@@ -1066,11 +1077,16 @@ public class TranslateV3Service {
         translateTaskMonitorV3RedisService.setRuntimeMeta(redisPrefix, taskId, meta);
         translateTaskMonitorV3RedisService.expireRuntimeKeys(redisPrefix, taskId, JSON_RUNTIME_DEFAULT_TTL_SECONDS);
 
+        long outerElapsedMs = System.currentTimeMillis() - startedOuter;
+        int redisChunksDoneNow = translateTaskMonitorV3RedisService.getRuntimeChunkDoneSet(redisPrefix, taskId).size();
         writeJsonRuntimeTranslationSummaryTxt(cosmosTask, true, aggregate,
-                System.currentTimeMillis() - startedOuter,
+                outerElapsedMs,
                 plans.size(),
-                translateTaskMonitorV3RedisService.getRuntimeChunkDoneSet(redisPrefix, taskId).size(),
+                redisChunksDoneNow,
                 perChunkLines);
+
+        maybeWriteJsonRuntimeLlmTranslationReport(cosmosTask, template, true, aggregate, outerElapsedMs, plans.size(),
+                redisChunksDoneNow, perChunkLines);
 
         maybeSyncCosmosAfterJsonRuntime(taskId, aggregate);
         return aggregate;
@@ -1396,11 +1412,13 @@ public class TranslateV3Service {
                     String.valueOf(result.get("total")),
                     String.valueOf(result.get("done")),
                     String.valueOf(result.get("failed"))));
+            long singleDurMs = parseLongFlexible(result.get("durationMs"));
             writeJsonRuntimeTranslationSummaryTxt(cosmosTask, false, result,
-                    parseLongFlexible(result.get("durationMs")),
+                    singleDurMs,
                     1,
                     1,
                     oneChunk);
+            maybeWriteJsonRuntimeLlmTranslationReport(cosmosTask, safeRequest, false, result, singleDurMs, 1, 1, oneChunk);
         }
         maybeSyncCosmosAfterJsonRuntime(taskId, result);
         return result;
@@ -1896,6 +1914,78 @@ public class TranslateV3Service {
         return new RuntimeModelTranslateOutcome(translated, usage);
     }
 
+    /**
+     * 与 {@link #requestRuntimeModelTranslate} 相同端点，但期望模型返回自然语言/Markdown（非 path→译文 JSON）。
+     */
+    private RuntimePlainTextOutcome requestRuntimeModelPlainText(String systemPrompt,
+                                                                  String userContent,
+                                                                  JsonRuntimeTranslateRequest request) throws RuntimeModelException {
+        if (StringUtils.isEmpty(safeText(systemPrompt)) || StringUtils.isEmpty(safeText(userContent))) {
+            return new RuntimePlainTextOutcome("", RuntimeLlmTokenUsage.ZERO);
+        }
+        String provider = safeText(request.getProvider()).toLowerCase();
+        String model = safeText(request.getModel());
+        String apiBase = safeText(request.getApiBase());
+        String apiKey = safeText(request.getApiKey());
+        if (provider.isEmpty() || model.isEmpty() || apiBase.isEmpty() || apiKey.isEmpty()) {
+            throw new RuntimeModelException(false, "INVALID_PROVIDER_CONFIG");
+        }
+
+        String endpoint = buildRuntimeEndpoint(provider, model, apiBase);
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (!"azure-openai".equals(provider)) {
+            body.put("model", model);
+        }
+        body.put("temperature", 0);
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        messages.add(Map.of("role", "user", "content", userContent));
+        body.put("messages", messages);
+        String traceUser = safeText(request.getOpenaiUser());
+        if (!traceUser.isEmpty()) {
+            body.put("user", traceUser.length() > 128 ? traceUser.substring(0, 128) : traceUser);
+        }
+        int cap = Math.max(2048, jsonRuntimeTranslationReportMaxCompletionTokens);
+        body.put("max_tokens", Math.min(cap, 32768));
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(endpoint))
+                .header("Content-Type", "application/json")
+                .timeout(Duration.ofSeconds(JSON_RUNTIME_HTTP_TIMEOUT_SECONDS))
+                .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.objectToJson(body), StandardCharsets.UTF_8));
+        if ("azure-openai".equals(provider)) {
+            builder.header("api-key", apiKey);
+        } else {
+            builder.header("Authorization", "Bearer " + apiKey);
+        }
+
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(JSON_RUNTIME_HTTP_TIMEOUT_SECONDS))
+                .build();
+        HttpResponse<String> response;
+        try {
+            response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new RuntimeModelException(true, "MODEL_REQUEST_TIMEOUT_OR_NETWORK");
+        }
+
+        int code = response.statusCode();
+        String responseBody = response.body();
+        if (code >= 400) {
+            boolean retryable = code == 429 || code >= 500;
+            String truncatedBody = responseBody == null ? "" : responseBody.substring(0, Math.min(responseBody.length(), 400));
+            throw new RuntimeModelException(retryable, "MODEL_HTTP_" + code + ":" + truncatedBody);
+        }
+
+        JsonNode root = JsonUtils.readTree(responseBody);
+        RuntimeLlmTokenUsage usage = parseLlmUsageFromRoot(root);
+        String content = parseModelContentFromRoot(root);
+        if (content == null) {
+            content = "";
+        }
+        return new RuntimePlainTextOutcome(content.trim(), usage);
+    }
+
     private RuntimeLlmTokenUsage parseLlmUsageFromRoot(JsonNode root) {
         if (root == null || root.path("usage").isMissingNode() || root.get("usage").isNull()) {
             return RuntimeLlmTokenUsage.ZERO;
@@ -2377,23 +2467,20 @@ public class TranslateV3Service {
         translateTaskV3BlobRepo.writeJson(reportBlobPath, report);
     }
 
-    /**
-     * 在 {@code tasks/{shop}/{taskId}/chunks/translation-summary.txt} 写入 UTF-8 纯文本总览，便于在 Blob 存储中直接预览/编辑。
-     */
-    private void writeJsonRuntimeTranslationSummaryTxt(TranslateTaskV3DO task,
-                                                       boolean chunkedMode,
-                                                       Map<String, Object> aggregate,
-                                                       long durationMs,
-                                                       int plannedChunkFiles,
-                                                       int redisChunksDone,
-                                                       List<String> perChunkLines) {
+    private String buildJsonRuntimeTranslationSummaryBody(TranslateTaskV3DO task,
+                                                            boolean chunkedMode,
+                                                            Map<String, Object> aggregate,
+                                                            long durationMs,
+                                                            int plannedChunkFiles,
+                                                            int redisChunksDone,
+                                                            List<String> perChunkLines) {
         if (task == null || aggregate == null) {
-            return;
+            return "";
         }
         String shop = safeText(task.getShopName());
         String tid = safeText(task.getId());
         if (shop.isEmpty() || tid.isEmpty()) {
-            return;
+            return "";
         }
         String status = safeText(asString(aggregate.get("status")));
         long totalItems = parseLongFlexible(aggregate.get("total"));
@@ -2447,8 +2534,170 @@ public class TranslateV3Service {
         sb.append('\n');
         String blobRel = blobPath(shop, tid, JSON_RUNTIME_TRANSLATION_SUMMARY_TXT);
         sb.append("本文件路径: ").append(blobRel).append('\n');
+        return sb.toString();
+    }
 
-        boolean ok = translateTaskV3BlobRepo.writeText(blobRel, sb.toString());
+    private String readTruncatedChunksFailedJson(String shop, String taskId, int maxChars) {
+        if (maxChars <= 0 || shop.isEmpty() || taskId.isEmpty()) {
+            return "";
+        }
+        String path = blobPath(shop, taskId, JSON_RUNTIME_CHUNKS_FAILED_JSON);
+        String raw = translateTaskV3BlobRepo.readText(path);
+        if (raw == null || raw.isEmpty()) {
+            return "";
+        }
+        if (raw.length() <= maxChars) {
+            return raw;
+        }
+        return raw.substring(0, maxChars) + "\n...(truncated)\n";
+    }
+
+    private static String buildFallbackTranslationReportMarkdown(String summaryBody) {
+        String safe = summaryBody == null ? "" : summaryBody;
+        return "# JSON Runtime 翻译报告\n\n"
+                + "> 本节为自动生成的兜底版本（模型不可用或未启用 LLM 报告时）。\n\n"
+                + safe;
+    }
+
+    private boolean runtimeLlmConfigured(JsonRuntimeTranslateRequest request) {
+        if (request == null) {
+            return false;
+        }
+        applyDefaultRuntimeLlmConfigIfMissing(request);
+        return !safeText(request.getProvider()).isEmpty()
+                && !safeText(request.getModel()).isEmpty()
+                && !safeText(request.getApiBase()).isEmpty()
+                && !safeText(request.getApiKey()).isEmpty();
+    }
+
+    /**
+     * 翻译结束后生成整体 Markdown 报告：汇总所有模块/chunk 的摘要事实 + 可选 failed.json，调用 LLM 产出可读报告。
+     */
+    private void maybeWriteJsonRuntimeLlmTranslationReport(TranslateTaskV3DO task,
+                                                           JsonRuntimeTranslateRequest llmRequest,
+                                                           boolean chunkedMode,
+                                                           Map<String, Object> aggregate,
+                                                           long durationMs,
+                                                           int plannedChunkFiles,
+                                                           int redisChunksDone,
+                                                           List<String> perChunkLines) {
+        if (task == null || aggregate == null) {
+            return;
+        }
+        String shop = safeText(task.getShopName());
+        String tid = safeText(task.getId());
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        String summaryBody = buildJsonRuntimeTranslationSummaryBody(task, chunkedMode, aggregate, durationMs,
+                plannedChunkFiles, redisChunksDone, perChunkLines);
+        if (summaryBody.isEmpty()) {
+            return;
+        }
+        String reportRel = blobPath(shop, tid, JSON_RUNTIME_TRANSLATION_REPORT_MD);
+
+        JsonRuntimeTranslateRequest req = shallowCopy(llmRequest);
+        applyDefaultRuntimeLlmConfigIfMissing(req);
+        String src = safeText(req.getSourceLang());
+        String tgt = safeText(req.getTargetLang());
+        if (src.isEmpty()) {
+            src = safeText(task.getSource());
+        }
+        if (tgt.isEmpty()) {
+            tgt = safeText(task.getTarget());
+        }
+
+        if (!jsonRuntimeTranslationReportEnabled || !runtimeLlmConfigured(req)) {
+            if (!jsonRuntimeTranslationReportEnabled) {
+                LOG.info("json-runtime translation report: LLM disabled by config, taskId={}, writing fallback md", tid);
+            } else {
+                LOG.warn("json-runtime translation report: LLM config incomplete, taskId={}, writing fallback md", tid);
+            }
+            boolean ok = translateTaskV3BlobRepo.writeText(reportRel, buildFallbackTranslationReportMarkdown(summaryBody));
+            if (ok) {
+                LOG.info("json-runtime wrote translation report md (fallback), taskId={}, path={}", tid, reportRel);
+            } else {
+                LOG.warn("json-runtime failed to write translation report md (fallback), taskId={}, path={}", tid, reportRel);
+            }
+            return;
+        }
+
+        int maxFacts = Math.max(8000, jsonRuntimeTranslationReportMaxInputChars);
+        int failBudget = Math.min(16000, maxFacts / 3);
+        String failedPart = readTruncatedChunksFailedJson(shop, tid, failBudget);
+        StringBuilder facts = new StringBuilder(summaryBody.length() + failedPart.length() + 64);
+        facts.append("语言方向: ").append(src.isEmpty() ? "未知" : src).append(" → ").append(tgt.isEmpty() ? "未知" : tgt).append('\n');
+        facts.append('\n').append(summaryBody);
+        if (!failedPart.isEmpty()) {
+            facts.append("\n\n--- chunks/failed.json（截断） ---\n").append(failedPart);
+        }
+        String combined = facts.toString();
+        if (combined.length() > maxFacts) {
+            combined = combined.substring(0, maxFacts) + "\n\n...(input truncated for LLM)\n";
+        }
+
+        String userPrompt = "以下是 JSON Runtime 翻译任务的全部模块与各 chunk 汇总事实（含一行一条的分片统计）。"
+                + "另附可能存在的失败条目 JSON 片段（若为空则无）。\n\n"
+                + "请基于这些事实撰写一份**简体中文** Markdown「翻译报告」，面向运营/产品/项目经理，结构清晰、可直接转发。\n\n"
+                + "必须包含：\n"
+                + "1) 标题与任务标识；\n"
+                + "2) 执行概况（耗时、条目统计、LLM token 与调用次数）；\n"
+                + "3) 按模块/chunk 的结果综述（可用小节或表格）；\n"
+                + "4) 若有失败：失败规模、可能原因、建议的补救与复跑策略；\n"
+                + "5) 结论：是否建议进入下一步（如保存/发布）及注意事项。\n\n"
+                + "禁止编造事实数据中未出现的数字；不确定请写「未知」。不要输出除 Markdown 以外的包裹格式。\n\n"
+                + "--- 事实数据 ---\n"
+                + combined;
+
+        String systemPrompt = "你是资深本地化项目经理与技术写作者。只输出 Markdown 正文，不要 JSON，不要用代码块包裹整篇文档。";
+
+        try {
+            RuntimePlainTextOutcome out = requestRuntimeModelPlainText(systemPrompt, userPrompt, req);
+            String md = out.text == null ? "" : out.text.trim();
+            if (md.isEmpty()) {
+                md = buildFallbackTranslationReportMarkdown(summaryBody);
+            }
+            boolean ok = translateTaskV3BlobRepo.writeText(reportRel, md);
+            if (ok) {
+                LOG.info("json-runtime wrote translation report md (LLM), taskId={}, path={}, reportPromptTokApprox={}",
+                        tid, reportRel, out.usage.promptTokens);
+            } else {
+                LOG.warn("json-runtime failed to write translation report md (LLM), taskId={}, path={}", tid, reportRel);
+            }
+        } catch (Exception e) {
+            LOG.warn("json-runtime LLM translation report failed, taskId={}, fallback to summary md", tid, e);
+            boolean ok = translateTaskV3BlobRepo.writeText(reportRel, buildFallbackTranslationReportMarkdown(summaryBody));
+            if (ok) {
+                LOG.info("json-runtime wrote translation report md after LLM error, taskId={}, path={}", tid, reportRel);
+            }
+        }
+    }
+
+    /**
+     * 在 {@code tasks/{shop}/{taskId}/chunks/translation-summary.txt} 写入 UTF-8 纯文本总览，便于在 Blob 存储中直接预览/编辑。
+     */
+    private void writeJsonRuntimeTranslationSummaryTxt(TranslateTaskV3DO task,
+                                                       boolean chunkedMode,
+                                                       Map<String, Object> aggregate,
+                                                       long durationMs,
+                                                       int plannedChunkFiles,
+                                                       int redisChunksDone,
+                                                       List<String> perChunkLines) {
+        if (task == null || aggregate == null) {
+            return;
+        }
+        String shop = safeText(task.getShopName());
+        String tid = safeText(task.getId());
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        String body = buildJsonRuntimeTranslationSummaryBody(task, chunkedMode, aggregate, durationMs,
+                plannedChunkFiles, redisChunksDone, perChunkLines);
+        if (body.isEmpty()) {
+            return;
+        }
+        String blobRel = blobPath(shop, tid, JSON_RUNTIME_TRANSLATION_SUMMARY_TXT);
+        boolean ok = translateTaskV3BlobRepo.writeText(blobRel, body);
         if (ok) {
             LOG.info("json-runtime wrote translation summary txt, taskId={}, path={}", tid, blobRel);
         } else {
@@ -4343,6 +4592,16 @@ public class TranslateV3Service {
             } catch (Exception e) {
                 return 0L;
             }
+        }
+    }
+
+    private static final class RuntimePlainTextOutcome {
+        private final String text;
+        private final RuntimeLlmTokenUsage usage;
+
+        private RuntimePlainTextOutcome(String text, RuntimeLlmTokenUsage usage) {
+            this.text = text == null ? "" : text;
+            this.usage = usage == null ? RuntimeLlmTokenUsage.ZERO : usage;
         }
     }
 
