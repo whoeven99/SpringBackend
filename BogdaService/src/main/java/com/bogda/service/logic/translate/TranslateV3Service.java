@@ -448,6 +448,9 @@ public class TranslateV3Service {
         body.put("resolvedRedisPrefix", effectiveRedis);
         body.put("redisRuntime", getJsonRuntimeTaskProgress(cleanId, effectiveRedis));
 
+        Map<String, String> translateMonitor = translateTaskMonitorV3RedisService.getAll(cleanId);
+        body.put("translateMonitor", translateMonitor == null || translateMonitor.isEmpty() ? null : translateMonitor);
+
         Map<String, String> redisMeta = translateTaskMonitorV3RedisService.getRuntimeMeta(effectiveRedis, cleanId);
         String inputUri = firstNonEmptyRuntimeBlobUri(
                 checkpoint, redisMeta, "inputBlobUri");
