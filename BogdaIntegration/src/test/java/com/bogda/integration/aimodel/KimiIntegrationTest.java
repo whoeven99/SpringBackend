@@ -17,7 +17,6 @@ import java.net.http.HttpResponse;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
@@ -55,8 +54,7 @@ class KimiIntegrationTest {
 
         when(httpResponse.statusCode()).thenReturn(200);
         when(httpResponse.body()).thenReturn(responseBody);
-        when(httpClient.send(any(), org.mockito.ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
-                .thenReturn(httpResponse);
+        when(httpClient.send(any(), any(HttpResponse.BodyHandlers.ofString().getClass()))).thenReturn(httpResponse);
 
         // When
         Pair<String, Integer> result = kimiIntegration.chatWithKimi(model, prompt, target, magnification);
@@ -77,14 +75,13 @@ class KimiIntegrationTest {
 
         when(httpResponse.statusCode()).thenReturn(500);
         when(httpResponse.body()).thenReturn("Internal Server Error");
-        when(httpClient.send(any(), org.mockito.ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
-                .thenReturn(httpResponse);
+        when(httpClient.send(any(), any(HttpResponse.BodyHandlers.ofString().getClass()))).thenReturn(httpResponse);
 
         // When
         Pair<String, Integer> result = kimiIntegration.chatWithKimi(model, prompt, target, magnification);
 
         // Then
         assertNull(result);
-        verify(feiShuRobotIntegration).sendMessage(contains("FatalException KimiIntegration call error sessionId:"));
+        verify(feiShuRobotIntegration).sendMessage("FatalException KimiIntegration call error prompt: " + prompt);
     }
 }

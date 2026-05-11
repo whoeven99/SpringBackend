@@ -307,7 +307,7 @@ public class UniversalTranslateService {
         }
         String prompt = promptConfigService.buildPlainJsonPrompt(module, targetLanguage, sourceMap);
         Pair<String, Integer> modelResult = modelTranslateService.modelTranslate(
-                aiModel, prompt, targetLanguage, sourceMap, sessionId
+                aiModel, prompt, targetLanguage, sourceMap
         );
 
         Map<Integer, String> translatedMap = parseMapResult(modelResult == null ? null : modelResult.getFirst());

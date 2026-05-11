@@ -308,8 +308,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
                 prompt,
                 ctx.getTargetLanguage(),
                 ctx.getAiModel(),
-                textsToTranslate,
-                ctx.getSessionId()
+                textsToTranslate
         );
 
         if (result == null) {
@@ -393,8 +392,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
                 prompt,
                 ctx.getTargetLanguage(),
                 ctx.getAiModel(),
-                batchTexts,
-                ctx.getSessionId()
+                batchTexts
         );
 
         if (result == null) {
@@ -532,7 +530,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
         if (needRetry) {
             // 重试调用（第二次使用 KIMI_K25）
             Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(
-                    KimiIntegration.KIMI_K25, prompt, targetLanguage, requestedSourceMap, ctx.getSessionId());
+                    KimiIntegration.KIMI_K25, prompt, targetLanguage, requestedSourceMap);
 
             if (aiResult == null) {
                 TraceReporterHolder.report("BatchTranslateStrategyService.batchTranslate",
@@ -627,11 +625,10 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
             String prompt,
             String targetLanguage,
             String aiModel,
-            Map<Integer, String> sourceMap,
-            String sessionId) {
+            Map<Integer, String> sourceMap) {
 
         // 调用AI模型翻译
-        Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(aiModel, prompt, targetLanguage, sourceMap, sessionId);
+        Pair<String, Integer> aiResult = modelTranslateService.modelTranslate(aiModel, prompt, targetLanguage, sourceMap);
         if (aiResult == null) {
             return null;
         }
@@ -641,7 +638,7 @@ public class BatchTranslateStrategyService implements ITranslateStrategyService 
 
         // 检查解析结果是否有效
         if (translatedMap == null || translatedMap.isEmpty()) {
-            aiResult = modelTranslateService.modelTranslate(KimiIntegration.KIMI_K25, prompt, targetLanguage, sourceMap, sessionId);
+            aiResult = modelTranslateService.modelTranslate(KimiIntegration.KIMI_K25, prompt, targetLanguage, sourceMap);
             if (aiResult == null) {
                 TraceReporterHolder.report("BatchTranslateStrategyService.batchTranslate", "FatalException 飞书机器人报错 aiResult 再次解析失败 " + aiResult);
                 feiShuRobotIntegration.sendMessage("FatalException 飞书机器人报错 aiResult 再次解析失败 " + aiResult);

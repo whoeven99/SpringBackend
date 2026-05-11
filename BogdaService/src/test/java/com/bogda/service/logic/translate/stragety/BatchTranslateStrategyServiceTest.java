@@ -202,7 +202,7 @@ class BatchTranslateStrategyServiceTest {
 
         when(promptConfigService.buildPlainJsonPrompt(eq(testModule), eq(testTarget), same(batchTexts)))
                 .thenReturn("plain-prompt");
-        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("plain-prompt"), eq(testTarget), same(batchTexts), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("plain-prompt"), eq(testTarget), same(batchTexts)))
                 .thenReturn(new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 77));
 
         // When
@@ -241,7 +241,7 @@ class BatchTranslateStrategyServiceTest {
 
         when(promptConfigService.buildPlainJsonPrompt(eq(testModule), eq(testTarget), same(batchTexts)))
                 .thenReturn("plain-prompt");
-        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("plain-prompt"), eq(testTarget), same(batchTexts), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("plain-prompt"), eq(testTarget), same(batchTexts)))
                 .thenReturn(null);
 
         // When
@@ -308,7 +308,7 @@ class BatchTranslateStrategyServiceTest {
         context.setGlossaryMap(new HashMap<>());
 
         when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
-        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap(), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
                 .thenReturn(new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 100));
 
         try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
@@ -321,7 +321,7 @@ class BatchTranslateStrategyServiceTest {
             assertEquals("你好", context.getTranslatedTextMap().get(1));
             assertEquals("世界", context.getTranslatedTextMap().get(2));
             assertEquals(100, context.getUsedToken());
-            verify(modelTranslateService, atLeastOnce()).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap(), isNull());
+            verify(modelTranslateService, atLeastOnce()).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
             verify(redisProcessService, atLeastOnce()).setCacheData(eq(testTarget), anyString(), anyString());
         }
     }
@@ -342,7 +342,7 @@ class BatchTranslateStrategyServiceTest {
 
         when(redisProcessService.getCacheData(anyString(), anyString())).thenReturn(null);
         when(promptConfigService.buildPlainJsonPrompt(any(), eq(testTarget), anyMap())).thenReturn("batch-json-prompt");
-        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap(), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
                 .thenReturn(new Pair<>("{\"1\":\"你好\",\"2\":\"世界\"}", 50));
 
         try (MockedStatic<ALiYunTranslateIntegration> mockedAliyun = mockStatic(ALiYunTranslateIntegration.class)) {
@@ -359,7 +359,7 @@ class BatchTranslateStrategyServiceTest {
             assertEquals("世界", context.getTranslatedTextMap().get(5));
 
             // 只需要翻译两条唯一文本 -> 至少一次 modelTranslate（可能一次批次）
-            verify(modelTranslateService, times(1)).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap(), isNull());
+            verify(modelTranslateService, times(1)).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
         }
     }
 
@@ -405,7 +405,7 @@ class BatchTranslateStrategyServiceTest {
 
         when(promptConfigService.buildGlossaryJsonPrompt(eq(testModule), eq(testTarget), anyString(), anyMap()))
                 .thenReturn("glossary-json-prompt");
-        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("glossary-json-prompt"), eq(testTarget), anyMap(), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("glossary-json-prompt"), eq(testTarget), anyMap()))
                 .thenReturn(new Pair<>("{\"1\":\"我喜欢苹果\"}", 12));
 
         // When
@@ -443,7 +443,7 @@ class BatchTranslateStrategyServiceTest {
 
         // modelTranslate 按 prompt 返回对应的 JSON（直接用 seq -> 译文），并记录每次调用拿到的 batch（注意：生产代码会复用并 clear 同一个 Map 引用）
         List<Map<Integer, String>> capturedBatches = new ArrayList<>();
-        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap(), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap()))
                 .thenAnswer(invocation -> {
                     Map<Integer, String> src = invocation.getArgument(3);
                     capturedBatches.add(new LinkedHashMap<>(src));
@@ -463,7 +463,7 @@ class BatchTranslateStrategyServiceTest {
             batchTranslateStrategyService.translate(context);
 
             // Then
-            verify(modelTranslateService, atLeastOnce()).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap(), isNull());
+            verify(modelTranslateService, atLeastOnce()).modelTranslate(eq(testAiModel), anyString(), eq(testTarget), anyMap());
             verify(redisProcessService, atLeastOnce()).setCacheData(eq(testTarget), anyString(), anyString());
         }
     }
@@ -579,7 +579,7 @@ class BatchTranslateStrategyServiceTest {
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
 
-        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap)))
                 .thenReturn(new Pair<>("raw1", 7))
                 .thenReturn(new Pair<>("raw2", 9));
 
@@ -595,19 +595,18 @@ class BatchTranslateStrategyServiceTest {
         Pair<Map<Integer, String>, Integer> result = (Pair<Map<Integer, String>, Integer>) invokePrivate(
                 spyService,
                 "batchTranslate",
-                new Class<?>[]{String.class, String.class, String.class, Map.class, String.class},
+                new Class<?>[]{String.class, String.class, String.class, Map.class},
                 "p",
                 testTarget,
                 testAiModel,
-                sourceMap,
-                null
+                sourceMap
         );
 
         // Then
         assertNotNull(result);
         assertEquals(9, result.getSecond()); // token 取最后一次调用的
         assertEquals("你好", result.getFirst().get(1));
-        verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap), isNull());
+        verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap));
     }
 
     @Test
@@ -618,7 +617,7 @@ class BatchTranslateStrategyServiceTest {
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
 
-        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap)))
                 .thenReturn(new Pair<>("raw1", 7))
                 .thenReturn(new Pair<>("raw2", 9));
 
@@ -632,17 +631,16 @@ class BatchTranslateStrategyServiceTest {
         Pair<Map<Integer, String>, Integer> result = (Pair<Map<Integer, String>, Integer>) invokePrivate(
                 spyService,
                 "batchTranslate",
-                new Class<?>[]{String.class, String.class, String.class, Map.class, String.class},
+                new Class<?>[]{String.class, String.class, String.class, Map.class},
                 "p",
                 testTarget,
                 testAiModel,
-                sourceMap,
-                null
+                sourceMap
         );
 
         // Then
         assertNull(result);
-        verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap), isNull());
+        verify(modelTranslateService, times(2)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap));
     }
 
     @Test
@@ -651,7 +649,7 @@ class BatchTranslateStrategyServiceTest {
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
 
-        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap), isNull()))
+        when(modelTranslateService.modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap)))
                 .thenReturn(null);
 
         // When
@@ -659,17 +657,16 @@ class BatchTranslateStrategyServiceTest {
         Pair<Map<Integer, String>, Integer> result = (Pair<Map<Integer, String>, Integer>) invokePrivate(
                 batchTranslateStrategyService,
                 "batchTranslate",
-                new Class<?>[]{String.class, String.class, String.class, Map.class, String.class},
+                new Class<?>[]{String.class, String.class, String.class, Map.class},
                 "p",
                 testTarget,
                 testAiModel,
-                sourceMap,
-                null
+                sourceMap
         );
 
         // Then
         assertNull(result);
-        verify(modelTranslateService, times(1)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap), isNull());
+        verify(modelTranslateService, times(1)).modelTranslate(eq(testAiModel), eq("p"), eq(testTarget), same(sourceMap));
     }
 }
 

@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class ChatGptIntegration {
@@ -53,32 +52,11 @@ public class ChatGptIntegration {
      * content - allToken，支持指定模型名称和系数（配置化入口）
      */
     public Pair<String, Integer> chatWithGpt(String modelName, double magnification, String prompt, String target) {
-        List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "user", "content", prompt));
-        return chatWithGpt(modelName, magnification, messages, target, null);
-    }
+        ChatMessage userMessage = new ChatMessage(ChatRole.USER);
+        userMessage.setContent(prompt);
 
-    public Pair<String, Integer> chatWithGpt(String modelName, double magnification,
-                                             List<Map<String, String>> messages,
-                                             String target, String sessionId) {
         List<ChatMessage> prompts = new ArrayList<>();
-        for (Map<String, String> message : messages) {
-            if (message == null) {
-                continue;
-            }
-            String role = message.get("role");
-            String content = message.get("content");
-            if (content == null || content.isEmpty()) {
-                continue;
-            }
-            ChatRole chatRole = "assistant".equalsIgnoreCase(role) ? ChatRole.ASSISTANT : ChatRole.USER;
-            ChatMessage chatMessage = new ChatMessage(chatRole);
-            chatMessage.setContent(content);
-            prompts.add(chatMessage);
-        }
-        if (prompts.isEmpty()) {
-            return null;
-        }
+        prompts.add(userMessage);
 
         ChatCompletionsOptions options = new ChatCompletionsOptions(prompts)
                 .setFrequencyPenalty(0.0)
@@ -92,26 +70,25 @@ public class ChatGptIntegration {
             int allToken = (int) Math.ceil(chatCompletions.getUsage().getTotalTokens() * magnification);
             int input = chatCompletions.getUsage().getPromptTokens();
             int output = chatCompletions.getUsage().getCompletionTokens();
-            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译 modelName: " + modelName
+            TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "ChatGptIntegration 翻译 提示词 ： " + prompt + " modelName: " + modelName
                     + " magnification: " + magnification + " token openai : " + content + " all: "
-                    + allToken + " input: " + input + " output: " + output + " target: " + target
-                    + " sessionId: " + sessionId + " messagesSize: " + prompts.size());
+                    + allToken + " input: " + input + " output: " + output + " target: " + target);
 
             if (content == null) {
                 CompletionsFinishReason finishReason = chatCompletions.getChoices().get(0).getFinishReason();
                 ChatMessage message = chatCompletions.getChoices().get(0).getMessage();
                 TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException 飞书机器人报错 ChatGptIntegration chatWithGpt error: "
-                        + " model: " + modelName + " sessionId: " + sessionId + " finishReason : " + finishReason + " message : " + message);
+                        + " model: " + modelName + " prompt: " + prompt + " finishReason : " + finishReason + " message : " + message);
                 feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + " model: "
-                        + modelName + " sessionId: " + sessionId + " finishReason : " + finishReason + " message : " + message);
+                        + modelName + " prompt: " + prompt + " finishReason : " + finishReason + " message : " + message);
             }
 
             return new Pair<>(content, allToken);
         } catch (Exception e) {
             TraceReporterHolder.report("ChatGptIntegration.chatWithGpt", "FatalException 飞书机器人报错 ChatGptIntegration chatWithGpt error: " + e.getMessage()
-                    + " model: " + modelName + " sessionId: " + sessionId);
+                    + " model: " + modelName + " prompt: " + prompt);
             ExceptionReporterHolder.report("ChatGptIntegration.chatWithGpt", e);
-            feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " model: " + modelName + " sessionId: " + sessionId);
+            feiShuRobotIntegration.sendMessage("FatalException ChatGptIntegration chatWithGpt error: " + e.getMessage() + " model: " + modelName + " prompt: " + prompt);
             return null;
         }
     }
