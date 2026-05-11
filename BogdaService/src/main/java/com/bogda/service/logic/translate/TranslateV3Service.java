@@ -104,6 +104,8 @@ public class TranslateV3Service {
     private static final String JSON_RUNTIME_TRANSLATION_SUMMARY_TXT = "chunks/translation-summary.txt";
     /** LLM 汇总所有模块/chunk 后生成的 Markdown 翻译报告，便于直接阅读 */
     private static final String JSON_RUNTIME_TRANSLATION_REPORT_MD = "chunks/translation-report.md";
+    /** LLM 对照原文/译文抽检后的质量打分报告（Markdown） */
+    private static final String JSON_RUNTIME_QUALITY_REPORT_MD = "chunks/translation-quality-report.md";
     /** 所有分片汇总的失败条目（含 sourceValue），便于在 Blob 中直接查看 */
     private static final String JSON_RUNTIME_CHUNKS_FAILED_JSON = "chunks/failed.json";
     private static final int JSON_RUNTIME_HTTP_TIMEOUT_SECONDS = 120;
@@ -134,6 +136,19 @@ public class TranslateV3Service {
     private int jsonRuntimeTranslationReportMaxInputChars;
     @Value("${translate.v3.runtime.translation-report.max-completion-tokens:8192}")
     private int jsonRuntimeTranslationReportMaxCompletionTokens;
+    /** 翻译结束后是否调用 LLM 生成 chunks/translation-quality-report.md（对照原文/译文抽检打分） */
+    @Value("${translate.v3.runtime.quality-report.enabled:true}")
+    private boolean jsonRuntimeQualityReportEnabled;
+    /** 送入质量模型的最多「路径」条数（超大任务会随机抽样） */
+    @Value("${translate.v3.runtime.quality-report.max-pairs:80}")
+    private int jsonRuntimeQualityReportMaxPairs;
+    /** 每条原文/译文在提示词中的最大字符数（防止超长字段撑爆上下文） */
+    @Value("${translate.v3.runtime.quality-report.max-chars-per-field:500}")
+    private int jsonRuntimeQualityReportMaxCharsPerField;
+    @Value("${translate.v3.runtime.quality-report.max-input-chars:32000}")
+    private int jsonRuntimeQualityReportMaxInputChars;
+    @Value("${translate.v3.runtime.quality-report.max-completion-tokens:4096}")
+    private int jsonRuntimeQualityReportMaxCompletionTokens;
 
     @Autowired
     private TranslateV2Service translateV2Service;
@@ -465,6 +480,8 @@ public class TranslateV3Service {
         blobs.put("report", buildRuntimeBlobSnapshot(reportUri, includeBlobPreview, cap));
         String translationReportRel = blobPath(task.getShopName(), cleanId, JSON_RUNTIME_TRANSLATION_REPORT_MD);
         blobs.put("translationReportMd", buildRuntimeBlobSnapshot(translationReportRel, includeBlobPreview, cap));
+        String qualityReportRel = blobPath(task.getShopName(), cleanId, JSON_RUNTIME_QUALITY_REPORT_MD);
+        blobs.put("qualityReportMd", buildRuntimeBlobSnapshot(qualityReportRel, includeBlobPreview, cap));
         body.put("blobs", blobs);
 
         if (includeBlobPreview) {
@@ -967,6 +984,8 @@ public class TranslateV3Service {
         long startedOuter = System.currentTimeMillis();
         String taskId = safeText(template.getTaskId());
 
+        List<RuntimeQualityPair> rollupQualityPairs = new ArrayList<>();
+
         translateTaskMonitorV3RedisService.deleteRuntimeTranslationPayloadKeys(redisPrefix, taskId);
         translateTaskMonitorV3RedisService.deleteRuntimePathDoneKey(redisPrefix, taskId);
 
@@ -1002,7 +1021,7 @@ public class TranslateV3Service {
                     sliceReq.getInputBlobUri(), sliceReq.getOutputBlobUri(), sliceReq.getReportBlobUri());
 
             sliceResp = translateJsonRuntimeSingleBlob(sliceReq, sliceResp, redisPrefix, startedOuter, suffix,
-                    plan.moduleName, plan.chunkOrdinal, plans.size());
+                    plan.moduleName, plan.chunkOrdinal, plans.size(), rollupQualityPairs);
             processedSlices++;
 
             String chunkFileOnly = plan.progressKey;
@@ -1091,6 +1110,8 @@ public class TranslateV3Service {
         maybeWriteJsonRuntimeLlmTranslationReport(cosmosTask, template, true, aggregate, outerElapsedMs, plans.size(),
                 redisChunksDoneNow, perChunkLines);
 
+        maybeWriteJsonRuntimeQualityReport(cosmosTask, template, rollupQualityPairs);
+
         maybeSyncCosmosAfterJsonRuntime(taskId, aggregate);
         return aggregate;
     }
@@ -1106,7 +1127,8 @@ public class TranslateV3Service {
                                                                String chunkHashSuffixOrEmpty,
                                                                String runtimeModuleName,
                                                                int chunkOrdinal,
-                                                               int runtimeChunksTotal) {
+                                                               int runtimeChunksTotal,
+                                                               List<RuntimeQualityPair> qualityPairsSinkOrNull) {
         long startedMs = System.currentTimeMillis();
         String taskId = safeText(safeRequest.getTaskId());
         String inputBlobUri = safeText(safeRequest.getInputBlobUri());
@@ -1288,6 +1310,14 @@ public class TranslateV3Service {
             for (RuntimeSourceItem it : allItems) {
                 pathToSource.put(it.path, it.text == null ? "" : it.text);
             }
+            if (qualityPairsSinkOrNull != null && !translationAcc.isEmpty()) {
+                for (Map.Entry<String, String> e : translationAcc.entrySet()) {
+                    String p = e.getKey();
+                    qualityPairsSinkOrNull.add(new RuntimeQualityPair(p,
+                            pathToSource.getOrDefault(p, ""),
+                            e.getValue() == null ? "" : e.getValue()));
+                }
+            }
             String[] shopTask = parseTasksBlobShopAndTaskId(inputBlobPath);
             if (shopTask != null && !failMap.isEmpty()) {
                 mergeWriteChunksFailedJson(shopTask[0], shopTask[1], runtimeModuleName, chunkFileLabel,
@@ -1399,8 +1429,9 @@ public class TranslateV3Service {
             return finalResponse;
         }
 
+        List<RuntimeQualityPair> singleQualityPairs = new ArrayList<>();
         Map<String, Object> result = translateJsonRuntimeSingleBlob(
-                safeRequest, finalResponse, redisPrefix, startedMs, "", "", 1, 1);
+                safeRequest, finalResponse, redisPrefix, startedMs, "", "", 1, 1, singleQualityPairs);
         if (cosmosTask != null) {
             List<String> oneChunk = new ArrayList<>();
             String inputUri = safeText(asString(result.get("inputBlobUri")));
@@ -1422,6 +1453,7 @@ public class TranslateV3Service {
                     1,
                     oneChunk);
             maybeWriteJsonRuntimeLlmTranslationReport(cosmosTask, safeRequest, false, result, singleDurMs, 1, 1, oneChunk);
+            maybeWriteJsonRuntimeQualityReport(cosmosTask, safeRequest, singleQualityPairs);
         }
         maybeSyncCosmosAfterJsonRuntime(taskId, result);
         return result;
@@ -1923,6 +1955,17 @@ public class TranslateV3Service {
     private RuntimePlainTextOutcome requestRuntimeModelPlainText(String systemPrompt,
                                                                   String userContent,
                                                                   JsonRuntimeTranslateRequest request) throws RuntimeModelException {
+        return requestRuntimeModelPlainText(systemPrompt, userContent, request,
+                jsonRuntimeTranslationReportMaxCompletionTokens);
+    }
+
+    /**
+     * @param maxCompletionTokens 传入时使用该上限作为 max_tokens（质量报告等可与整包报告区分）
+     */
+    private RuntimePlainTextOutcome requestRuntimeModelPlainText(String systemPrompt,
+                                                                  String userContent,
+                                                                  JsonRuntimeTranslateRequest request,
+                                                                  int maxCompletionTokens) throws RuntimeModelException {
         if (StringUtils.isEmpty(safeText(systemPrompt)) || StringUtils.isEmpty(safeText(userContent))) {
             return new RuntimePlainTextOutcome("", RuntimeLlmTokenUsage.ZERO);
         }
@@ -1948,7 +1991,7 @@ public class TranslateV3Service {
         if (!traceUser.isEmpty()) {
             body.put("user", traceUser.length() > 128 ? traceUser.substring(0, 128) : traceUser);
         }
-        int cap = Math.max(2048, jsonRuntimeTranslationReportMaxCompletionTokens);
+        int cap = Math.max(2048, maxCompletionTokens);
         body.put("max_tokens", Math.min(cap, 32768));
 
         HttpRequest.Builder builder = HttpRequest.newBuilder()
@@ -2672,6 +2715,146 @@ public class TranslateV3Service {
             boolean ok = translateTaskV3BlobRepo.writeText(reportRel, buildFallbackTranslationReportMarkdown(summaryBody));
             if (ok) {
                 LOG.info("json-runtime wrote translation report md after LLM error, taskId={}, path={}", tid, reportRel);
+            }
+        }
+    }
+
+    private List<RuntimeQualityPair> sampleQualityPairsForReport(List<RuntimeQualityPair> all, int maxPairs) {
+        if (all == null || all.isEmpty()) {
+            return Collections.emptyList();
+        }
+        int cap = Math.max(1, maxPairs);
+        if (all.size() <= cap) {
+            return new ArrayList<>(all);
+        }
+        List<RuntimeQualityPair> copy = new ArrayList<>(all);
+        Collections.shuffle(copy, ThreadLocalRandom.current());
+        return new ArrayList<>(copy.subList(0, cap));
+    }
+
+    private static String truncateForQualityPrompt(String s, int maxChars) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        if (s.length() <= maxChars) {
+            return s;
+        }
+        return s.substring(0, maxChars) + "\n...(截断)";
+    }
+
+    private static String buildFallbackQualityMarkdown(int totalSuccessPairs, String reasonLine) {
+        String why = reasonLine == null || reasonLine.isEmpty() ? "LLM 未返回有效内容或调用失败。" : reasonLine;
+        return "# 翻译质量检测报告\n\n> " + why + "\n\n"
+                + "本次运行已成功回填译文的条目数（路径数）约为 **" + totalSuccessPairs + "**。\n";
+    }
+
+    /**
+     * 对照「翻译前原文 / 翻译后译文」抽样调用 LLM，生成总体打分与较差译例说明，写入 {@code chunks/translation-quality-report.md}。
+     */
+    private void maybeWriteJsonRuntimeQualityReport(TranslateTaskV3DO task,
+                                                    JsonRuntimeTranslateRequest llmRequest,
+                                                    List<RuntimeQualityPair> allPairs) {
+        if (task == null) {
+            return;
+        }
+        String shop = safeText(task.getShopName());
+        String tid = safeText(task.getId());
+        if (shop.isEmpty() || tid.isEmpty()) {
+            return;
+        }
+        String rel = blobPath(shop, tid, JSON_RUNTIME_QUALITY_REPORT_MD);
+        int total = allPairs == null ? 0 : allPairs.size();
+
+        if (!jsonRuntimeQualityReportEnabled) {
+            LOG.info("json-runtime quality report skipped (translate.v3.runtime.quality-report.enabled=false), taskId={}", tid);
+            return;
+        }
+
+        if (total == 0) {
+            boolean ok = translateTaskV3BlobRepo.writeText(rel,
+                    "# 翻译质量检测报告\n\n暂无已成功翻译并写回的条目，未执行质检。\n");
+            if (ok) {
+                LOG.info("json-runtime wrote empty quality report stub, taskId={}, path={}", tid, rel);
+            }
+            return;
+        }
+
+        JsonRuntimeTranslateRequest req = shallowCopy(llmRequest);
+        applyDefaultRuntimeLlmConfigIfMissing(req);
+        String src = safeText(req.getSourceLang());
+        String tgt = safeText(req.getTargetLang());
+        if (src.isEmpty()) {
+            src = safeText(task.getSource());
+        }
+        if (tgt.isEmpty()) {
+            tgt = safeText(task.getTarget());
+        }
+
+        if (!runtimeLlmConfigured(req)) {
+            LOG.warn("json-runtime quality report: LLM config incomplete, taskId={}, writing fallback md", tid);
+            boolean ok = translateTaskV3BlobRepo.writeText(rel,
+                    buildFallbackQualityMarkdown(total, "运行时 LLM 配置不完整，未调用质检模型。"));
+            if (ok) {
+                LOG.info("json-runtime wrote quality report fallback (no LLM), taskId={}, path={}", tid, rel);
+            }
+            return;
+        }
+
+        int maxPairs = Math.max(8, jsonRuntimeQualityReportMaxPairs);
+        List<RuntimeQualityPair> sampled = sampleQualityPairsForReport(allPairs, maxPairs);
+        int maxField = Math.max(120, jsonRuntimeQualityReportMaxCharsPerField);
+
+        StringBuilder sb = new StringBuilder(Math.min(total * 128, 65536));
+        sb.append("翻译方向: ").append(src.isEmpty() ? "未知" : src).append(" → ").append(tgt.isEmpty() ? "未知" : tgt).append('\n');
+        sb.append("统计: 本次运行已成功写回译文的 JSON 路径共 ").append(total).append(" 条；以下抽检 ")
+                .append(sampled.size()).append(" 条。\n\n");
+
+        int idx = 1;
+        for (RuntimeQualityPair p : sampled) {
+            sb.append("### 样本 ").append(idx++).append('\n');
+            sb.append("- 路径: `").append(p.path.replace("`", "'")).append("`\n");
+            sb.append("- 原文:\n```\n").append(truncateForQualityPrompt(p.sourceText, maxField)).append("\n```\n");
+            sb.append("- 译文:\n```\n").append(truncateForQualityPrompt(p.targetText, maxField)).append("\n```\n\n");
+        }
+
+        String combined = sb.toString();
+        int maxIn = Math.max(4000, jsonRuntimeQualityReportMaxInputChars);
+        if (combined.length() > maxIn) {
+            combined = combined.substring(0, maxIn) + "\n\n...(输入过长已截断，仅保留前段样本)\n";
+        }
+
+        String userPrompt = "你是一名资深本地化质检审校（QE）。下面是同一 JSON Runtime 翻译任务中多条「原文 / 译文」对照样本（路径为 JSON Pointer）。\n\n"
+                + "请输出**简体中文 Markdown**，必须包含：\n"
+                + "1) **总体质量分**：给出一个 **0～100** 的整数分数，并一句话说明评分依据；\n"
+                + "2) **总体评价**：约 2～5 句话；\n"
+                + "3) **较差译例**：列出最多 **8** 条你认为问题相对最明显的样本（注明样本编号或路径），每条简述问题类型"
+                + "（如漏译、术语不一致、语气不当、破坏 HTML/占位符等）；若抽检中未发现明显问题，请明确说明。\n\n"
+                + "禁止编造未出现在样本中的路径或句子；不确定之处请写「不确定」。不要输出 JSON；不要用单个代码块包裹整篇文档。\n\n"
+                + "--- 抽检样本 ---\n"
+                + combined;
+
+        String systemPrompt = "你只输出 Markdown 正文；语气专业、克制。";
+
+        try {
+            RuntimePlainTextOutcome out = requestRuntimeModelPlainText(systemPrompt, userPrompt, req,
+                    jsonRuntimeQualityReportMaxCompletionTokens);
+            String md = out.text == null ? "" : out.text.trim();
+            if (md.isEmpty()) {
+                md = buildFallbackQualityMarkdown(total, "模型返回空内容。");
+            }
+            boolean ok = translateTaskV3BlobRepo.writeText(rel, md);
+            if (ok) {
+                LOG.info("json-runtime wrote quality report md (LLM), taskId={}, path={}, sampled={}, totalPairs={}, promptTok~{}",
+                        tid, rel, sampled.size(), total, out.usage.promptTokens);
+            } else {
+                LOG.warn("json-runtime failed to write quality report md, taskId={}, path={}", tid, rel);
+            }
+        } catch (Exception e) {
+            LOG.warn("json-runtime quality report LLM failed, taskId={}, fallback md", tid, e);
+            boolean ok = translateTaskV3BlobRepo.writeText(rel,
+                    buildFallbackQualityMarkdown(total, "质检模型调用异常：" + e.getClass().getSimpleName()));
+            if (ok) {
+                LOG.info("json-runtime wrote quality report md after error, taskId={}, path={}", tid, rel);
             }
         }
     }
@@ -4519,6 +4702,19 @@ public class TranslateV3Service {
 
     private static String blobPath(String shopName, String taskId, String tail) {
         return "tasks/" + shopName + "/" + taskId + "/" + tail;
+    }
+
+    /** 用于翻译质量抽检：JSON Pointer 路径 + 原文 + 译文（成功写入 translationAcc 的条目） */
+    private static final class RuntimeQualityPair {
+        private final String path;
+        private final String sourceText;
+        private final String targetText;
+
+        private RuntimeQualityPair(String path, String sourceText, String targetText) {
+            this.path = path == null ? "" : path;
+            this.sourceText = sourceText == null ? "" : sourceText;
+            this.targetText = targetText == null ? "" : targetText;
+        }
     }
 
     private static class RuntimeSourceItem {
