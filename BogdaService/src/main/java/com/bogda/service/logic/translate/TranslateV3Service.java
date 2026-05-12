@@ -387,7 +387,7 @@ public class TranslateV3Service {
             failed.put("status", "FAILED");
             failed.put("reason", "NOT_JSON_RUNTIME_TASK");
             failed.put("taskType", task.getTaskType());
-            failed.put("hint", "该文档存在但 taskType 不是 json-runtime，无法用 JSON Runtime 执行器。");
+            failed.put("hint", "该文档存在但 taskType 不是 spark（兼容历史 json-runtime），无法用 JSON Runtime 执行器。");
             return failed;
         }
         JsonRuntimeTranslateRequest request = buildRuntimeRequestFromTask(task);
@@ -614,7 +614,7 @@ public class TranslateV3Service {
         snap.put("uri", uri);
         if (uri.isEmpty()) {
             snap.put("exists", false);
-            snap.put("note", "checkpoint 中无此 URI（非 json-runtime 或字段未写入）");
+            snap.put("note", "checkpoint 中无此 URI（非 spark/json-runtime 运行时任务或字段未写入）");
             return snap;
         }
         String path = toBlobPath(uri);
@@ -1513,7 +1513,11 @@ public class TranslateV3Service {
         if (task == null) {
             return false;
         }
-        return "json-runtime".equalsIgnoreCase(task.getTaskType());
+        String taskType = task.getTaskType();
+        if (StringUtils.isEmpty(taskType)) {
+            return false;
+        }
+        return "spark".equalsIgnoreCase(taskType) || "json-runtime".equalsIgnoreCase(taskType);
     }
 
     private JsonRuntimeTranslateRequest buildRuntimeRequestFromTask(TranslateTaskV3DO task) {
