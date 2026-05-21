@@ -34,11 +34,6 @@ datasource:
 redis:
   hostname: azure-cache-dev.redis.cache.windows.net
 
-cosmos:
-  endpoint: https://springbackend-cosmos-test.documents.azure.com:443/
-  database: bogdatechtest
-  container: discount
-
 ---
 # prod环境覆盖
 spring:
@@ -56,7 +51,3 @@ datasource:
 
 redis:
   hostname: azurecache-redis-prod.redis.cache.windows.net
-
-cosmos:
-  endpoint: https://bogdaprodcosmos.documents.azure.com:443/
-  database: bogdaprodcosmos

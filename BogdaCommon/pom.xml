@@ -102,18 +102,6 @@
             <version>5.18.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-spring-data-cosmos</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.azure</groupId>
-                    <artifactId>azure-core</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>6.1.0</version>
-            <scope>compile</scope>
-        </dependency>
         <!-- emoji 判断 -->
         <dependency>
             <groupId>com.vdurmont</groupId>
