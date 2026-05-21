@@ -27,6 +27,6 @@ Backend development process(edited by 2024/10/8)
 controller -- Expose the api to frontend
 logic -- The business logic
 integration -- Call http/rpc api
-repository -- All the logic of repository such as mysql,redis,cosmosDb
+repository -- All the logic of repository such as mysql,redis
 3.Commit the Pull Requests, when the pr is completed, an Action in Github will run automaticly. The Action is described in /.github/workflows/master_springbackendservice.yml
 We should add another workflows to release other branch to test
