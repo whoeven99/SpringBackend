@@ -3,8 +3,6 @@ package com.bogda.service.logic.bundle;
 import com.bogda.common.utils.AliyunLogSqlUtils;
 import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.repository.entity.BundleUsersDiscountDO;
-import com.bogda.repository.repo.bundle.BundleUsersDiscountRepo;
-import com.bogda.repository.repo.bundle.BundleUsersRepo;
 import com.bogda.service.logic.RateDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
