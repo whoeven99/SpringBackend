@@ -38,16 +38,16 @@ redis:
   hostname: azure-cache-dev.redis.cache.windows.net
 
 cosmos:
-  endpoint: https://springbackend-cosmos-test.documents.azure.com:443/
-  database: bogdatechtest
-  container: discount
+  endpoint: https://sparkcosmostest.documents.azure.com:443/
+  database: translation
+  container: translation_jobs
   # Render / CI：设置环境变量 COSMOS_KEY（或通过 Key Vault 写入 cosmos-key）；勿提交明文
   key: ${COSMOS_KEY}
 
 blob:
   translate-v3:
-    connection-string: DefaultEndpointsProtocol=https;AccountName=transblobstoragetest;AccountKey=t6bQvkNPSv58uy/ng6o0thriGXB0V8ShMM5zAFo6eIRCpqfaJVghkmUbUUhBzbmdZXsmtPOqZHlZ+AStmR+L/A==;EndpointSuffix=core.windows.net
-    container: translate-v3
+    connection-string: https;AccountName=sparkblobstoragetest;AccountKey=JBHpZKA18I+utDqCBB1FzAxlxkzcxN6ocos4if8O+e8cqU5U819rw0jHOmf2rw/jBzLXYrAS4GxR+AStY8Si1w==;EndpointSuffix=core.windows.net
+    container: translation-content
 
 ---
 # prod环境覆盖
