@@ -38,11 +38,9 @@ redis:
   hostname: azure-cache-dev.redis.cache.windows.net
 
 cosmos:
-  endpoint: ${COSMOS_ENDPOINT:https://springbackend-cosmos-test.documents.azure.com:443/}
-  database: ${COSMOS_DATABASE:bogdatechtest}
-  container: discount
+  endpoint: ${COSMOS_ENDPOINT:https://sparkcosmostest.documents.azure.com:443/}
   # Render / CI：设置环境变量 COSMOS_KEY（或通过 Key Vault 写入 cosmos-key）；勿提交明文
-  key: ${COSMOS_KEY:}
+  key: ${COSMOS_KEY}
   translate-v3:
     database: ${COSMOS_TRANSLATION_DATABASE_ID:translation}
     container: ${COSMOS_TRANSLATION_JOBS_CONTAINER:translation_jobs}

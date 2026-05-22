@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class TranslateV3CosmosConfig {
     private static final Logger LOG = LoggerFactory.getLogger(TranslateV3CosmosConfig.class);
 
-    @Value("${cosmos.translate-v3.database:${cosmos.database}}")
+    @Value("${cosmos.translate-v3.database}")
     private String database;
 
     @Value("${cosmos.translate-v3.container:translate_tasks_v3}")
