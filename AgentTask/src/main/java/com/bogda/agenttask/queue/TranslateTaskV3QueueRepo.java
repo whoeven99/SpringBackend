@@ -3,15 +3,12 @@ package com.bogda.agenttask.queue;
 import com.bogda.agenttask.config.TranslateTaskV3QueueRedisConfig;
 import com.bogda.agenttask.queue.dto.TranslateTaskV3QueueMessage;
 import com.bogda.common.utils.JsonUtils;
-import com.bogda.repository.container.TranslateTaskV3ScheduleLogDO;
-import com.bogda.repository.repo.translate.TranslateTaskV3ScheduleLogCosmosRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,13 +20,10 @@ public class TranslateTaskV3QueueRepo {
     private static final Logger LOG = LoggerFactory.getLogger(TranslateTaskV3QueueRepo.class);
 
     private final StringRedisTemplate queueRedis;
-    private final TranslateTaskV3ScheduleLogCosmosRepo scheduleLogRepo;
 
     public TranslateTaskV3QueueRepo(
-            @Qualifier(TranslateTaskV3QueueRedisConfig.QUEUE_STRING_REDIS_TEMPLATE) StringRedisTemplate queueRedis,
-            TranslateTaskV3ScheduleLogCosmosRepo scheduleLogRepo) {
+            @Qualifier(TranslateTaskV3QueueRedisConfig.QUEUE_STRING_REDIS_TEMPLATE) StringRedisTemplate queueRedis) {
         this.queueRedis = queueRedis;
-        this.scheduleLogRepo = scheduleLogRepo;
     }
 
     public void enqueue(TranslateTaskV3QueueMessage message) {
@@ -50,29 +44,6 @@ public class TranslateTaskV3QueueRepo {
         }
         queueRedis.opsForList().leftPush(key, json);
         LOG.info("v3 queue LPUSH stage={} taskId={} shop={}", stage, message.getTaskId(), message.getShopName());
-
-        // 记录调度日志
-        recordEnqueueLog(message, stage);
-    }
-
-    private void recordEnqueueLog(TranslateTaskV3QueueMessage message, TranslateTaskV3QueueStage stage) {
-        try {
-            TranslateTaskV3ScheduleLogDO log = new TranslateTaskV3ScheduleLogDO();
-            log.setId(UUID.randomUUID().toString());
-            log.setShopName(message.getShopName() != null ? message.getShopName() : "");
-            log.setTaskId(message.getTaskId());
-            log.setEventType("ENQUEUED_" + stage.toString());
-            log.setQueueStage(stage.toString());
-            log.setEnqueuedAt(message.getEnqueuedAt());
-            log.setMessage("Task queued for " + stage.toString() + " processing");
-            log.setSuccess(true);
-            log.setCreatedAt(System.currentTimeMillis());
-            log.setSource("QueueRepo.enqueue");
-
-            scheduleLogRepo.append(log);
-        } catch (Exception e) {
-            LOG.warn("v3 queue failed to record enqueue log, taskId={}", message.getTaskId(), e);
-        }
     }
 
     public void enqueueInit(String taskId, String shopName) {
@@ -104,31 +75,7 @@ public class TranslateTaskV3QueueRepo {
             message.setStage(stage);
         }
         LOG.info("v3 queue BRPOP stage={} taskId={} shop={}", stage, message.getTaskId(), message.getShopName());
-
-        // 记录出队日志
-        recordDequeueLog(message, stage);
-
         return message;
-    }
-
-    private void recordDequeueLog(TranslateTaskV3QueueMessage message, TranslateTaskV3QueueStage stage) {
-        try {
-            TranslateTaskV3ScheduleLogDO log = new TranslateTaskV3ScheduleLogDO();
-            log.setId(UUID.randomUUID().toString());
-            log.setShopName(message.getShopName() != null ? message.getShopName() : "");
-            log.setTaskId(message.getTaskId());
-            log.setEventType("DEQUEUED_" + stage.toString());
-            log.setQueueStage(stage.toString());
-            log.setDequeuedAt(System.currentTimeMillis());
-            log.setMessage("Task dequeued from " + stage.toString() + " processing queue");
-            log.setSuccess(true);
-            log.setCreatedAt(System.currentTimeMillis());
-            log.setSource("QueueRepo.blockingPop");
-
-            scheduleLogRepo.append(log);
-        } catch (Exception e) {
-            LOG.warn("v3 queue failed to record dequeue log, taskId={}", message.getTaskId(), e);
-        }
     }
 
     private static String truncate(String raw) {
