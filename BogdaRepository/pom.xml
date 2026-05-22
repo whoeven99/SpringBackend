@@ -21,6 +21,18 @@
     <dependencies>
         <dependency>
             <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos</artifactId>
+            <version>4.76.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-spring-data-cosmos</artifactId>
+            <version>5.16.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
             <artifactId>azure-core</artifactId>
             <version>1.57.0</version>
         </dependency>

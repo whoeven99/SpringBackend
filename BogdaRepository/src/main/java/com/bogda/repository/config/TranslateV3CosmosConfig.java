@@ -1,6 +1,7 @@
 package com.bogda.repository.config;
 
 import com.azure.cosmos.CosmosClient;
+import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.CosmosContainer;
 import com.bogda.common.utils.ConfigUtils;
 import org.slf4j.Logger;
@@ -21,6 +22,23 @@ public class TranslateV3CosmosConfig {
 
     @Value("${cosmos.endpoint:}")
     private String cosmosEndpoint;
+
+    @Bean
+    public CosmosClient cosmosClient() {
+        String endpoint = cosmosEndpoint;
+        if (endpoint == null || endpoint.isEmpty()) {
+            endpoint = ConfigUtils.getConfig("COSMOS_ENDPOINT");
+        }
+        String key = ConfigUtils.getConfig("COSMOS_KEY");
+        if (key == null || key.isEmpty()) {
+            key = ConfigUtils.getConfig("cosmos.key");
+        }
+        LOG.info("Cosmos client config: endpoint={}", endpoint);
+        return new CosmosClientBuilder()
+                .endpoint(endpoint)
+                .key(key)
+                .buildClient();
+    }
 
     @Bean
     public CosmosContainer translateTaskV3Container(CosmosClient cosmosClient) {
