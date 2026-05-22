@@ -1509,6 +1509,10 @@ public class TranslateV3Service {
         }
     }
 
+    /**
+     * Spark / JSON Runtime 任务（与 Spark {@code SPARK_TRANSLATION_TASK_TYPES} 对齐）。
+     * AgentTask 调度：INIT 仍走 Shopify 落盘；TRANSLATE 走 {@link #executeJsonRuntimeTaskByTaskId}。
+     */
     private boolean isRuntimeJsonTask(TranslateTaskV3DO task) {
         if (task == null) {
             return false;
@@ -1517,7 +1521,10 @@ public class TranslateV3Service {
         if (StringUtils.isEmpty(taskType)) {
             return false;
         }
-        return "spark".equalsIgnoreCase(taskType) || "json-runtime".equalsIgnoreCase(taskType);
+        String normalized = taskType.trim();
+        return "spark".equalsIgnoreCase(normalized)
+                || "json-runtime".equalsIgnoreCase(normalized)
+                || "spark-transtion".equalsIgnoreCase(normalized);
     }
 
     private JsonRuntimeTranslateRequest buildRuntimeRequestFromTask(TranslateTaskV3DO task) {
@@ -3077,7 +3084,18 @@ public class TranslateV3Service {
 
     public void initialToTranslateTaskV3(TranslateTaskV3DO task) {
         String taskId = task.getId();
-        LOG.info("v3 init reading shopify, taskId={}, shop={}", taskId, task.getShopName());
+        String shopName = task.getShopName();
+        if (isInitCheckpointDone(task)) {
+            if (patchStatusWithVerify(taskId, shopName, 1, "INIT_ALREADY_DONE")) {
+                LOG.info("v3 init skip re-dump, checkpoint already INIT_DONE, taskId={}, shop={}",
+                        taskId, shopName);
+            } else {
+                LOG.warn("v3 init checkpoint INIT_DONE but status still not 1 in Cosmos, taskId={}, shop={}",
+                        taskId, shopName);
+            }
+            return;
+        }
+        LOG.info("v3 init reading shopify, taskId={}, shop={}", taskId, shopName);
         translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_READING_SHOPIFY");
 
         UsersDO userDO = usersService.getUserByName(task.getShopName());
@@ -3103,7 +3121,7 @@ public class TranslateV3Service {
         if (CollectionUtils.isEmpty(moduleList)) {
             LOG.info("v3 init empty modules directly move to translate, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_DONE_EMPTY_MODULES");
-            translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 1);
+            patchStatusWithVerify(taskId, task.getShopName(), 1, "INIT_DONE_EMPTY_MODULES");
             return;
         }
         LOG.info("v3 init start dump modules, taskId={}, shop={}, moduleCount={}, modules={}",
@@ -3154,10 +3172,42 @@ public class TranslateV3Service {
         metrics.put("savedCount", 0);
         metrics.put("usedToken", 0);
 
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, task.getShopName(), checkpoint, metrics);
-        translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 1);
-        LOG.info("v3 init done and status moved to 1, taskId={}, shop={}, totalCount={}, totalChars={}",
-                taskId, task.getShopName(), totalCount, totalChars);
+        if (!translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, task.getShopName(), checkpoint, metrics)) {
+            LOG.warn("v3 init patchCheckpointAndMetrics failed, taskId={}, shop={}", taskId, task.getShopName());
+        }
+        if (patchStatusWithVerify(taskId, task.getShopName(), 1, "INIT_DONE")) {
+            LOG.info("v3 init done and status moved to 1, taskId={}, shop={}, totalCount={}, totalChars={}",
+                    taskId, task.getShopName(), totalCount, totalChars);
+        } else {
+            LOG.error("v3 init finished dump but Cosmos status stayed 0 — translate scheduler will not pick task, taskId={}, shop={}",
+                    taskId, task.getShopName());
+        }
+    }
+
+    private boolean isInitCheckpointDone(TranslateTaskV3DO task) {
+        if (task == null || task.getCheckpoint() == null) {
+            return false;
+        }
+        Object phase = task.getCheckpoint().get("phase");
+        if (phase == null) {
+            return false;
+        }
+        String phaseText = String.valueOf(phase).trim();
+        return "INIT_DONE".equalsIgnoreCase(phaseText)
+                || "INIT_DONE_EMPTY_MODULES".equalsIgnoreCase(phaseText);
+    }
+
+    private boolean patchStatusWithVerify(String taskId, String shopName, int status, String reason) {
+        if (!translateTaskV3CosmosRepo.patchStatus(taskId, shopName, status)) {
+            return false;
+        }
+        TranslateTaskV3DO latest = translateTaskV3CosmosRepo.getById(taskId, shopName);
+        if (latest != null && latest.getStatus() != null && latest.getStatus() == status) {
+            return true;
+        }
+        LOG.warn("v3 patchStatus verify mismatch reason={} taskId={} shop={} expectedStatus={} actualStatus={}",
+                reason, taskId, shopName, status, latest == null ? null : latest.getStatus());
+        return false;
     }
 
     /**
@@ -3218,27 +3268,47 @@ public class TranslateV3Service {
         }
     }
 
+    /**
+     * Spark / json-runtime 任务在 AgentTask 定时翻译阶段的执行入口（直接运行时，不经 LLM Agent 二次编排）。
+     */
+    private void translateJsonRuntimeTaskV3(TranslateTaskV3DO task) {
+        String taskId = task.getId();
+        String shopName = task.getShopName();
+        String taskType = task.getTaskType();
+        translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_RUNNING");
+        LOG.info("v3 translate json-runtime executeJsonRuntimeTaskByTaskId, taskId={}, shop={}, taskType={}",
+                taskId, shopName, taskType);
+        try {
+            Map<String, Object> result = executeJsonRuntimeTaskByTaskId(taskId);
+            String status = result == null ? "UNKNOWN" : String.valueOf(result.get("status"));
+            LOG.info("v3 translate json-runtime finished, taskId={}, shop={}, status={}, done={}, failed={}",
+                    taskId, shopName, status,
+                    result == null ? null : result.get("done"),
+                    result == null ? null : result.get("failed"));
+            if (result != null) {
+                persistJsonRuntimeAgentTraceBlob(task,
+                        "executeJsonRuntimeTaskByTaskId",
+                        JsonUtils.objectToJson(result));
+            }
+            if ("FAILED".equals(status)) {
+                translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_RUNTIME");
+            }
+        } catch (IllegalArgumentException e) {
+            LOG.warn("v3 translate json-runtime skipped, taskId={}, reason={}", taskId, e.getMessage());
+            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_RUNTIME");
+        } catch (Exception e) {
+            LOG.error("v3 translate json-runtime failed, taskId={}, shop={}", taskId, shopName, e);
+            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_RUNTIME");
+            TraceReporterHolder.report("TranslateV3Service.translateJsonRuntimeTaskV3",
+                    "FatalException json-runtime taskId=" + taskId + " error=" + e);
+        }
+    }
+
     public void translateEachTaskV3(TranslateTaskV3DO task) {
         String taskId = task.getId();
         String shopName = task.getShopName();
-        if (isRuntimeJsonTask(task)) { // agent 模式的翻译
-            String agentMsg = "执行taskId=" + taskId + "的json翻译任务";
-            try {
-                if (jsonRuntimeAgentRunner == null) {
-                    LOG.error("JsonRuntimeAgentRunner 未装配（仅 AgentTask 进程提供），taskId={}, shop={}", taskId, shopName);
-                    translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_AGENT_UNAVAILABLE");
-                    return;
-                }
-                LOG.info("v3 translate json-runtime via agent, taskId={}, shop={}", taskId, shopName);
-                String agentTrace = jsonRuntimeAgentRunner.run(agentMsg);
-                persistJsonRuntimeAgentTraceBlob(task, agentMsg, agentTrace);
-            } catch (IllegalArgumentException e) {
-                LOG.warn("v3 translate json-runtime agent skipped, taskId={}, reason={}", taskId, e.getMessage());
-            } catch (Exception e) {
-                LOG.error("v3 translate json-runtime agent failed, taskId={}, shop={}", taskId, shopName, e);
-                TraceReporterHolder.report("TranslateV3Service.translateEachTaskV3",
-                        "FatalException json-runtime agent taskId=" + taskId + " error=" + e);
-            }
+        if (isRuntimeJsonTask(task)) {
+            translateJsonRuntimeTaskV3(task);
             return;
         }
         String target = normalizeLocaleCode(task.getTarget());

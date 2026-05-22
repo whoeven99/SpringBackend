@@ -192,12 +192,16 @@ public class TranslateTaskV3CosmosRepo {
     public boolean patchStatus(String id, String shopName, Integer status) {
         try {
             CosmosPatchOperations patch = CosmosPatchOperations.create()
-                    .replace("/status", status)
+                    .set("/status", status)
                     .set("/statusText", toStatusText(status))
-                    .replace("/updatedAt", Instant.now().toString());
+                    .set("/updatedAt", Instant.now().toString());
             translateTaskV3Container.patchItem(id, new PartitionKey(shopName), patch, Object.class);
+            LOG.info("v3 cosmos patchStatus ok id={} shop={} status={} statusText={}",
+                    id, shopName, status, toStatusText(status));
             return true;
         } catch (Exception e) {
+            LOG.warn("v3 cosmos patchStatus failed id={} shop={} status={} error={}",
+                    id, shopName, status, e.toString());
             TraceReporterHolder.report("TranslateTaskV3CosmosRepo.patchStatus",
                     "FatalException patch status failed: id=" + id + " shop=" + shopName + " error=" + e);
             return false;
