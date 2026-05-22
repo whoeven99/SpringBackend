@@ -3086,7 +3086,7 @@ public class TranslateV3Service {
         String taskId = task.getId();
         String shopName = task.getShopName();
         if (isInitCheckpointDone(task)) {
-            if (patchStatusWithVerify(taskId, shopName, 1, "INIT_ALREADY_DONE")) {
+            if (persistStatusToCosmos(task, 1, "INIT_ALREADY_DONE")) {
                 LOG.info("v3 init skip re-dump, checkpoint already INIT_DONE, taskId={}, shop={}",
                         taskId, shopName);
             } else {
@@ -3121,7 +3121,7 @@ public class TranslateV3Service {
         if (CollectionUtils.isEmpty(moduleList)) {
             LOG.info("v3 init empty modules directly move to translate, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_DONE_EMPTY_MODULES");
-            patchStatusWithVerify(taskId, task.getShopName(), 1, "INIT_DONE_EMPTY_MODULES");
+            persistStatusToCosmos(task, 1, "INIT_DONE_EMPTY_MODULES");
             return;
         }
         LOG.info("v3 init start dump modules, taskId={}, shop={}, moduleCount={}, modules={}",
@@ -3172,10 +3172,7 @@ public class TranslateV3Service {
         metrics.put("savedCount", 0);
         metrics.put("usedToken", 0);
 
-        if (!translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, task.getShopName(), checkpoint, metrics)) {
-            LOG.warn("v3 init patchCheckpointAndMetrics failed, taskId={}, shop={}", taskId, task.getShopName());
-        }
-        if (patchStatusWithVerify(taskId, task.getShopName(), 1, "INIT_DONE")) {
+        if (persistInitDoneToCosmos(task, checkpoint, metrics)) {
             LOG.info("v3 init done and status moved to 1, taskId={}, shop={}, totalCount={}, totalChars={}",
                     taskId, task.getShopName(), totalCount, totalChars);
         } else {
@@ -3201,13 +3198,44 @@ public class TranslateV3Service {
         if (!translateTaskV3CosmosRepo.patchStatus(taskId, shopName, status)) {
             return false;
         }
-        TranslateTaskV3DO latest = translateTaskV3CosmosRepo.getById(taskId, shopName);
+        String partitionKey = translateTaskV3CosmosRepo.resolveShopPartitionKey(taskId, shopName);
+        TranslateTaskV3DO latest = translateTaskV3CosmosRepo.getById(taskId, partitionKey);
         if (latest != null && latest.getStatus() != null && latest.getStatus() == status) {
             return true;
         }
-        LOG.warn("v3 patchStatus verify mismatch reason={} taskId={} shop={} expectedStatus={} actualStatus={}",
-                reason, taskId, shopName, status, latest == null ? null : latest.getStatus());
+        LOG.warn("v3 patchStatus verify mismatch reason={} taskId={} shopHint={} partitionKey={} expectedStatus={} actualStatus={}",
+                reason, taskId, shopName, partitionKey, status, latest == null ? null : latest.getStatus());
         return false;
+    }
+
+    private boolean persistStatusToCosmos(TranslateTaskV3DO task, int status, String reason) {
+        if (task == null) {
+            return false;
+        }
+        if (patchStatusWithVerify(task.getId(), task.getShopName(), status, reason)) {
+            return true;
+        }
+        TranslateTaskV3DO reload = translateTaskV3CosmosRepo.findByIdResolved(task.getId(), task.getShopName());
+        return translateTaskV3CosmosRepo.upsertTaskState(reload != null ? reload : task, status, null, null);
+    }
+
+    private boolean persistInitDoneToCosmos(TranslateTaskV3DO task,
+                                            Map<String, Object> checkpoint,
+                                            Map<String, Object> metrics) {
+        if (task == null) {
+            return false;
+        }
+        String taskId = task.getId();
+        String shopName = task.getShopName();
+        boolean patched = translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, metrics)
+                && patchStatusWithVerify(taskId, shopName, 1, "INIT_DONE");
+        if (patched) {
+            return true;
+        }
+        LOG.warn("v3 init cosmos patch failed, trying upsert fallback, taskId={}, shop={}", taskId, shopName);
+        TranslateTaskV3DO reload = translateTaskV3CosmosRepo.findByIdResolved(taskId, shopName);
+        TranslateTaskV3DO toWrite = reload != null ? reload : task;
+        return translateTaskV3CosmosRepo.upsertTaskState(toWrite, 1, checkpoint, metrics);
     }
 
     /**

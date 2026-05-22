@@ -2,6 +2,8 @@ package com.bogda.repository.container;
 
 import com.azure.spring.data.cosmos.core.mapping.Container;
 import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,8 @@ public class TranslateTaskV3DO {
     private String id;
 
     @PartitionKey
+    @JsonProperty("shopName")
+    @JsonAlias("shop")
     private String shopName;
 
     private String source;
@@ -27,7 +31,9 @@ public class TranslateTaskV3DO {
     private String statusText;
     private String taskType;
     private String aiModel;
+    @JsonProperty("cover")
     private boolean isCover;
+    @JsonProperty("handle")
     private boolean isHandle;
     private String moduleList;
     private String sessionId;
