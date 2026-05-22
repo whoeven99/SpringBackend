@@ -974,7 +974,9 @@ public class TranslateV3Service {
         metrics.put("runtimeLlmTotalTokens", cumulativeTok.totalTokens);
         metrics.put("runtimeLlmApiCallCount", cumulativeLlmCalls);
         metrics.put("updatedAt", Instant.now().toString());
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
+        if (!translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics)) {
+            translateTaskV3CosmosRepo.mergeAndPersistTaskState(task.getId(), task, null, checkpoint, metrics);
+        }
     }
 
     private Map<String, Object> executeJsonRuntimeChunked(JsonRuntimeTranslateRequest template,
@@ -1501,11 +1503,10 @@ public class TranslateV3Service {
         if (totalTok > 0) {
             metrics.put("usedToken", (int) Math.min(totalTok, Integer.MAX_VALUE));
         }
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
-        if ("COMPLETED".equals(status) || "PARTIAL_FAILED".equals(status)) {
-            translateTaskV3CosmosRepo.patchStatus(task.getId(), task.getShopName(), 2);
-        } else {
-            translateTaskV3CosmosRepo.patchStatus(task.getId(), task.getShopName(), 4);
+        int cosmosStatus = ("COMPLETED".equals(status) || "PARTIAL_FAILED".equals(status)) ? 2 : 4;
+        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, cosmosStatus, checkpoint, metrics)) {
+            LOG.warn("v3 json-runtime cosmos sync failed after translate, taskId={}, shop={}, runtimeStatus={}",
+                    taskId, task.getShopName(), status);
         }
     }
 
@@ -3225,17 +3226,7 @@ public class TranslateV3Service {
         if (task == null) {
             return false;
         }
-        String taskId = task.getId();
-        String shopName = task.getShopName();
-        boolean patched = translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, metrics)
-                && patchStatusWithVerify(taskId, shopName, 1, "INIT_DONE");
-        if (patched) {
-            return true;
-        }
-        LOG.warn("v3 init cosmos patch failed, trying upsert fallback, taskId={}, shop={}", taskId, shopName);
-        TranslateTaskV3DO reload = translateTaskV3CosmosRepo.findByIdResolved(taskId, shopName);
-        TranslateTaskV3DO toWrite = reload != null ? reload : task;
-        return translateTaskV3CosmosRepo.upsertTaskState(toWrite, 1, checkpoint, metrics);
+        return translateTaskV3CosmosRepo.mergeAndPersistTaskState(task.getId(), task, 1, checkpoint, metrics);
     }
 
     /**

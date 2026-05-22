@@ -20,9 +20,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class TranslateTaskV3CosmosRepo {
@@ -229,50 +231,138 @@ public class TranslateTaskV3CosmosRepo {
     }
 
     public boolean patchStatus(String id, String shopName, Integer status) {
-        String partitionKey = resolveShopPartitionKey(id, shopName);
-        if (partitionKey.isEmpty()) {
-            LOG.warn("v3 cosmos patchStatus missing partition key id={} shopHint={}", id, shopName);
-            return false;
-        }
-        try {
-            CosmosPatchOperations patch = CosmosPatchOperations.create()
-                    .set("/status", status)
-                    .set("/statusText", toStatusText(status))
-                    .set("/updatedAt", Instant.now().toString());
-            translateTaskV3Container.patchItem(id, new PartitionKey(partitionKey), patch, Object.class);
-            LOG.info("v3 cosmos patchStatus ok id={} shop={} status={} statusText={}",
-                    id, partitionKey, status, toStatusText(status));
-            return true;
-        } catch (Exception e) {
-            LOG.warn("v3 cosmos patchStatus failed id={} shopHint={} partitionKey={} status={} notFound={} error={}",
-                    id, shopName, partitionKey, status, isNotFound(e), shortenError(e));
-            TraceReporterHolder.report("TranslateTaskV3CosmosRepo.patchStatus",
-                    "FatalException patch status failed: id=" + id + " shop=" + partitionKey + " error=" + e);
-            return false;
-        }
+        return patchStatusInternal(id, shopName, status, true);
     }
 
     public boolean patchCheckpointAndMetrics(String id, String shopName, Object checkpoint, Object metrics) {
-        String partitionKey = resolveShopPartitionKey(id, shopName);
-        if (partitionKey.isEmpty()) {
-            LOG.warn("v3 cosmos patchCheckpointAndMetrics missing partition key id={} shopHint={}", id, shopName);
-            return false;
+        return patchCheckpointInternal(id, shopName, checkpoint, metrics, true);
+    }
+
+    /**
+     * patch 失败时 upsert 全量文档（翻译结束写回 Cosmos 等场景）。
+     */
+    public boolean mergeAndPersistTaskState(String id,
+                                            TranslateTaskV3DO seed,
+                                            Integer status,
+                                            Map<String, Object> checkpoint,
+                                            Map<String, Object> metrics) {
+        TranslateTaskV3DO task = seed;
+        if (task == null) {
+            task = findByIdResolved(id, "");
         }
-        try {
-            CosmosPatchOperations patch = CosmosPatchOperations.create()
-                    .set("/checkpoint", checkpoint)
-                    .set("/metrics", metrics)
-                    .set("/updatedAt", Instant.now().toString());
-            translateTaskV3Container.patchItem(id, new PartitionKey(partitionKey), patch, Object.class);
-            LOG.info("v3 cosmos patchCheckpointAndMetrics ok id={} shop={}", id, partitionKey);
+        if (task == null) {
+            List<TranslateTaskV3DO> found = listByTaskId(id);
+            if (found.isEmpty()) {
+                LOG.warn("v3 cosmos mergeAndPersistTaskState no document id={}", id);
+                return false;
+            }
+            task = found.get(0);
+        }
+        if (id != null && !id.isEmpty()) {
+            task.setId(id);
+        }
+
+        boolean checkpointOk = checkpoint == null || patchCheckpointInternal(task.getId(), task.getShopName(), checkpoint, metrics, true);
+        boolean statusOk = status == null || patchStatusInternal(task.getId(), task.getShopName(), status, true);
+        if (checkpointOk && statusOk) {
             return true;
-        } catch (Exception e) {
-            LOG.warn("v3 cosmos patchCheckpointAndMetrics failed id={} shopHint={} partitionKey={} notFound={} error={}",
-                    id, shopName, partitionKey, isNotFound(e), shortenError(e));
-            TraceReporterHolder.report("TranslateTaskV3CosmosRepo.patchCheckpointAndMetrics",
-                    "FatalException patch checkpoint/metrics failed: id=" + id + " shop=" + partitionKey + " error=" + e);
+        }
+        LOG.warn("v3 cosmos mergeAndPersistTaskState patch failed, upsert fallback id={} shop={}",
+                task.getId(), task.getShopName());
+        return upsertTaskState(task, status, checkpoint, metrics);
+    }
+
+    private boolean patchStatusInternal(String id, String shopName, Integer status, boolean tryAllPartitions) {
+        String itemId = normalizeItemId(id);
+        if (itemId.isEmpty()) {
             return false;
         }
+        CosmosPatchOperations patch = CosmosPatchOperations.create()
+                .set("/status", status)
+                .set("/statusText", toStatusText(status))
+                .set("/updatedAt", Instant.now().toString());
+        for (String partitionKey : partitionKeyCandidates(itemId, shopName, tryAllPartitions)) {
+            try {
+                translateTaskV3Container.patchItem(itemId, new PartitionKey(partitionKey), patch, Object.class);
+                LOG.info("v3 cosmos patchStatus ok id={} shop={} status={} statusText={}",
+                        itemId, partitionKey, status, toStatusText(status));
+                return true;
+            } catch (Exception e) {
+                LOG.warn("v3 cosmos patchStatus failed id={} shopHint={} partitionKey={} status={} notFound={} error={}",
+                        itemId, shopName, partitionKey, status, isNotFound(e), shortenError(e));
+                if (!isNotFound(e)) {
+                    TraceReporterHolder.report("TranslateTaskV3CosmosRepo.patchStatus",
+                            "FatalException patch status failed: id=" + itemId + " shop=" + partitionKey + " error=" + e);
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean patchCheckpointInternal(String id,
+                                            String shopName,
+                                            Object checkpoint,
+                                            Object metrics,
+                                            boolean tryAllPartitions) {
+        String itemId = normalizeItemId(id);
+        if (itemId.isEmpty()) {
+            return false;
+        }
+        CosmosPatchOperations patch = CosmosPatchOperations.create()
+                .set("/checkpoint", checkpoint)
+                .set("/metrics", metrics)
+                .set("/updatedAt", Instant.now().toString());
+        for (String partitionKey : partitionKeyCandidates(itemId, shopName, tryAllPartitions)) {
+            try {
+                translateTaskV3Container.patchItem(itemId, new PartitionKey(partitionKey), patch, Object.class);
+                LOG.info("v3 cosmos patchCheckpointAndMetrics ok id={} shop={}", itemId, partitionKey);
+                return true;
+            } catch (Exception e) {
+                LOG.warn("v3 cosmos patchCheckpointAndMetrics failed id={} shopHint={} partitionKey={} notFound={} error={}",
+                        itemId, shopName, partitionKey, isNotFound(e), shortenError(e));
+                if (!isNotFound(e)) {
+                    TraceReporterHolder.report("TranslateTaskV3CosmosRepo.patchCheckpointAndMetrics",
+                            "FatalException patch checkpoint/metrics failed: id=" + itemId + " shop=" + partitionKey + " error=" + e);
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    private Set<String> partitionKeyCandidates(String id, String shopHint, boolean tryAllPartitions) {
+        Set<String> keys = new LinkedHashSet<>();
+        String hint = normalizeShopHint(shopHint);
+        if (!hint.isEmpty()) {
+            keys.add(hint);
+        }
+        if (!tryAllPartitions || id == null || id.isEmpty()) {
+            return keys;
+        }
+        for (TranslateTaskV3DO doc : listByTaskId(id)) {
+            if (doc == null) {
+                continue;
+            }
+            String pk = firstNonEmpty(doc.getShopName(), "");
+            if (!pk.isEmpty()) {
+                keys.add(pk);
+            }
+            String docId = normalizeItemId(doc.getId());
+            if (!docId.isEmpty() && !docId.equals(id)) {
+                LOG.warn("v3 cosmos partition candidate id mismatch queryId={} docId={} shop={}", id, docId, pk);
+            }
+        }
+        for (String pk : keys) {
+            if (getById(id, pk) != null) {
+                return Set.of(pk);
+            }
+        }
+        return keys;
+    }
+
+    private static String normalizeItemId(String id) {
+        return id == null ? "" : id.trim();
     }
 
     /**
