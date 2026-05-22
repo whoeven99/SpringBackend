@@ -7,7 +7,6 @@ import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.entity.DO.GlossaryDO;
 import com.bogda.common.entity.DO.TranslateResourceDTO;
-import com.bogda.common.entity.DO.UsersDO;
 import com.bogda.common.entity.VO.SingleReturnVO;
 import com.bogda.common.entity.VO.SingleTranslateVO;
 import com.bogda.common.reporter.TraceReporterHolder;
@@ -23,7 +22,6 @@ import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.translate.TranslateTaskV3BlobRepo;
 import com.bogda.repository.repo.translate.TranslateTaskV3CosmosRepo;
 import com.bogda.service.Service.ITranslatesService;
-import com.bogda.service.Service.IUsersService;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.GlossaryService;
 import com.bogda.service.logic.ShopifyRateLimitService;
@@ -163,9 +161,10 @@ public class TranslateV3Service {
     @Autowired
     private ShopifyRateLimitService shopifyRateLimitService;
     @Autowired
-    private IUsersService usersService;
-    @Autowired
     private UserTokenService userTokenService;
+
+    /** Cosmos checkpoint 中的 Shopify Admin accessToken（Spark / BogdaApi 创建任务时写入）。 */
+    private static final String CHECKPOINT_SHOPIFY_ACCESS_TOKEN = "shopifyAccessToken";
     @Autowired
     private ConfigRedisRepo configRedisRepo;
     @Autowired
@@ -244,6 +243,9 @@ public class TranslateV3Service {
             Map<String, Object> checkpoint = new HashMap<>();
             checkpoint.put("phase", "INIT_CREATED");
             checkpoint.put("updatedAt", Instant.now().toString());
+            if (!StringUtils.isEmpty(request.getAccessToken())) {
+                checkpoint.put(CHECKPOINT_SHOPIFY_ACCESS_TOKEN, request.getAccessToken().trim());
+            }
             task.setCheckpoint(checkpoint);
 
             Map<String, Object> metrics = new HashMap<>();
@@ -1599,44 +1601,23 @@ public class TranslateV3Service {
     }
 
     /**
-     * Spark 嵌入式应用 Session 在 Turso，未必写入 Azure SQL Users；spark 任务可在 checkpoint 携带 shopifyAccessToken。
+     * 仅从 Cosmos 任务文档 checkpoint 读取 Shopify accessToken，不查 Users 表。
      */
     private String resolveShopifyAccessToken(TranslateTaskV3DO task) {
-        if (task == null) {
+        if (task == null || task.getCheckpoint() == null) {
             return "";
         }
-        String shopName = safeText(task.getShopName());
-        if (!shopName.isEmpty()) {
-            UsersDO userDO = usersService.getUserByName(shopName);
-            if (userDO != null && !StringUtils.isEmpty(userDO.getAccessToken())) {
-                return userDO.getAccessToken();
-            }
-        }
-        if (!isRuntimeJsonTask(task) || task.getCheckpoint() == null) {
-            return "";
-        }
-        String fromCheckpoint = safeText(asString(task.getCheckpoint().get("shopifyAccessToken")));
-        if (!fromCheckpoint.isEmpty()) {
-            LOG.info("v3 resolve accessToken from checkpoint (spark), taskId={}, shop={}", task.getId(), shopName);
-            return fromCheckpoint;
-        }
-        return "";
+        return safeText(asString(task.getCheckpoint().get(CHECKPOINT_SHOPIFY_ACCESS_TOKEN)));
     }
 
-    private UsersDO resolveUserForShopifyApi(TranslateTaskV3DO task) {
-        String accessToken = resolveShopifyAccessToken(task);
-        if (StringUtils.isEmpty(accessToken)) {
-            return null;
+    private void preserveShopifyAccessTokenInCheckpoint(TranslateTaskV3DO task, Map<String, Object> checkpoint) {
+        if (task == null || checkpoint == null) {
+            return;
         }
-        UsersDO userDO = usersService.getUserByName(task.getShopName());
-        if (userDO == null) {
-            userDO = new UsersDO();
-            userDO.setShopName(task.getShopName());
+        String token = resolveShopifyAccessToken(task);
+        if (!token.isEmpty()) {
+            checkpoint.put(CHECKPOINT_SHOPIFY_ACCESS_TOKEN, token);
         }
-        if (StringUtils.isEmpty(userDO.getAccessToken())) {
-            userDO.setAccessToken(accessToken);
-        }
-        return userDO;
     }
 
     private JsonRuntimeTranslateRequest buildRuntimeRequestFromTask(TranslateTaskV3DO task) {
@@ -3210,14 +3191,14 @@ public class TranslateV3Service {
         LOG.info("v3 init reading shopify, taskId={}, shop={}", taskId, shopName);
         translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_READING_SHOPIFY");
 
-        UsersDO userDO = resolveUserForShopifyApi(task);
-        if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
-            LOG.warn("v3 init stop no user/accessToken, taskId={}, shop={}", taskId, task.getShopName());
+        String accessToken = resolveShopifyAccessToken(task);
+        if (StringUtils.isEmpty(accessToken)) {
+            LOG.warn("v3 init stop missing checkpoint.shopifyAccessToken, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_FAILED_NO_USER");
             return;
         }
 
-        String primaryLocaleData = shopifyService.getShopifyData(task.getShopName(), userDO.getAccessToken(),
+        String primaryLocaleData = shopifyService.getShopifyData(task.getShopName(), accessToken,
                 com.bogda.common.contants.TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
         if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, task.getSource())) {
@@ -3247,7 +3228,7 @@ public class TranslateV3Service {
         int moduleIndex = 0;
         for (String module : moduleList) {
             moduleIndex++;
-            ModuleInitSummary summary = dumpModuleToBlob(task, userDO, module);
+            ModuleInitSummary summary = dumpModuleToBlob(task, accessToken, module);
             totalCount += summary.totalCount;
             totalChars += summary.totalChars;
             totalChunks += summary.chunkCount;
@@ -3276,6 +3257,7 @@ public class TranslateV3Service {
         checkpoint.put("phase", "INIT_DONE");
         checkpoint.put("modules", moduleList);
         checkpoint.put("updatedAt", Instant.now().toString());
+        preserveShopifyAccessTokenInCheckpoint(task, checkpoint);
 
         Map<String, Object> metrics = new HashMap<>();
         metrics.put("totalCount", totalCount);
@@ -3446,13 +3428,13 @@ public class TranslateV3Service {
 
         translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_RUNNING");
 
-        UsersDO userDO = resolveUserForShopifyApi(task);
-        if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
+        String accessToken = resolveShopifyAccessToken(task);
+        if (StringUtils.isEmpty(accessToken)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_NO_USER");
             return;
         }
 
-        String primaryLocaleData = shopifyService.getShopifyData(shopName, userDO.getAccessToken(),
+        String primaryLocaleData = shopifyService.getShopifyData(shopName, accessToken,
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
         if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, source)) {
@@ -3621,7 +3603,7 @@ public class TranslateV3Service {
         translateV2Service.cleanDeleteTask(initialTaskV2DO);
     }
 
-    private ModuleInitSummary dumpModuleToBlob(TranslateTaskV3DO task, UsersDO userDO, String module) {
+    private ModuleInitSummary dumpModuleToBlob(TranslateTaskV3DO task, String accessToken, String module) {
         final int chunkSize = 200;
         final int moduleFetchLimit = Math.max(1, initModuleFetchLimit);
         List<Map<String, Object>> currentChunk = new ArrayList<>();
@@ -3630,7 +3612,7 @@ public class TranslateV3Service {
         final int[] totalChars = {0};
         AtomicBoolean stopFetch = new AtomicBoolean(false);
 
-        shopifyService.rotateAllShopifyGraph(task.getShopName(), module, userDO.getAccessToken(), 250, task.getTarget(), "",
+        shopifyService.rotateAllShopifyGraph(task.getShopName(), module, accessToken, 250, task.getTarget(), "",
                 null,
                 node -> {
                     if (stopFetch.get()) {
@@ -3929,12 +3911,11 @@ public class TranslateV3Service {
         String taskId = task.getId();
         String shopName = task.getShopName();
 
-        UsersDO userDO = usersService.getUserByName(shopName);
-        if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
+        String token = resolveShopifyAccessToken(task);
+        if (StringUtils.isEmpty(token)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "SAVE_FAILED_NO_USER");
             return;
         }
-        String token = userDO.getAccessToken();
 
         List<String> modules = JsonUtils.jsonToObject(task.getModuleList(), new TypeReference<List<String>>() {
         });
@@ -4253,12 +4234,11 @@ public class TranslateV3Service {
         String shopName = task.getShopName();
         translateTaskMonitorV3RedisService.setPhase(taskId, "VERIFY_RUNNING");
 
-        UsersDO userDO = usersService.getUserByName(shopName);
-        if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
+        String token = resolveShopifyAccessToken(task);
+        if (StringUtils.isEmpty(token)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "VERIFY_FAILED_NO_USER");
             return;
         }
-        String token = userDO.getAccessToken();
 
         List<String> modules = JsonUtils.jsonToObject(task.getModuleList(), new TypeReference<List<String>>() {
         });

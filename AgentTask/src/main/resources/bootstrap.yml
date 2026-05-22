@@ -48,7 +48,7 @@ cosmos:
 blob:
   translate-v3:
     # 与 Spark AZURE_BLOB_* 对齐；Render 请设环境变量，勿依赖旧 translate-v3 容器默认值
-    connection-string: ${AZURE_BLOB_CONNECTION_STRING:${BLOB_TRANSLATE_V3_CONNECTION_STRING:}}
+    connection-string: ${AZURE_BLOB_CONNECTION_STRING}
     container: ${AZURE_BLOB_TRANSLATION_CONTAINER:translation-content}
 
 ---
