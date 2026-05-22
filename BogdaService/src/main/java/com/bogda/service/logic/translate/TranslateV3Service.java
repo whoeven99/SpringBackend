@@ -356,14 +356,51 @@ public class TranslateV3Service {
     }
 
     public void processInitialTasksV3() {
-        processTasksByShopName("INIT", 0, processingInitialTaskIds,
+        processTasksByShopName("INIT", translateTaskV3CosmosRepo.listPendingInitTasks(), processingInitialTaskIds,
                 task -> false, this::initialToTranslateTaskV3,
                 () -> LOG.debug("v3 init poll no pending task(status=0)"));
     }
 
     public void processTranslateTasksV3() {
-        processTasksByShopName("TRANSLATE", 1, processingTranslateTaskIds,
+        processTasksByShopName("TRANSLATE", translateTaskV3CosmosRepo.listPendingTranslateTasks(),
+                processingTranslateTaskIds,
                 task -> false, this::translateEachTaskV3, null);
+    }
+
+    /**
+     * AgentTask Redis 队列：同步执行单条 INIT（与定时任务共用 taskId 内存锁，避免与轮询重复执行）。
+     */
+    public void runInitTaskV3FromQueue(TranslateTaskV3DO task) {
+        if (task == null || StringUtils.isEmpty(task.getId())) {
+            return;
+        }
+        if (!processingInitialTaskIds.add(task.getId())) {
+            LOG.info("v3 queue init skip duplicated task lock, taskId={}, shop={}", task.getId(), task.getShopName());
+            return;
+        }
+        try {
+            initialToTranslateTaskV3(task);
+        } finally {
+            processingInitialTaskIds.remove(task.getId());
+        }
+    }
+
+    /**
+     * AgentTask Redis 队列：同步执行单条 TRANSLATE。
+     */
+    public void runTranslateTaskV3FromQueue(TranslateTaskV3DO task) {
+        if (task == null || StringUtils.isEmpty(task.getId())) {
+            return;
+        }
+        if (!processingTranslateTaskIds.add(task.getId())) {
+            LOG.info("v3 queue translate skip duplicated task lock, taskId={}, shop={}", task.getId(), task.getShopName());
+            return;
+        }
+        try {
+            translateEachTaskV3(task);
+        } finally {
+            processingTranslateTaskIds.remove(task.getId());
+        }
     }
 
     public Map<String, Object> executeJsonRuntimeTaskByTaskId(String taskId) {
@@ -440,13 +477,8 @@ public class TranslateV3Service {
         if (cleanId.isEmpty()) {
             return BaseResponse.FailedResponse("Missing parameters: taskId");
         }
-        TranslateTaskV3DO task;
-        String cleanShop = safeText(shopName);
-        if (!cleanShop.isEmpty()) {
-            task = translateTaskV3CosmosRepo.getById(cleanId, cleanShop);
-        } else {
-            task = findTaskByIdAcrossStatuses(cleanId);
-        }
+        // 点读分区键可能与文档实际分区不一致（Spark upsert 与 shopName 字段）；用 findByIdResolved 先点读再跨分区兜底
+        TranslateTaskV3DO task = translateTaskV3CosmosRepo.findByIdResolved(cleanId, safeText(shopName));
         if (task == null) {
             return BaseResponse.FailedResponse("Task not found: " + cleanId);
         }
@@ -875,12 +907,12 @@ public class TranslateV3Service {
     }
 
     public void processSaveTasksV3() {
-        processTasksByShopName("SAVE", 2, processingSaveTaskIds,
+        processTasksByShopName("SAVE", translateTaskV3CosmosRepo.listPendingSaveTasks(), processingSaveTaskIds,
                 task -> false, this::saveToShopifyV3, null);
     }
 
     public void processVerifyTasksV3() {
-        processTasksByShopName("VERIFY", 6, processingVerifyTaskIds,
+        processTasksByShopName("VERIFY", translateTaskV3CosmosRepo.listByStatus(6), processingVerifyTaskIds,
                 this::isVerifyFinal, this::verifySavedDataV3, null);
     }
 
@@ -3072,12 +3104,11 @@ public class TranslateV3Service {
     }
 
     private void processTasksByShopName(String stageName,
-                                        int status,
+                                        List<TranslateTaskV3DO> tasks,
                                         Set<String> processingTaskIds,
                                         Predicate<TranslateTaskV3DO> skipTaskPredicate,
                                         Consumer<TranslateTaskV3DO> taskHandler,
                                         Runnable emptyTaskCallback) {
-        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(status);
         if (tasks.isEmpty()) {
             if (emptyTaskCallback != null) {
                 emptyTaskCallback.run();
@@ -3179,11 +3210,11 @@ public class TranslateV3Service {
         String taskId = task.getId();
         String shopName = task.getShopName();
         if (isInitCheckpointDone(task)) {
-            if (persistStatusToCosmos(task, 1, "INIT_ALREADY_DONE")) {
+            if (persistStatusToCosmos(task, com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.INIT_DONE, "INIT_ALREADY_DONE")) {
                 LOG.info("v3 init skip re-dump, checkpoint already INIT_DONE, taskId={}, shop={}",
                         taskId, shopName);
             } else {
-                LOG.warn("v3 init checkpoint INIT_DONE but status still not 1 in Cosmos, taskId={}, shop={}",
+                LOG.warn("v3 init checkpoint INIT_DONE but status still not INIT_DONE(2) in Cosmos, taskId={}, shop={}",
                         taskId, shopName);
             }
             return;
@@ -3214,7 +3245,7 @@ public class TranslateV3Service {
         if (CollectionUtils.isEmpty(moduleList)) {
             LOG.info("v3 init empty modules directly move to translate, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_DONE_EMPTY_MODULES");
-            persistStatusToCosmos(task, 1, "INIT_DONE_EMPTY_MODULES");
+            persistStatusToCosmos(task, com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.INIT_DONE, "INIT_DONE_EMPTY_MODULES");
             return;
         }
         LOG.info("v3 init start dump modules, taskId={}, shop={}, moduleCount={}, modules={}",
@@ -3267,7 +3298,7 @@ public class TranslateV3Service {
         metrics.put("usedToken", 0);
 
         if (persistInitDoneToCosmos(task, checkpoint, metrics)) {
-            LOG.info("v3 init done and status moved to 1, taskId={}, shop={}, totalCount={}, totalChars={}",
+            LOG.info("v3 init done and status moved to INIT_DONE(2), taskId={}, shop={}, totalCount={}, totalChars={}",
                     taskId, task.getShopName(), totalCount, totalChars);
         } else {
             LOG.error("v3 init finished dump but Cosmos status stayed 0 — translate scheduler will not pick task, taskId={}, shop={}",
@@ -3319,7 +3350,12 @@ public class TranslateV3Service {
         if (task == null) {
             return false;
         }
-        return translateTaskV3CosmosRepo.mergeAndPersistTaskState(task.getId(), task, 1, checkpoint, metrics);
+        return translateTaskV3CosmosRepo.mergeAndPersistTaskState(
+                task.getId(),
+                task,
+                com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.INIT_DONE,
+                checkpoint,
+                metrics);
     }
 
     /**
@@ -3387,6 +3423,10 @@ public class TranslateV3Service {
         String taskId = task.getId();
         String shopName = task.getShopName();
         String taskType = task.getTaskType();
+        translateTaskV3CosmosRepo.patchStatusSpark(
+                com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.TRANSLATE_RUNNING,
+                taskId,
+                shopName);
         translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_RUNNING");
         LOG.info("v3 translate json-runtime executeJsonRuntimeTaskByTaskId, taskId={}, shop={}, taskType={}",
                 taskId, shopName, taskType);
@@ -3447,7 +3487,10 @@ public class TranslateV3Service {
         });
         if (CollectionUtils.isEmpty(modules)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_DONE_EMPTY_MODULES");
-            translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 2);
+            translateTaskV3CosmosRepo.patchStatusSpark(
+                    com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.TRANSLATE_DONE,
+                    taskId,
+                    shopName);
             return;
         }
 
@@ -3539,7 +3582,11 @@ public class TranslateV3Service {
             checkpoint.put("phase", "TRANSLATE_STOPPED_TOKEN_LIMIT");
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_STOPPED_TOKEN_LIMIT");
             translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
-            translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 3);
+            translateTaskV3CosmosRepo.patchStatusWithText(
+                    com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.TRANSLATE_STOPPED_MANUAL,
+                    "STOPPED_TOKEN_LIMIT",
+                    taskId,
+                    shopName);
             translatesService.updateTranslateStatus(shopName, 3, target, source);
             pendingProgressMap.remove(taskId);
             return;
@@ -3548,7 +3595,10 @@ public class TranslateV3Service {
         checkpoint.put("phase", "TRANSLATE_DONE");
         translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_DONE");
         translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
-        translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 2);
+        translateTaskV3CosmosRepo.patchStatusSpark(
+                com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.TRANSLATE_DONE,
+                taskId,
+                shopName);
         translatesService.updateTranslateStatus(shopName, 1, target, source);
         pendingProgressMap.remove(taskId);
 

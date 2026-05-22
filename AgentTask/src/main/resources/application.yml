@@ -7,3 +7,10 @@ spring:
   config:
     import:
       - classpath:bootstrap.yml
+
+# Redis List 队列（Spark LPUSH → AgentTask BRPOP）
+translate:
+  v3:
+    queue:
+      enabled: true
+      brpop-timeout-seconds: 30

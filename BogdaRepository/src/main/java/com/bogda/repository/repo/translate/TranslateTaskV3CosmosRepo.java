@@ -35,11 +35,14 @@ public class TranslateTaskV3CosmosRepo {
 
     public boolean upsert(TranslateTaskV3DO task) {
         try {
+            ensureShopNameOnTask(task);
             if (task.getCreatedAt() == null || task.getCreatedAt().isEmpty()) {
                 task.setCreatedAt(Instant.now().toString());
             }
-            if (task.getStatusText() == null || task.getStatusText().isEmpty()) {
+            if (task.getStatus() != null) {
                 task.setStatusText(toStatusText(task.getStatus()));
+            } else if (task.getStatusText() == null || task.getStatusText().isEmpty()) {
+                task.setStatusText(TranslateTaskV3CosmosStatus.toStatusText(TranslateTaskV3CosmosStatus.INIT_PENDING));
             }
             task.setUpdatedAt(Instant.now().toString());
             CosmosItemRequestOptions options = new CosmosItemRequestOptions()
@@ -139,6 +142,147 @@ public class TranslateTaskV3CosmosRepo {
         }
     }
 
+    /** INIT 阶段：Spark INIT_PENDING(0)，兼容历史 Java status=0。 */
+    public List<TranslateTaskV3DO> listPendingInitTasks() {
+        return listByStatus(TranslateTaskV3CosmosStatus.INIT_PENDING);
+    }
+
+    /**
+     * TRANSLATE 阶段：INIT_DONE(2) 待翻译；TRANSLATE_RUNNING(3) 中断可续跑；
+     * 兼容旧数据 status=1 + TRANSLATE_PENDING。
+     */
+    public List<TranslateTaskV3DO> listPendingTranslateTasks() {
+        try {
+            String sql = """
+                    SELECT * FROM c WHERE c.status IN (1, 2, 3)
+                    OR (c.status = 1 AND (c.statusText = 'TRANSLATE_PENDING' OR c.statusText = 'INIT_DONE'))
+                    """;
+            SqlQuerySpec spec = new SqlQuerySpec(sql);
+            CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
+                    .setMaxDegreeOfParallelism(1);
+            List<TranslateTaskV3DO> result = new ArrayList<>();
+            translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(item -> {
+                if (item == null) {
+                    return;
+                }
+                if (isPendingTranslateTask(item)) {
+                    result.add(item);
+                }
+            });
+            LOG.info("v3 cosmos listPendingTranslateTasks fetched={} taskIds={}",
+                    result.size(), result.stream().map(TranslateTaskV3DO::getId).toList());
+            return result;
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3CosmosRepo.listPendingTranslateTasks",
+                    "FatalException query pending translate tasks failed: " + e);
+            return Collections.emptyList();
+        }
+    }
+
+    /** SAVE 阶段：TRANSLATE_DONE(5)，兼容旧 Java status=2（SAVE_PENDING）。 */
+    public List<TranslateTaskV3DO> listPendingSaveTasks() {
+        try {
+            String sql = "SELECT * FROM c WHERE c.status IN (2, 5)";
+            SqlQuerySpec spec = new SqlQuerySpec(sql);
+            CosmosQueryRequestOptions options = new CosmosQueryRequestOptions()
+                    .setMaxDegreeOfParallelism(1);
+            List<TranslateTaskV3DO> result = new ArrayList<>();
+            translateTaskV3Container.queryItems(spec, options, TranslateTaskV3DO.class).forEach(item -> {
+                if (item == null) {
+                    return;
+                }
+                Integer status = item.getStatus();
+                if (status == null) {
+                    return;
+                }
+                if (status == TranslateTaskV3CosmosStatus.TRANSLATE_DONE) {
+                    result.add(item);
+                    return;
+                }
+                if (status == 2 && isLegacySavePending(item)) {
+                    result.add(item);
+                }
+            });
+            LOG.info("v3 cosmos listPendingSaveTasks fetched={} taskIds={}",
+                    result.size(), result.stream().map(TranslateTaskV3DO::getId).toList());
+            return result;
+        } catch (Exception e) {
+            TraceReporterHolder.report("TranslateTaskV3CosmosRepo.listPendingSaveTasks",
+                    "FatalException query pending save tasks failed: " + e);
+            return Collections.emptyList();
+        }
+    }
+
+    public boolean patchStatusSpark(int status, String id, String shopName) {
+        return patchStatusInternal(id, shopName, status, TranslateTaskV3CosmosStatus.toStatusText(status), true);
+    }
+
+    public boolean patchStatusWithText(int status, String statusText, String id, String shopName) {
+        return patchStatusInternal(id, shopName, status, statusText, true);
+    }
+
+    public boolean patchStatus(String id, String shopName, Integer status) {
+        return patchStatusSpark(status == null ? TranslateTaskV3CosmosStatus.INIT_PENDING : status, id, shopName);
+    }
+
+    private static boolean isPendingTranslateTask(TranslateTaskV3DO item) {
+        Integer status = item.getStatus();
+        if (status == null) {
+            return false;
+        }
+        if (status == TranslateTaskV3CosmosStatus.INIT_DONE) {
+            return true;
+        }
+        if (status == 1) {
+            String text = item.getStatusText();
+            return text == null || text.isEmpty()
+                    || "TRANSLATE_PENDING".equalsIgnoreCase(text)
+                    || "INIT_DONE".equalsIgnoreCase(text);
+        }
+        if (status == TranslateTaskV3CosmosStatus.TRANSLATE_RUNNING) {
+            return !isTranslateTerminal(item);
+        }
+        return false;
+    }
+
+    private static boolean isTranslateTerminal(TranslateTaskV3DO item) {
+        if (item.getCheckpoint() == null) {
+            return false;
+        }
+        Object phase = item.getCheckpoint().get("phase");
+        if (phase == null) {
+            return false;
+        }
+        String phaseText = String.valueOf(phase).trim();
+        return "TRANSLATE_DONE".equalsIgnoreCase(phaseText)
+                || "SAVE_RUNNING".equalsIgnoreCase(phaseText)
+                || "SAVE_DONE".equalsIgnoreCase(phaseText)
+                || "VERIFY_DONE".equalsIgnoreCase(phaseText);
+    }
+
+    private static boolean isLegacySavePending(TranslateTaskV3DO item) {
+        String text = item.getStatusText();
+        return text == null
+                || text.isEmpty()
+                || "SAVE_PENDING".equalsIgnoreCase(text)
+                || "TRANSLATE_DONE".equalsIgnoreCase(text);
+    }
+
+    private void ensureShopNameOnTask(TranslateTaskV3DO task) {
+        if (task == null) {
+            return;
+        }
+        String shop = firstNonEmpty(task.getShopName(), "");
+        if (!shop.isEmpty()) {
+            task.setShopName(shop);
+            return;
+        }
+        String sessionId = task.getSessionId();
+        if (sessionId != null && sessionId.contains(":")) {
+            task.setShopName(sessionId.substring(0, sessionId.indexOf(':')).trim());
+        }
+    }
+
     /**
      * 按文档 {@code id} 跨分区查询，不限制 status。同一 id 在不同 shopName 分区下可共存，此时返回多条，由调用方处理。
      */
@@ -164,7 +308,7 @@ public class TranslateTaskV3CosmosRepo {
 
     public boolean existsActiveTask(String shopName, String source, String target) {
         try {
-            String sql = "SELECT * FROM c WHERE c.shopName = @shopName AND c.status IN (0,1,2,3)";
+            String sql = "SELECT * FROM c WHERE c.shopName = @shopName AND c.status IN (0,1,2,3,5,6)";
             SqlQuerySpec spec = new SqlQuerySpec(sql, Arrays.asList(
                     new SqlParameter("@shopName", shopName)
             ));
@@ -230,10 +374,6 @@ public class TranslateTaskV3CosmosRepo {
         return found.isEmpty() ? null : found.get(0);
     }
 
-    public boolean patchStatus(String id, String shopName, Integer status) {
-        return patchStatusInternal(id, shopName, status, true);
-    }
-
     public boolean patchCheckpointAndMetrics(String id, String shopName, Object checkpoint, Object metrics) {
         return patchCheckpointInternal(id, shopName, checkpoint, metrics, true);
     }
@@ -263,7 +403,12 @@ public class TranslateTaskV3CosmosRepo {
         }
 
         boolean checkpointOk = checkpoint == null || patchCheckpointInternal(task.getId(), task.getShopName(), checkpoint, metrics, true);
-        boolean statusOk = status == null || patchStatusInternal(task.getId(), task.getShopName(), status, true);
+        boolean statusOk = status == null || patchStatusInternal(
+                task.getId(),
+                task.getShopName(),
+                status,
+                TranslateTaskV3CosmosStatus.toStatusText(status),
+                true);
         if (checkpointOk && statusOk) {
             return true;
         }
@@ -272,20 +417,27 @@ public class TranslateTaskV3CosmosRepo {
         return upsertTaskState(task, status, checkpoint, metrics);
     }
 
-    private boolean patchStatusInternal(String id, String shopName, Integer status, boolean tryAllPartitions) {
+    private boolean patchStatusInternal(String id,
+                                        String shopName,
+                                        Integer status,
+                                        String statusText,
+                                        boolean tryAllPartitions) {
         String itemId = normalizeItemId(id);
         if (itemId.isEmpty()) {
             return false;
         }
+        String resolvedText = statusText == null || statusText.isBlank()
+                ? TranslateTaskV3CosmosStatus.toStatusText(status)
+                : statusText;
         CosmosPatchOperations patch = CosmosPatchOperations.create()
                 .set("/status", status)
-                .set("/statusText", toStatusText(status))
+                .set("/statusText", resolvedText)
                 .set("/updatedAt", Instant.now().toString());
         for (String partitionKey : partitionKeyCandidates(itemId, shopName, tryAllPartitions)) {
             try {
                 translateTaskV3Container.patchItem(itemId, new PartitionKey(partitionKey), patch, Object.class);
                 LOG.info("v3 cosmos patchStatus ok id={} shop={} status={} statusText={}",
-                        itemId, partitionKey, status, toStatusText(status));
+                        itemId, partitionKey, status, resolvedText);
                 return true;
             } catch (Exception e) {
                 LOG.warn("v3 cosmos patchStatus failed id={} shopHint={} partitionKey={} status={} notFound={} error={}",
@@ -388,9 +540,7 @@ public class TranslateTaskV3CosmosRepo {
         }
         if (status != null) {
             task.setStatus(status);
-            if (task.getStatusText() == null || task.getStatusText().isBlank()) {
-                task.setStatusText(toStatusText(status));
-            }
+            task.setStatusText(TranslateTaskV3CosmosStatus.toStatusText(status));
         }
         if (checkpoint != null) {
             task.setCheckpoint(checkpoint);
@@ -435,19 +585,8 @@ public class TranslateTaskV3CosmosRepo {
         return text.length() > 500 ? text.substring(0, 500) + "..." : text;
     }
 
-    private String toStatusText(Integer status) {
-        if (status == null) {
-            return "UNKNOWN";
-        }
-        return switch (status) {
-            case 0 -> "INIT_PENDING";
-            case 1 -> "TRANSLATE_PENDING";
-            case 2 -> "SAVE_PENDING";
-            case 3 -> "STOPPED_TOKEN_LIMIT";
-            case 4 -> "STOPPED";
-            case 6 -> "VERIFY_PENDING";
-            default -> "UNKNOWN";
-        };
+    private static String toStatusText(Integer status) {
+        return status == null ? "UNKNOWN" : TranslateTaskV3CosmosStatus.toStatusText(status);
     }
 
     private static String normalizeLocaleCode(String locale) {

@@ -88,4 +88,30 @@ public class TranslateV3CosmosConfig {
                 cosmosEndpoint, databaseValue, containerValue);
         return cosmosClient.getDatabase(databaseValue).getContainer(containerValue);
     }
+
+    @Bean
+    public CosmosContainer translateTaskV3ScheduleLogContainer(CosmosClient cosmosClient) {
+        String databaseValue = database;
+        if (databaseValue == null || databaseValue.isEmpty()) {
+            databaseValue = ConfigUtils.getConfig("cosmos.translate-v3.database");
+        }
+        if (databaseValue == null || databaseValue.isEmpty()) {
+            databaseValue = ConfigUtils.getConfig("COSMOS_TRANSLATION_DATABASE_ID");
+        }
+        if (databaseValue == null || databaseValue.isEmpty()) {
+            databaseValue = ConfigUtils.getConfig("cosmos.database");
+        }
+        if (databaseValue == null || databaseValue.isEmpty()) {
+            databaseValue = "translation";
+        }
+
+        String logContainerValue = ConfigUtils.getConfig("cosmos.translate-v3.schedule-log.container");
+        if (logContainerValue == null || logContainerValue.isEmpty()) {
+            logContainerValue = "translate_tasks_v3_schedule_logs";
+        }
+
+        LOG.info("TranslateV3 ScheduleLog Cosmos resolved config: database={}, container={}",
+                databaseValue, logContainerValue);
+        return cosmosClient.getDatabase(databaseValue).getContainer(logContainerValue);
+    }
 }
