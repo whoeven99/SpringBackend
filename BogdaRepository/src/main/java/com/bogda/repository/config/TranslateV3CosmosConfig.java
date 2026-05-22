@@ -23,21 +23,42 @@ public class TranslateV3CosmosConfig {
     @Value("${cosmos.endpoint:}")
     private String cosmosEndpoint;
 
+    @Value("${cosmos.key:}")
+    private String cosmosKey;
+
     @Bean
     public CosmosClient cosmosClient() {
-        String endpoint = cosmosEndpoint;
-        if (endpoint == null || endpoint.isEmpty()) {
-            endpoint = ConfigUtils.getConfig("COSMOS_ENDPOINT");
+        // Render / Spark：环境变量优先，避免 bootstrap 默认 endpoint 与 COSMOS_KEY 来自不同账户
+        String endpoint = firstNonBlank(
+                ConfigUtils.getConfig("COSMOS_ENDPOINT"),
+                cosmosEndpoint);
+        String key = firstNonBlank(
+                ConfigUtils.getConfig("COSMOS_KEY"),
+                cosmosKey,
+                ConfigUtils.getConfig("cosmos.key"));
+        if (endpoint == null || endpoint.isBlank()) {
+            throw new IllegalStateException("Missing Cosmos endpoint: set COSMOS_ENDPOINT or cosmos.endpoint");
         }
-        String key = ConfigUtils.getConfig("COSMOS_KEY");
-        if (key == null || key.isEmpty()) {
-            key = ConfigUtils.getConfig("cosmos.key");
+        if (key == null || key.isBlank()) {
+            throw new IllegalStateException("Missing Cosmos key: set COSMOS_KEY or cosmos.key");
         }
         LOG.info("Cosmos client config: endpoint={}", endpoint);
         return new CosmosClientBuilder()
                 .endpoint(endpoint)
                 .key(key)
                 .buildClient();
+    }
+
+    private static String firstNonBlank(String... candidates) {
+        if (candidates == null) {
+            return null;
+        }
+        for (String candidate : candidates) {
+            if (candidate != null && !candidate.isBlank()) {
+                return candidate.trim();
+            }
+        }
+        return null;
     }
 
     @Bean

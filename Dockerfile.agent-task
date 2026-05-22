@@ -26,8 +26,6 @@ COPY BogdaTask/pom.xml BogdaTask/
 # BogdaService 依赖本地 libs/aidge.jar，必须在任何 mvn 解析 BogdaService 之前复制到位
 COPY BogdaService/libs/ BogdaService/libs/
 
-RUN mvn dependency:go-offline -B -q -pl AgentTask -am || true
-
 COPY BogdaCommon/src BogdaCommon/src
 COPY BogdaRepository/src BogdaRepository/src
 COPY BogdaIntegration/src BogdaIntegration/src
