@@ -38,7 +38,7 @@ public class ScheduleLogController {
             @RequestParam(required = false, defaultValue = "100") int limit) {
         try {
             if (taskId == null || taskId.isBlank()) {
-                return BaseResponse.fail("Missing parameter: taskId");
+                return BaseResponse.FailedResponse("Missing parameter: taskId");
             }
 
             List<TranslateTaskV3ScheduleLogDO> logs = scheduleLogRepo.listByTaskId(taskId, limit);
@@ -50,10 +50,10 @@ public class ScheduleLogController {
             result.put("total", logs.size());
 
             LOG.info("Schedule logs queried by taskId: taskId={}, count={}", taskId, logs.size());
-            return BaseResponse.success(result);
+            return BaseResponse.SuccessResponse(result);
         } catch (Exception e) {
             LOG.error("Failed to query schedule logs by taskId: taskId={}", taskId, e);
-            return BaseResponse.fail("Failed to query schedule logs: " + e.getMessage());
+            return BaseResponse.FailedResponse("Failed to query schedule logs: " + e.getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ public class ScheduleLogController {
             @RequestParam(required = false, defaultValue = "100") int limit) {
         try {
             if (shopName == null || shopName.isBlank()) {
-                return BaseResponse.fail("Missing parameter: shopName");
+                return BaseResponse.FailedResponse("Missing parameter: shopName");
             }
 
             long start = startTime != null ? startTime : System.currentTimeMillis() - 24 * 60 * 60 * 1000; // 默认 24 小时前
@@ -88,10 +88,10 @@ public class ScheduleLogController {
 
             LOG.info("Schedule logs queried by shop: shopName={}, startTime={}, endTime={}, count={}",
                     shopName, start, end, logs.size());
-            return BaseResponse.success(result);
+            return BaseResponse.SuccessResponse(result);
         } catch (Exception e) {
             LOG.error("Failed to query schedule logs by shop: shopName={}", shopName, e);
-            return BaseResponse.fail("Failed to query schedule logs: " + e.getMessage());
+            return BaseResponse.FailedResponse("Failed to query schedule logs: " + e.getMessage());
         }
     }
 
@@ -103,7 +103,7 @@ public class ScheduleLogController {
     public BaseResponse<Map<String, Object>> getScheduleLogSummary(@RequestParam String taskId) {
         try {
             if (taskId == null || taskId.isBlank()) {
-                return BaseResponse.fail("Missing parameter: taskId");
+                return BaseResponse.FailedResponse("Missing parameter: taskId");
             }
 
             Map<String, Integer> summary = scheduleLogRepo.countEventTypes(taskId);
@@ -115,10 +115,10 @@ public class ScheduleLogController {
             result.put("total", total);
 
             LOG.info("Schedule log summary queried: taskId={}, total={}", taskId, total);
-            return BaseResponse.success(result);
+            return BaseResponse.SuccessResponse(result);
         } catch (Exception e) {
             LOG.error("Failed to query schedule log summary: taskId={}", taskId, e);
-            return BaseResponse.fail("Failed to query schedule log summary: " + e.getMessage());
+            return BaseResponse.FailedResponse("Failed to query schedule log summary: " + e.getMessage());
         }
     }
 }
