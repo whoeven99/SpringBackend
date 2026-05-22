@@ -376,9 +376,21 @@ public class TranslateTaskV3CosmosRepo {
         if (!pk.isEmpty()) {
             task.setShopName(pk);
         }
+        if (task.getShopName() == null || task.getShopName().isBlank()) {
+            LOG.warn("v3 cosmos upsertTaskState aborted missing shopName id={}", task.getId());
+            return false;
+        }
+        if (task.getSessionId() == null || task.getSessionId().isBlank()) {
+            task.setSessionId(task.getShopName() + ":" + task.getId());
+        }
+        if (task.getTaskType() == null || task.getTaskType().isBlank()) {
+            task.setTaskType("spark");
+        }
         if (status != null) {
             task.setStatus(status);
-            task.setStatusText(toStatusText(status));
+            if (task.getStatusText() == null || task.getStatusText().isBlank()) {
+                task.setStatusText(toStatusText(status));
+            }
         }
         if (checkpoint != null) {
             task.setCheckpoint(checkpoint);

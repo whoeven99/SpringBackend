@@ -462,6 +462,7 @@ public class TranslateV3Service {
         body.put("cosmos", cosmosTaskV3ToMap(task));
         body.put("resolvedRedisPrefix", effectiveRedis);
         body.put("redisRuntime", getJsonRuntimeTaskProgress(cleanId, effectiveRedis));
+        augmentRuntimeMetaFromCosmos(body, task);
 
         Map<String, String> translateMonitor = translateTaskMonitorV3RedisService.getAll(cleanId);
         body.put("translateMonitor", translateMonitor == null || translateMonitor.isEmpty() ? null : translateMonitor);
@@ -704,6 +705,54 @@ public class TranslateV3Service {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    /**
+     * Redis meta 可能未写完或已过期；用 Cosmos metrics/checkpoint 补齐进度字段（与 Spark jsonRuntimeTaskDetail 一致）。
+     */
+    @SuppressWarnings("unchecked")
+    private void augmentRuntimeMetaFromCosmos(Map<String, Object> body, TranslateTaskV3DO task) {
+        if (body == null || task == null) {
+            return;
+        }
+        Object rawRuntime = body.get("redisRuntime");
+        if (!(rawRuntime instanceof Map<?, ?>)) {
+            return;
+        }
+        Map<String, Object> redisRuntime = (Map<String, Object>) rawRuntime;
+        Object rawMeta = redisRuntime.get("meta");
+        Map<String, String> meta = new LinkedHashMap<>();
+        if (rawMeta instanceof Map<?, ?> metaMap) {
+            for (Map.Entry<?, ?> e : metaMap.entrySet()) {
+                if (e.getKey() != null && e.getValue() != null) {
+                    meta.put(String.valueOf(e.getKey()), String.valueOf(e.getValue()));
+                }
+            }
+        }
+        Map<String, Object> m = task.getMetrics() == null ? Collections.emptyMap() : task.getMetrics();
+        Map<String, Object> ck = task.getCheckpoint() == null ? Collections.emptyMap() : task.getCheckpoint();
+
+        java.util.function.BiConsumer<String, Object> setIfAbsent = (key, value) -> {
+            if (!meta.getOrDefault(key, "").isEmpty()) {
+                return;
+            }
+            if (value == null) {
+                return;
+            }
+            String s = value instanceof Number n && n.doubleValue() == Math.floor(n.doubleValue())
+                    ? String.valueOf(n.intValue())
+                    : safeText(String.valueOf(value));
+            if (!s.isEmpty()) {
+                meta.put(key, s);
+            }
+        };
+
+        setIfAbsent.accept("totalCountThisBlob", m.get("totalCount"));
+        setIfAbsent.accept("currentDoneThisBlob", m.get("translatedCount"));
+        setIfAbsent.accept("failCountThisBlob", m.get("failedCount"));
+        setIfAbsent.accept("runtimeChunksTotal", m.get("runtimeChunksTotal") != null ? m.get("runtimeChunksTotal") : ck.get("runtimeChunksTotal"));
+        setIfAbsent.accept("runtimeChunkDoneSize", m.get("runtimeChunksDone"));
+        redisRuntime.put("meta", meta);
     }
 
     /**
@@ -1503,11 +1552,32 @@ public class TranslateV3Service {
         if (totalTok > 0) {
             metrics.put("usedToken", (int) Math.min(totalTok, Integer.MAX_VALUE));
         }
-        int cosmosStatus = ("COMPLETED".equals(status) || "PARTIAL_FAILED".equals(status)) ? 2 : 4;
-        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, cosmosStatus, checkpoint, metrics)) {
+        applySparkAlignedCosmosStatus(task, status);
+        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, null, checkpoint, metrics)) {
             LOG.warn("v3 json-runtime cosmos sync failed after translate, taskId={}, shop={}, runtimeStatus={}",
                     taskId, task.getShopName(), status);
         }
+    }
+
+    /**
+     * 与 Spark {@code cosmosJobStore STATUS_META} 对齐，避免 status=2 + SAVE_PENDING 在 Spark 侧被误读为 INIT_DONE 且列表异常。
+     */
+    private void applySparkAlignedCosmosStatus(TranslateTaskV3DO task, String runtimeStatus) {
+        if (task == null) {
+            return;
+        }
+        if ("COMPLETED".equals(runtimeStatus) || "PARTIAL_FAILED".equals(runtimeStatus)) {
+            task.setStatus(5);
+            task.setStatusText("TRANSLATE_DONE");
+            return;
+        }
+        if ("FAILED".equals(runtimeStatus)) {
+            task.setStatus(8);
+            task.setStatusText("FAILED");
+            return;
+        }
+        task.setStatus(4);
+        task.setStatusText("TRANSLATE_STOPPED_MANUAL");
     }
 
     /**
@@ -1526,6 +1596,47 @@ public class TranslateV3Service {
         return "spark".equalsIgnoreCase(normalized)
                 || "json-runtime".equalsIgnoreCase(normalized)
                 || "spark-transtion".equalsIgnoreCase(normalized);
+    }
+
+    /**
+     * Spark 嵌入式应用 Session 在 Turso，未必写入 Azure SQL Users；spark 任务可在 checkpoint 携带 shopifyAccessToken。
+     */
+    private String resolveShopifyAccessToken(TranslateTaskV3DO task) {
+        if (task == null) {
+            return "";
+        }
+        String shopName = safeText(task.getShopName());
+        if (!shopName.isEmpty()) {
+            UsersDO userDO = usersService.getUserByName(shopName);
+            if (userDO != null && !StringUtils.isEmpty(userDO.getAccessToken())) {
+                return userDO.getAccessToken();
+            }
+        }
+        if (!isRuntimeJsonTask(task) || task.getCheckpoint() == null) {
+            return "";
+        }
+        String fromCheckpoint = safeText(asString(task.getCheckpoint().get("shopifyAccessToken")));
+        if (!fromCheckpoint.isEmpty()) {
+            LOG.info("v3 resolve accessToken from checkpoint (spark), taskId={}, shop={}", task.getId(), shopName);
+            return fromCheckpoint;
+        }
+        return "";
+    }
+
+    private UsersDO resolveUserForShopifyApi(TranslateTaskV3DO task) {
+        String accessToken = resolveShopifyAccessToken(task);
+        if (StringUtils.isEmpty(accessToken)) {
+            return null;
+        }
+        UsersDO userDO = usersService.getUserByName(task.getShopName());
+        if (userDO == null) {
+            userDO = new UsersDO();
+            userDO.setShopName(task.getShopName());
+        }
+        if (StringUtils.isEmpty(userDO.getAccessToken())) {
+            userDO.setAccessToken(accessToken);
+        }
+        return userDO;
     }
 
     private JsonRuntimeTranslateRequest buildRuntimeRequestFromTask(TranslateTaskV3DO task) {
@@ -3099,7 +3210,7 @@ public class TranslateV3Service {
         LOG.info("v3 init reading shopify, taskId={}, shop={}", taskId, shopName);
         translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_READING_SHOPIFY");
 
-        UsersDO userDO = usersService.getUserByName(task.getShopName());
+        UsersDO userDO = resolveUserForShopifyApi(task);
         if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
             LOG.warn("v3 init stop no user/accessToken, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_FAILED_NO_USER");
@@ -3335,7 +3446,7 @@ public class TranslateV3Service {
 
         translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_RUNNING");
 
-        UsersDO userDO = usersService.getUserByName(shopName);
+        UsersDO userDO = resolveUserForShopifyApi(task);
         if (userDO == null || StringUtils.isEmpty(userDO.getAccessToken())) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_NO_USER");
             return;
