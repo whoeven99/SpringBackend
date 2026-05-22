@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.util.StringUtils;
 
 import javax.sql.DataSource;
 
@@ -28,6 +29,10 @@ public class MybatisPlusConfig {
     @Value("${datasource.password}")
     private String password;
 
+    /** 追加到 JDBC 驱动的连接属性（分号分隔），如 {@code sslProtocol=TLSv1.2}；见 SQL Server JDBC 文档与 Azure SQL 网络/TLS 排查。 */
+    @Value("${datasource.connection-properties:}")
+    private String connectionProperties;
+
     @Bean
     public DataSource dataSource() {
         log.info("Bogda Config Datasource initialized with Username: {}", username);
@@ -37,6 +42,9 @@ public class MybatisPlusConfig {
         dataSource.setUsername(username);
         dataSource.setPassword(password);
         dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        if (StringUtils.hasText(connectionProperties)) {
+            dataSource.setConnectionProperties(connectionProperties.trim());
+        }
         return dataSource;
     }
 

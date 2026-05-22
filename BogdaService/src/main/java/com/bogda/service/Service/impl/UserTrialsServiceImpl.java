@@ -1,8 +1,6 @@
 package com.bogda.service.Service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.IUserTrialsService;
@@ -38,12 +36,13 @@ public class UserTrialsServiceImpl extends ServiceImpl<UserTrialsMapper, UserTri
 
     @Override
     public boolean updateExpiredByShopName(String shopName) {
-        return baseMapper.update(new LambdaUpdateWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName)
-                .set(UserTrialsDO::getIsTrialExpired, true)) > 0;
+        UserTrialsDO update = new UserTrialsDO();
+        update.setIsTrialExpired(true);
+        return baseMapper.update(update, new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName)) > 0;
     }
 
     @Override
     public UserTrialsDO getDataByShopName(String shopName) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<UserTrialsDO>().eq(UserTrialsDO::getShopName, shopName));
+        return baseMapper.selectOne(new QueryWrapper<UserTrialsDO>().eq("shop_name", shopName));
     }
 }

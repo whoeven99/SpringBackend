@@ -1,0 +1,51 @@
+# AgentTask 镜像：多模块 Maven 构建后仅运行 AgentTask fat jar。
+# Render Web Service：平台注入 PORT，应用已通过 server.port=${PORT} 绑定。
+# 构建上下文应为 SpringBackend 仓库根目录（与 pom.xml 同级）。
+#
+# Render 面板建议：
+#   - Dockerfile Path: Dockerfile.agent-task
+#   - Docker Build Context: .
+#   - Health Check Path: /actuator/health
+#   - 环境变量：COSMOS_*、REDIS_*、BLOB_* 等（镜像内不含 application.properties 时的必填项）
+#
+# 构建前须在仓库中存在 BogdaService/libs/aidge.jar（BogdaService POM 中 system 依赖；
+# 本地可从构建产物拷贝或由 CI 注入；无此文件时 COPY 会失败）。
+
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+WORKDIR /build
+
+COPY pom.xml .
+COPY BogdaCommon/pom.xml BogdaCommon/
+COPY BogdaRepository/pom.xml BogdaRepository/
+COPY AgentTask/pom.xml AgentTask/
+COPY BogdaApi/pom.xml BogdaApi/
+COPY BogdaService/pom.xml BogdaService/
+COPY BogdaIntegration/pom.xml BogdaIntegration/
+COPY BogdaTask/pom.xml BogdaTask/
+
+# BogdaService 依赖本地 libs/aidge.jar，必须在任何 mvn 解析 BogdaService 之前复制到位
+COPY BogdaService/libs/ BogdaService/libs/
+
+RUN mvn dependency:go-offline -B -q -pl AgentTask -am || true
+
+COPY BogdaCommon/src BogdaCommon/src
+COPY BogdaRepository/src BogdaRepository/src
+COPY BogdaIntegration/src BogdaIntegration/src
+COPY BogdaService/src BogdaService/src
+COPY AgentTask/src AgentTask/src
+
+RUN mvn -pl AgentTask -am package -DskipTests -B
+
+FROM eclipse-temurin:17-jre-jammy
+RUN groupadd --system spring && useradd --system --gid spring spring
+WORKDIR /app
+
+COPY --from=build /build/AgentTask/target/AgentTask-*.jar /app/app.jar
+
+USER spring:spring
+
+ENV PORT=8080
+EXPOSE 8080
+
+# Render / 容器通用：可通过 Dashboard 设置 JAVA_TOOL_OPTIONS 内存等
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:-} -jar /app/app.jar"]

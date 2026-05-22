@@ -20,6 +20,10 @@
             <artifactId>BogdaService</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
 
         <!-- For bootstrap.yml-->
         <!-- Spring Cloud Bootstrap：让 bootstrap.yml 在 application*.properties 之前加载 -->
