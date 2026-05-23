@@ -1680,9 +1680,24 @@ public class TranslateV3Service {
             task.setStatusText("FAILED");
             statusToPersist = task.getStatus();
         }
-        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, statusToPersist, checkpoint, metrics)) {
-            LOG.warn("v3 cosmos patch task failure fields failed, taskId={}, shop={}, phase={}",
+        boolean persisted = translateTaskV3CosmosRepo.mergeAndPersistTaskState(
+                taskId, task, statusToPersist, checkpoint, metrics);
+        if (!persisted) {
+            LOG.warn("v3 cosmos patch task failure fields merge failed, taskId={}, shop={}, phase={}",
                     taskId, task.getShopName(), phase);
+        }
+        if (markFailedStatus) {
+            boolean statusOk = translateTaskV3CosmosRepo.patchStatusSpark(
+                    com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.FAILED,
+                    taskId,
+                    task.getShopName());
+            if (statusOk) {
+                LOG.info("v3 cosmos status FAILED(8) after failure, taskId={}, shop={}, phase={}, reason={}",
+                        taskId, task.getShopName(), phase, reason);
+            } else if (!persisted) {
+                LOG.warn("v3 cosmos status FAILED(8) patch also failed, taskId={}, shop={}, phase={}",
+                        taskId, task.getShopName(), phase);
+            }
         }
     }
 
@@ -1697,6 +1712,7 @@ public class TranslateV3Service {
         String safePhase = safeText(phase);
         if (!safePhase.isEmpty()) {
             checkpoint.put("lastFailurePhase", safePhase);
+            checkpoint.put("phase", safePhase);
         }
         checkpoint.put("lastFailureReason", truncateFailureText(safeText(reason), FAILURE_TEXT_MAX_REASON));
         String safeHint = truncateFailureText(safeText(hint), FAILURE_TEXT_MAX_HINT);
@@ -1742,6 +1758,9 @@ public class TranslateV3Service {
     private static boolean shouldMarkCosmosFailedForPhase(String phase) {
         String p = safeText(phase).toUpperCase();
         if (p.isEmpty()) {
+            return false;
+        }
+        if (p.contains("PARTIAL")) {
             return false;
         }
         return p.contains("_FAILED") || "FAILED".equals(p);
@@ -3602,18 +3621,18 @@ public class TranslateV3Service {
                     taskId, shopName, status,
                     result == null ? null : result.get("done"),
                     result == null ? null : result.get("failed"));
-            if (result != null) {
-                persistJsonRuntimeAgentTraceBlob(task,
-                        "executeJsonRuntimeTaskByTaskId",
-                        JsonUtils.objectToJson(result));
-            }
-            if ("FAILED".equals(status)) {
+            if ("FAILED".equals(status) || "UNKNOWN".equals(status)) {
                 recordTaskFailure(
                         task,
                         "TRANSLATE_FAILED_RUNTIME",
                         extractRuntimeFailureReason(result),
                         result == null ? "" : asString(result.get("hint")),
                         result == null ? "" : JsonUtils.objectToJson(result));
+            }
+            if (result != null) {
+                persistJsonRuntimeAgentTraceBlob(task,
+                        "executeJsonRuntimeTaskByTaskId",
+                        JsonUtils.objectToJson(result));
             }
         } catch (IllegalArgumentException e) {
             LOG.warn("v3 translate json-runtime skipped, taskId={}, reason={}", taskId, e.getMessage());
