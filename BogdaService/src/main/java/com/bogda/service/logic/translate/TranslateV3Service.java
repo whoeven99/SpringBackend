@@ -1587,9 +1587,13 @@ public class TranslateV3Service {
             metrics.put("usedToken", (int) Math.min(totalTok, Integer.MAX_VALUE));
         }
         applySparkAlignedCosmosStatus(task, status);
-        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, null, checkpoint, metrics)) {
+        Integer cosmosStatus = task.getStatus();
+        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, cosmosStatus, checkpoint, metrics)) {
             LOG.warn("v3 json-runtime cosmos sync failed after translate, taskId={}, shop={}, runtimeStatus={}",
                     taskId, task.getShopName(), status);
+        } else {
+            LOG.info("v3 json-runtime cosmos sync ok, taskId={}, shop={}, cosmosStatus={}, cosmosStatusText={}, runtimeStatus={}",
+                    taskId, task.getShopName(), cosmosStatus, task.getStatusText(), status);
         }
     }
 
@@ -3367,6 +3371,11 @@ public class TranslateV3Service {
             return;
         }
         try {
+            // 队列 handler 传入的 task 可能是 INIT 时的快照；必须先读 Cosmos，避免用旧 checkpoint/metrics 覆盖 runtime 同步结果。
+            TranslateTaskV3DO fresh = translateTaskV3CosmosRepo.findByIdResolved(task.getId(), task.getShopName());
+            if (fresh != null) {
+                task = fresh;
+            }
             String ts = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
                     .withZone(ZoneOffset.UTC)
                     .format(Instant.now());
