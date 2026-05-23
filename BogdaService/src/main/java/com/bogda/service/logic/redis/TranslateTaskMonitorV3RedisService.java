@@ -49,6 +49,45 @@ public class TranslateTaskMonitorV3RedisService {
         redisIntegration.setHash(key, "updatedAt", String.valueOf(System.currentTimeMillis()));
     }
 
+    /**
+     * 记录失败阶段与原因，供 Spark {@code translateMonitor} 展示。
+     */
+    public void recordFailure(String taskId,
+                             String phase,
+                             String reason,
+                             String hint,
+                             String detail) {
+        if (taskId == null || taskId.isBlank()) {
+            return;
+        }
+        String key = MONITOR_KEY_PREFIX + taskId;
+        String safePhase = phase == null ? "" : phase.trim();
+        if (!safePhase.isEmpty()) {
+            redisIntegration.setHash(key, "phase", safePhase);
+        }
+        putFailureHashField(key, "lastFailureReason", reason, 512);
+        putFailureHashField(key, "lastFailureHint", hint, 1024);
+        putFailureHashField(key, "lastFailureDetail", detail, 4000);
+        if (!safePhase.isEmpty()) {
+            redisIntegration.setHash(key, "lastFailurePhase", safePhase);
+        }
+        redisIntegration.setHash(key, "lastFailureAt", String.valueOf(System.currentTimeMillis()));
+        redisIntegration.setHash(key, "updatedAt", String.valueOf(System.currentTimeMillis()));
+        redisIntegration.expire(key, RedisKeyUtils.DAY_14);
+    }
+
+    private void putFailureHashField(String key, String field, String value, int maxLen) {
+        if (value == null) {
+            return;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return;
+        }
+        String capped = trimmed.length() <= maxLen ? trimmed : trimmed.substring(0, maxLen) + "...";
+        redisIntegration.setHash(key, field, capped);
+    }
+
     public void incrementBy(String taskId, int translatedDelta, int savedDelta, int tokenDelta) {
         String key = MONITOR_KEY_PREFIX + taskId;
         if (translatedDelta != 0) {

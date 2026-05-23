@@ -1586,6 +1586,18 @@ public class TranslateV3Service {
         if (totalTok > 0) {
             metrics.put("usedToken", (int) Math.min(totalTok, Integer.MAX_VALUE));
         }
+        if ("COMPLETED".equals(status)) {
+            clearFailureFieldsFromCheckpoint(checkpoint);
+        } else if ("FAILED".equals(status) || "PARTIAL_FAILED".equals(status)) {
+            String failurePhase = "FAILED".equals(status)
+                    ? "TRANSLATE_FAILED_RUNTIME"
+                    : "TRANSLATE_PARTIAL_FAILED_RUNTIME";
+            String reason = extractRuntimeFailureReason(result);
+            String hint = safeText(asString(result.get("hint")));
+            String detail = truncateFailureText(JsonUtils.objectToJson(result), FAILURE_TEXT_MAX_DETAIL);
+            applyFailureFieldsToCheckpoint(checkpoint, failurePhase, reason, hint, detail);
+            translateTaskMonitorV3RedisService.recordFailure(taskId, failurePhase, reason, hint, detail);
+        }
         applySparkAlignedCosmosStatus(task, status);
         Integer cosmosStatus = task.getStatus();
         if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, cosmosStatus, checkpoint, metrics)) {
@@ -1616,6 +1628,140 @@ public class TranslateV3Service {
         }
         task.setStatus(4);
         task.setStatusText("TRANSLATE_STOPPED_MANUAL");
+    }
+
+    private static final int FAILURE_TEXT_MAX_REASON = 512;
+    private static final int FAILURE_TEXT_MAX_HINT = 1024;
+    private static final int FAILURE_TEXT_MAX_DETAIL = 4000;
+
+    private void recordTaskFailure(TranslateTaskV3DO task,
+                                 String phase,
+                                 String reason,
+                                 String hint,
+                                 String detail) {
+        if (task == null || StringUtils.isEmpty(task.getId())) {
+            return;
+        }
+        String resolvedReason = safeText(reason);
+        if (resolvedReason.isEmpty()) {
+            resolvedReason = defaultReasonForFailurePhase(phase);
+        }
+        String resolvedHint = truncateFailureText(safeText(hint), FAILURE_TEXT_MAX_HINT);
+        String resolvedDetail = truncateFailureText(safeText(detail), FAILURE_TEXT_MAX_DETAIL);
+        translateTaskMonitorV3RedisService.recordFailure(
+                task.getId(), phase, resolvedReason, resolvedHint, resolvedDetail);
+        patchCosmosTaskFailure(
+                task.getId(),
+                task.getShopName(),
+                phase,
+                resolvedReason,
+                resolvedHint,
+                resolvedDetail,
+                shouldMarkCosmosFailedForPhase(phase));
+    }
+
+    private void patchCosmosTaskFailure(String taskId,
+                                        String shopName,
+                                        String phase,
+                                        String reason,
+                                        String hint,
+                                        String detail,
+                                        boolean markFailedStatus) {
+        TranslateTaskV3DO task = translateTaskV3CosmosRepo.findByIdResolved(taskId, safeText(shopName));
+        if (task == null) {
+            return;
+        }
+        Map<String, Object> checkpoint = task.getCheckpoint() == null ? new HashMap<>() : new HashMap<>(task.getCheckpoint());
+        applyFailureFieldsToCheckpoint(checkpoint, phase, reason, hint, detail);
+        Map<String, Object> metrics = task.getMetrics() == null ? new HashMap<>() : new HashMap<>(task.getMetrics());
+        Integer statusToPersist = null;
+        if (markFailedStatus) {
+            task.setStatus(com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.FAILED);
+            task.setStatusText("FAILED");
+            statusToPersist = task.getStatus();
+        }
+        if (!translateTaskV3CosmosRepo.mergeAndPersistTaskState(taskId, task, statusToPersist, checkpoint, metrics)) {
+            LOG.warn("v3 cosmos patch task failure fields failed, taskId={}, shop={}, phase={}",
+                    taskId, task.getShopName(), phase);
+        }
+    }
+
+    private static void applyFailureFieldsToCheckpoint(Map<String, Object> checkpoint,
+                                                       String phase,
+                                                       String reason,
+                                                       String hint,
+                                                       String detail) {
+        if (checkpoint == null) {
+            return;
+        }
+        String safePhase = safeText(phase);
+        if (!safePhase.isEmpty()) {
+            checkpoint.put("lastFailurePhase", safePhase);
+        }
+        checkpoint.put("lastFailureReason", truncateFailureText(safeText(reason), FAILURE_TEXT_MAX_REASON));
+        String safeHint = truncateFailureText(safeText(hint), FAILURE_TEXT_MAX_HINT);
+        if (!safeHint.isEmpty()) {
+            checkpoint.put("lastFailureHint", safeHint);
+        }
+        String safeDetail = truncateFailureText(safeText(detail), FAILURE_TEXT_MAX_DETAIL);
+        if (!safeDetail.isEmpty()) {
+            checkpoint.put("lastFailureDetail", safeDetail);
+        }
+        checkpoint.put("lastFailureAt", Instant.now().toString());
+    }
+
+    private static void clearFailureFieldsFromCheckpoint(Map<String, Object> checkpoint) {
+        if (checkpoint == null) {
+            return;
+        }
+        checkpoint.remove("lastFailurePhase");
+        checkpoint.remove("lastFailureReason");
+        checkpoint.remove("lastFailureHint");
+        checkpoint.remove("lastFailureDetail");
+        checkpoint.remove("lastFailureAt");
+    }
+
+    private static String extractRuntimeFailureReason(Map<String, Object> result) {
+        if (result == null) {
+            return "";
+        }
+        String reason = safeText(asString(result.get("reason")));
+        if (!reason.isEmpty()) {
+            return reason;
+        }
+        return safeText(asString(result.get("message")));
+    }
+
+    private static String truncateFailureText(String text, int maxLen) {
+        if (text == null || text.isEmpty() || maxLen <= 0) {
+            return "";
+        }
+        return text.length() <= maxLen ? text : text.substring(0, maxLen) + "...";
+    }
+
+    private static boolean shouldMarkCosmosFailedForPhase(String phase) {
+        String p = safeText(phase).toUpperCase();
+        if (p.isEmpty()) {
+            return false;
+        }
+        return p.contains("_FAILED") || "FAILED".equals(p);
+    }
+
+    private static String defaultReasonForFailurePhase(String phase) {
+        String p = safeText(phase).toUpperCase();
+        return switch (p) {
+            case "INIT_FAILED_NO_USER" -> "MISSING_SHOPIFY_ACCESS_TOKEN";
+            case "INIT_STOPPED_PRIMARY_LOCALE_MISMATCH" -> "PRIMARY_LOCALE_MISMATCH";
+            case "TRANSLATE_FAILED_NO_USER" -> "MISSING_SHOPIFY_ACCESS_TOKEN";
+            case "TRANSLATE_FAILED_RUNTIME" -> "JSON_RUNTIME_FAILED";
+            case "TRANSLATE_PARTIAL_FAILED_RUNTIME" -> "JSON_RUNTIME_PARTIAL_FAILED";
+            case "TRANSLATE_STOPPED_PRIMARY_LOCALE_MISMATCH" -> "PRIMARY_LOCALE_MISMATCH";
+            case "TRANSLATE_STOPPED_TOKEN_LIMIT" -> "TOKEN_LIMIT_REACHED";
+            case "SAVE_FAILED_NO_USER" -> "MISSING_SHOPIFY_ACCESS_TOKEN";
+            case "SAVE_PARTIAL_FAILED" -> "SAVE_PARTIAL_FAILED";
+            case "VERIFY_FAILED_NO_USER" -> "MISSING_SHOPIFY_ACCESS_TOKEN";
+            default -> p.isEmpty() ? "UNKNOWN_FAILURE" : p;
+        };
     }
 
     /**
@@ -3229,7 +3375,12 @@ public class TranslateV3Service {
         String accessToken = resolveShopifyAccessToken(task);
         if (StringUtils.isEmpty(accessToken)) {
             LOG.warn("v3 init stop missing checkpoint.shopifyAccessToken, taskId={}, shop={}", taskId, task.getShopName());
-            translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_FAILED_NO_USER");
+            recordTaskFailure(
+                    task,
+                    "INIT_FAILED_NO_USER",
+                    "MISSING_SHOPIFY_ACCESS_TOKEN",
+                    "checkpoint 中缺少 shopifyAccessToken，请重新创建任务或检查 Spark Session",
+                    null);
             return;
         }
 
@@ -3239,7 +3390,12 @@ public class TranslateV3Service {
         if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, task.getSource())) {
             LOG.warn("v3 init stop locale mismatch, taskId={}, shop={}, primaryLocale={}, source={}",
                     taskId, task.getShopName(), primaryLocale, task.getSource());
-            translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_STOPPED_PRIMARY_LOCALE_MISMATCH");
+            recordTaskFailure(
+                    task,
+                    "INIT_STOPPED_PRIMARY_LOCALE_MISMATCH",
+                    "PRIMARY_LOCALE_MISMATCH",
+                    "店铺主语言 " + primaryLocale + " 与任务源语言 " + task.getSource() + " 不一致",
+                    null);
             translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 4);
             return;
         }
@@ -3452,14 +3608,19 @@ public class TranslateV3Service {
                         JsonUtils.objectToJson(result));
             }
             if ("FAILED".equals(status)) {
-                translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_RUNTIME");
+                recordTaskFailure(
+                        task,
+                        "TRANSLATE_FAILED_RUNTIME",
+                        extractRuntimeFailureReason(result),
+                        result == null ? "" : asString(result.get("hint")),
+                        result == null ? "" : JsonUtils.objectToJson(result));
             }
         } catch (IllegalArgumentException e) {
             LOG.warn("v3 translate json-runtime skipped, taskId={}, reason={}", taskId, e.getMessage());
-            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_RUNTIME");
+            recordTaskFailure(task, "TRANSLATE_FAILED_RUNTIME", e.getClass().getSimpleName(), e.getMessage(), null);
         } catch (Exception e) {
             LOG.error("v3 translate json-runtime failed, taskId={}, shop={}", taskId, shopName, e);
-            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_RUNTIME");
+            recordTaskFailure(task, "TRANSLATE_FAILED_RUNTIME", e.getClass().getSimpleName(), e.getMessage(), null);
             TraceReporterHolder.report("TranslateV3Service.translateJsonRuntimeTaskV3",
                     "FatalException json-runtime taskId=" + taskId + " error=" + e);
         }
@@ -3479,7 +3640,12 @@ public class TranslateV3Service {
 
         String accessToken = resolveShopifyAccessToken(task);
         if (StringUtils.isEmpty(accessToken)) {
-            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_FAILED_NO_USER");
+            recordTaskFailure(
+                    task,
+                    "TRANSLATE_FAILED_NO_USER",
+                    "MISSING_SHOPIFY_ACCESS_TOKEN",
+                    "checkpoint 中缺少 shopifyAccessToken",
+                    null);
             return;
         }
 
@@ -3487,7 +3653,12 @@ public class TranslateV3Service {
                 TranslateConstants.API_VERSION_LAST, ShopifyRequestUtils.getShopLanguageQuery());
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
         if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, source)) {
-            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_STOPPED_PRIMARY_LOCALE_MISMATCH");
+            recordTaskFailure(
+                    task,
+                    "TRANSLATE_STOPPED_PRIMARY_LOCALE_MISMATCH",
+                    "PRIMARY_LOCALE_MISMATCH",
+                    "店铺主语言 " + primaryLocale + " 与任务源语言 " + source + " 不一致",
+                    null);
             translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 4);
             return;
         }
@@ -3589,7 +3760,11 @@ public class TranslateV3Service {
 
         if (stoppedByTokenLimit) {
             checkpoint.put("phase", "TRANSLATE_STOPPED_TOKEN_LIMIT");
-            translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_STOPPED_TOKEN_LIMIT");
+            String tokenHint = "已用 token " + currentUsedToken + " / 配额 " + maxToken;
+            applyFailureFieldsToCheckpoint(
+                    checkpoint, "TRANSLATE_STOPPED_TOKEN_LIMIT", "TOKEN_LIMIT_REACHED", tokenHint, null);
+            translateTaskMonitorV3RedisService.recordFailure(
+                    taskId, "TRANSLATE_STOPPED_TOKEN_LIMIT", "TOKEN_LIMIT_REACHED", tokenHint, null);
             translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
             translateTaskV3CosmosRepo.patchStatusWithText(
                     com.bogda.repository.repo.translate.TranslateTaskV3CosmosStatus.TRANSLATE_STOPPED_MANUAL,
