@@ -41,7 +41,7 @@ public class ALiYunTranslateIntegration {
 
     private static Tokenizer tokenizer;
     public static String TRANSLATE_APP = "TRANSLATE_APP";
-    public static String QWEN_MAX = "qwen-max";
+    public static String QWEN_PLUS = "qwen3.6-plus";
 
     public ALiYunTranslateIntegration() {
         tokenizer = TokenizerFactory.qwen();
@@ -61,7 +61,7 @@ public class ALiYunTranslateIntegration {
     public static String switchModel(String languageCode) {
         return switch (languageCode) {
 //            case "en", "zh-CN", "de", "ja", "it", "ru", "zh-TW", "da", "nl", "id", "th", "vi", "uk", "fr", "ko", "hi", "bg", "cs", "el", "hr", "lt", "nb", "pl", "ro", "sk", "sv", "ar", "no" -> "qwen-plus";
-            default -> "qwen-max-latest"; //32k token
+            default -> QWEN_PLUS; //32k token
         };
 //        return "qwen-max";
     }
@@ -129,7 +129,7 @@ public class ALiYunTranslateIntegration {
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(TranslateConstants.QWEN_VL_LAST)
+                .model(QWEN_PLUS)
                 .message(userMessage)
                 .build();
         MultiModalConversationResult result;
@@ -167,7 +167,7 @@ public class ALiYunTranslateIntegration {
     }
 
     /**
-     * 调用qwen-max用户产品描述图片为空的情况
+     * 调用qwen3.6-plus用户产品描述图片为空的情况
      */
     public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit) {
         Generation gen = new Generation();
@@ -178,7 +178,7 @@ public class ALiYunTranslateIntegration {
         GenerationParam param = GenerationParam.builder()
                 // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model("qwen-max-latest")
+                .model(QWEN_PLUS)
                 .messages(Collections.singletonList(userMsg))
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();

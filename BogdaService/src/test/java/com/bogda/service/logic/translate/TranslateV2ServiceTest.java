@@ -245,7 +245,7 @@ class TranslateV2ServiceTest {
     void testTestTranslate_WithQwenModel_ShouldCallAliYunIntegration() {
         // Given
         Map<String, Object> map = new HashMap<>();
-        map.put("model", "qwen-max");
+        map.put("model", "qwen3.6-plus");
         map.put("prompt", "Translate: {{SOURCE_LANGUAGE_LIST}} to {{TARGET_LANGUAGE}}");
         map.put("target", "zh");
         map.put("json", "{\"1\":\"English\"}");
@@ -278,7 +278,7 @@ class TranslateV2ServiceTest {
     void testTestTranslate_WithInvalidJson_ShouldReturnDefaultNullMap() {
         // Given
         Map<String, Object> map = new HashMap<>();
-        map.put("model", "qwen-max");
+        map.put("model", "qwen3.6-plus");
         map.put("prompt", "Translate");
         map.put("target", "zh");
         map.put("json", "invalid-json");
@@ -296,7 +296,7 @@ class TranslateV2ServiceTest {
     void testTestTranslate_WithEmptyLanguageMap_ShouldReturnDefaultNullMap() {
         // Given
         Map<String, Object> map = new HashMap<>();
-        map.put("model", "qwen-max");
+        map.put("model", "qwen3.6-plus");
         map.put("prompt", "Translate");
         map.put("target", "zh");
         map.put("json", "{}");

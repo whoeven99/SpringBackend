@@ -54,7 +54,7 @@ class ModelTranslateServiceTest {
     @Test
     void testAiTranslate_WithQwenMax_ShouldCallAliYunIntegration() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
         when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(expectedPair);
 
@@ -101,7 +101,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithStringSource_WithSuccessfulAiTranslate_ShouldReturnAiResult() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Pair<String, Integer> expectedPair = new Pair<>("翻译结果", 100);
         when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(expectedPair);
 
@@ -118,7 +118,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithStringSource_WithFailedAiTranslate_ShouldFallbackToGoogle() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Pair<String, Integer> googlePair = new Pair<>("Google翻译结果", 50);
         when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
         when(googleMachineIntegration.googleTranslateWithSDK(testSourceText, testTarget)).thenReturn(googlePair);
@@ -136,7 +136,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithMap_WithSuccessfulAiTranslate_ShouldReturnAiResult() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
         sourceMap.put(2, "World");
@@ -156,7 +156,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithMap_WithFailedAiTranslate_ShouldFallbackToGoogle() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
         sourceMap.put(2, "World");
@@ -178,7 +178,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithMap_WithNullMap_ShouldReturnNull() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
 
         // When - explicitly pass null as Map to call the Map version
@@ -194,7 +194,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithMap_WithEmptyMap_ShouldReturnNull() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Map<Integer, String> emptyMap = new LinkedHashMap<>();
         when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);
 
@@ -210,7 +210,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithMap_WithBlankValues_ShouldSkipBlankValues() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
         sourceMap.put(2, "");
@@ -229,7 +229,7 @@ class ModelTranslateServiceTest {
     @Test
     void testModelTranslate_WithMap_WithGoogleTranslateException_ShouldHandleGracefully() {
         // Given
-        String aiModel = ALiYunTranslateIntegration.QWEN_MAX;
+        String aiModel = ALiYunTranslateIntegration.QWEN_PLUS;
         Map<Integer, String> sourceMap = new LinkedHashMap<>();
         sourceMap.put(1, "Hello");
         when(aLiYunTranslateIntegration.userTranslate(testPrompt, testTarget, 0)).thenReturn(null);

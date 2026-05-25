@@ -44,19 +44,13 @@ public class TranslateConstants {
     public static final String LIST_SINGLE_LINE_TEXT_FIELD = "LIST_SINGLE_LINE_TEXT_FIELD";
 
     public static final String EMAIL = "EMAIL"; //手动翻译邮件标识
-
     public static final String CHARACTER_LIMIT = "Character Limit Reached";
-
-    public static final String QWEN_MT = "qwen-mt-turbo";
-
     public static final String SHOP_NAME = "shop_name";
-
     public static final String DEEPL_MODEL = "3";
     public static final String OPENAI_MODEL = "2";
     public static final float MAGNIFICATION = 1.5f;
     public static final int DEEPL_MAGNIFICATION = 4;
     public static final String API_VERSION_LAST = "2025-07";
-    public static final String QWEN_VL_LAST = "qwen-vl-max-latest";
     //年费
     public static final int ANNUAL_FEE = 2;
     //月费
