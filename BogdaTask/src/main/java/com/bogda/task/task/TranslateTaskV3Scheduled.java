@@ -7,9 +7,11 @@ import com.bogda.service.logic.translate.TranslateV3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "translate.v3.enabled", havingValue = "true")
 public class TranslateTaskV3Scheduled {
     private static final Logger LOG = LoggerFactory.getLogger(TranslateTaskV3Scheduled.class);
     @Autowired

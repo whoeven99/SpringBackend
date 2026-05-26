@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -85,6 +86,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
+@ConditionalOnProperty(name = "translate.v3.enabled", havingValue = "true")
 public class TranslateV3Service {
     private static final Logger LOG = LoggerFactory.getLogger(TranslateV3Service.class);
     private static final int PROGRESS_FLUSH_INTERVAL_CHUNKS = 10;

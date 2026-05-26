@@ -6,10 +6,12 @@ import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.bogda.common.utils.ConfigUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ConditionalOnProperty(name = "translate.v3.enabled", havingValue = "true")
 public class TranslateV3BlobConfig {
     @Value("${blob.translate-v3.connection-string:}")
     private String connectionStringFromConfig;

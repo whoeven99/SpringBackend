@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 @Service
+@ConditionalOnProperty(name = "translate.v3.enabled", havingValue = "true")
 public class TranslateTaskV3CosmosRepo {
     private static final Logger LOG = LoggerFactory.getLogger(TranslateTaskV3CosmosRepo.class);
     @Autowired

@@ -9,6 +9,7 @@ import com.bogda.common.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@ConditionalOnProperty(name = "translate.v3.enabled", havingValue = "true")
 public class TranslateTaskV3BlobRepo {
     @Autowired
     @Qualifier("translateV3BlobContainerClient")

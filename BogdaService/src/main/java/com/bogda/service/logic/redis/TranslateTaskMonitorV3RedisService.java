@@ -5,6 +5,7 @@ import com.bogda.common.utils.RedisKeyUtils;
 import com.bogda.repository.RedisIntegration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
+@ConditionalOnProperty(name = "translate.v3.enabled", havingValue = "true")
 public class TranslateTaskMonitorV3RedisService {
     @Autowired
     private RedisIntegration redisIntegration;
