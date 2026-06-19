@@ -36,7 +36,6 @@ public class UniversalTranslateService {
     private static final Pattern TRAILING_WHITESPACE = Pattern.compile("(\\s+)$");
 
     /**
-     * 与 TranslateV3Service 普通行批处理一致：
      * 结构化（HTML/JSON）多条文本一次塞进模型易触发上游超时，按估算 token 分批请求。
      */
     private static final int STRUCTURED_PROMPT_TOKEN_BUDGET = 600;
