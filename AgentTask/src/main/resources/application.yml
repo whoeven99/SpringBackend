@@ -1,4 +1,4 @@
-# Spring Boot 3：显式 import bootstrap.yml，确保 datasource/redis/cosmos 等在 Bean 创建前进入 Environment
+# Spring Boot 3：显式 import bootstrap.yml，确保 datasource/redis/blob 等在 Bean 创建前进入 Environment
 #（否则 MybatisPlusConfig 中 @Value("${datasource.url}") 可能解析失败）。
 spring:
   config:

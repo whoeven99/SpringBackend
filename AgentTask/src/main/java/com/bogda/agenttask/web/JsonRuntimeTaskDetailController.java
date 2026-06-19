@@ -19,7 +19,7 @@ public class JsonRuntimeTaskDetailController {
     private TranslateV3Service translateV3Service;
 
     /**
-     * 查看 JSON runtime 任务：Cosmos 文档、Redis 进度、checkpoint 中 Blob 情况；可选预览。
+     * 查看 JSON runtime 任务：Blob 任务元数据、Redis 进度、checkpoint 中 Blob 情况；可选预览。
      */
     @GetMapping("/v3/jsonRuntimeTaskDetail")
     public BaseResponse<Object> jsonRuntimeTaskDetail(@RequestParam String taskId,

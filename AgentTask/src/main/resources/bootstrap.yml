@@ -37,13 +37,6 @@ datasource:
 redis:
   hostname: azure-cache-dev.redis.cache.windows.net
 
-cosmos:
-  endpoint: https://springbackend-cosmos-test.documents.azure.com:443/
-  database: bogdatechtest
-  container: discount
-  # Render / CI：设置环境变量 COSMOS_KEY（或通过 Key Vault 写入 cosmos-key）；勿提交明文
-  key: ${COSMOS_KEY}
-
 blob:
   translate-v3:
     connection-string: DefaultEndpointsProtocol=https;AccountName=transblobstoragetest;AccountKey=t6bQvkNPSv58uy/ng6o0thriGXB0V8ShMM5zAFo6eIRCpqfaJVghkmUbUUhBzbmdZXsmtPOqZHlZ+AStmR+L/A==;EndpointSuffix=core.windows.net
@@ -67,8 +60,3 @@ blob:
 
 # redis:
 #   hostname: azurecache-redis-prod.redis.cache.windows.net
-
-# cosmos:
-#   endpoint: https://bogdaprodcosmos.documents.azure.com:443/
-#   database: bogdaprodcosmos
-  # key: ${COSMOS_KEY:Prod}

@@ -7,7 +7,7 @@
 - 核心服务：`BogdaService/src/main/java/com/bogda/service/logic/translate/TranslateV3Service.java`
 - 任务调度：`BogdaTask/src/main/java/com/bogda/task/task/TranslateTaskV3Scheduled.java`
 - API 入口：`BogdaApi/src/main/java/com/bogda/api/controller/TranslateController.java` 的 `PUT /translate/clickTranslation`
-- 任务主存储：Cosmos `TranslateTaskV3DO`
+- 任务主存储：Blob `tasks/{shop}/{taskId}/task.json`（`TranslateTaskV3DO`）
 - 中间数据存储：Blob `tasks/{taskId}/chunks/...`
 - 进度监控：Redis `translate_monitor_v3:{taskId}`
 
@@ -39,7 +39,7 @@
   - `phase = INIT_CREATED`
 - 初始 metrics：
   - `totalCount=0, translatedCount=0, savedCount=0, usedToken=0`
-- 写入 Cosmos 后，创建 Redis monitor 记录
+- 写入 Blob 任务元数据后，创建 Redis monitor 记录
 
 ### 3.2 读取 Shopify 并落盘 chunk
 

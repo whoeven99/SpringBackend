@@ -21,7 +21,7 @@ import com.bogda.integration.model.ShopifyTranslationsResponse;
 import com.bogda.repository.container.TranslateTaskV3DO;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.translate.TranslateTaskV3BlobRepo;
-import com.bogda.repository.repo.translate.TranslateTaskV3CosmosRepo;
+import com.bogda.repository.repo.translate.TranslateTaskV3TaskRepo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.IUsersService;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
@@ -153,7 +153,7 @@ public class TranslateV3Service {
     @Autowired
     private TranslateV2Service translateV2Service;
     @Autowired
-    private TranslateTaskV3CosmosRepo translateTaskV3CosmosRepo;
+    private TranslateTaskV3TaskRepo translateTaskV3TaskRepo;
     @Autowired
     private TranslateTaskV3BlobRepo translateTaskV3BlobRepo;
     @Autowired
@@ -222,7 +222,7 @@ public class TranslateV3Service {
             if (configRedisRepo.isWhiteList(target, "forbiddenTarget")) {
                 continue;
             }
-            if (translateTaskV3CosmosRepo.existsActiveTask(shopName, normalizedSource, target)) {
+            if (translateTaskV3TaskRepo.existsActiveTask(shopName, normalizedSource, target)) {
                 continue;
             }
 
@@ -253,7 +253,7 @@ public class TranslateV3Service {
             metrics.put("usedToken", 0);
             task.setMetrics(metrics);
 
-            if (!translateTaskV3CosmosRepo.upsert(task)) {
+            if (!translateTaskV3TaskRepo.upsert(task)) {
                 continue;
             }
 
@@ -289,7 +289,7 @@ public class TranslateV3Service {
             return BaseResponse.FailedResponse("Missing parameters: taskId or shopName");
         }
 
-        TranslateTaskV3DO task = translateTaskV3CosmosRepo.getById(taskId, shopName);
+        TranslateTaskV3DO task = translateTaskV3TaskRepo.getById(taskId, shopName);
         String effectiveShopName = shopName;
         if (task == null) {
             task = findTaskByIdAcrossStatuses(taskId);
@@ -342,7 +342,7 @@ public class TranslateV3Service {
         if (StringUtils.isEmpty(taskId)) {
             return null;
         }
-        List<TranslateTaskV3DO> byId = translateTaskV3CosmosRepo.listByTaskId(taskId);
+        List<TranslateTaskV3DO> byId = translateTaskV3TaskRepo.listByTaskId(taskId);
         if (byId == null || byId.isEmpty()) {
             return null;
         }
@@ -379,7 +379,7 @@ public class TranslateV3Service {
             failed.put("status", "FAILED");
             failed.put("reason", "TASK_NOT_FOUND");
             failed.put("hint",
-                    "Cosmos translate_tasks_v3 中未找到该 id（已按 id 跨分区查询）。请核对环境/容器是否与 API 一致，且 id 字符串完全相等。");
+                    "Blob tasks/{shop}/{taskId}/task.json 中未找到该 id。请核对环境与 id 是否一致。");
             return failed;
         }
         if (!isRuntimeJsonTask(task)) {
@@ -426,8 +426,8 @@ public class TranslateV3Service {
     }
 
     /**
-     * 查看 json-runtime 任务在 Cosmos 中的状态、Redis 进度，以及 checkpoint 里引用的 Blob 是否存在与大小（可选文本预览）。
-     * {@code shopName} 若给出则直接点读 Cosmos，否则按各 status 扫描查找（与按 taskId 执行 runtime 一致）。
+     * 查看 json-runtime 任务在 Blob 中的状态、Redis 进度，以及 checkpoint 里引用的 Blob 是否存在与大小（可选文本预览）。
+     * {@code shopName} 若给出则直接点读任务元数据，否则按各 status 扫描查找（与按 taskId 执行 runtime 一致）。
      */
     public BaseResponse<Object> getJsonRuntimeTaskDetail(String taskId,
                                                          String shopName,
@@ -441,7 +441,7 @@ public class TranslateV3Service {
         TranslateTaskV3DO task;
         String cleanShop = safeText(shopName);
         if (!cleanShop.isEmpty()) {
-            task = translateTaskV3CosmosRepo.getById(cleanId, cleanShop);
+            task = translateTaskV3TaskRepo.getById(cleanId, cleanShop);
         } else {
             task = findTaskByIdAcrossStatuses(cleanId);
         }
@@ -459,7 +459,7 @@ public class TranslateV3Service {
         int cap = maxPreviewBytes <= 0 ? 8192 : Math.min(Math.max(maxPreviewBytes, 256), 512 * 1024);
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("cosmos", cosmosTaskV3ToMap(task));
+        body.put("task", taskV3ToMap(task));
         body.put("resolvedRedisPrefix", effectiveRedis);
         body.put("redisRuntime", getJsonRuntimeTaskProgress(cleanId, effectiveRedis));
 
@@ -508,14 +508,14 @@ public class TranslateV3Service {
     }
 
     /**
-     * 列出某店铺在 Cosmos 中已存在的 json-runtime 任务（摘要，不含 checkpoint/metrics 大字段）。
+     * 列出某店铺在 Blob 中已存在的 json-runtime 任务（摘要，不含 checkpoint/metrics 大字段）。
      */
     public BaseResponse<Object> listJsonRuntimeTasksByShop(String shopName) {
         String cleanShop = safeText(shopName);
         if (cleanShop.isEmpty()) {
             return BaseResponse.FailedResponse("Missing parameters: shopName");
         }
-        List<TranslateTaskV3DO> all = translateTaskV3CosmosRepo.listByShopName(cleanShop);
+        List<TranslateTaskV3DO> all = translateTaskV3TaskRepo.listByShopName(cleanShop);
         List<TranslateTaskV3DO> runtime = all.stream()
                 .filter(this::isRuntimeJsonTask)
                 .sorted(Comparator.comparing(TranslateTaskV3DO::getUpdatedAt,
@@ -587,7 +587,7 @@ public class TranslateV3Service {
         return safeText(asString(m.get(field)));
     }
 
-    private Map<String, Object> cosmosTaskV3ToMap(TranslateTaskV3DO task) {
+    private Map<String, Object> taskV3ToMap(TranslateTaskV3DO task) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", task.getId());
         m.put("shopName", task.getShopName());
@@ -939,7 +939,7 @@ public class TranslateV3Service {
         }
     }
 
-    private void patchCosmosRuntimeChunkCheckpoint(TranslateTaskV3DO task,
+    private void patchRuntimeChunkCheckpoint(TranslateTaskV3DO task,
                                                    int chunkDoneCount,
                                                    int chunksTotal,
                                                    RuntimeLlmTokenUsage cumulativeTok,
@@ -974,11 +974,11 @@ public class TranslateV3Service {
         metrics.put("runtimeLlmTotalTokens", cumulativeTok.totalTokens);
         metrics.put("runtimeLlmApiCallCount", cumulativeLlmCalls);
         metrics.put("updatedAt", Instant.now().toString());
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
     }
 
     private Map<String, Object> executeJsonRuntimeChunked(JsonRuntimeTranslateRequest template,
-                                                          TranslateTaskV3DO cosmosTask,
+                                                          TranslateTaskV3DO runtimeTask,
                                                           List<RuntimeChunkPlan> plans,
                                                           String redisPrefix) {
         long startedOuter = System.currentTimeMillis();
@@ -1058,7 +1058,7 @@ public class TranslateV3Service {
             }
 
             int redisChunkDoneNow = translateTaskMonitorV3RedisService.getRuntimeChunkDoneSet(redisPrefix, taskId).size();
-            patchCosmosRuntimeChunkCheckpoint(cosmosTask, redisChunkDoneNow, plans.size(), grandTok, grandCalls, sliceResp);
+            patchRuntimeChunkCheckpoint(runtimeTask, redisChunkDoneNow, plans.size(), grandTok, grandCalls, sliceResp);
 
             if ("FAILED".equals(st)) {
                 LOG.warn("json-runtime chunked halted on FAILED slice, taskId={}, chunk={}", taskId, plan.progressKey);
@@ -1101,18 +1101,18 @@ public class TranslateV3Service {
 
         long outerElapsedMs = System.currentTimeMillis() - startedOuter;
         int redisChunksDoneNow = translateTaskMonitorV3RedisService.getRuntimeChunkDoneSet(redisPrefix, taskId).size();
-        writeJsonRuntimeTranslationSummaryTxt(cosmosTask, true, aggregate,
+        writeJsonRuntimeTranslationSummaryTxt(runtimeTask, true, aggregate,
                 outerElapsedMs,
                 plans.size(),
                 redisChunksDoneNow,
                 perChunkLines);
 
-        maybeWriteJsonRuntimeLlmTranslationReport(cosmosTask, template, true, aggregate, outerElapsedMs, plans.size(),
+        maybeWriteJsonRuntimeLlmTranslationReport(runtimeTask, template, true, aggregate, outerElapsedMs, plans.size(),
                 redisChunksDoneNow, perChunkLines);
 
-        maybeWriteJsonRuntimeQualityReport(cosmosTask, template, rollupQualityPairs);
+        maybeWriteJsonRuntimeQualityReport(runtimeTask, template, rollupQualityPairs);
 
-        maybeSyncCosmosAfterJsonRuntime(taskId, aggregate);
+        maybeSyncTaskAfterJsonRuntime(taskId, aggregate);
         return aggregate;
     }
 
@@ -1400,16 +1400,16 @@ public class TranslateV3Service {
         if (redisPrefix.isEmpty()) {
             redisPrefix = "tr:v1";
         }
-        TranslateTaskV3DO cosmosTask = null;
+        TranslateTaskV3DO runtimeTask = null;
         if (!taskId.isEmpty()) {
             TranslateTaskV3DO t = findTaskByIdAcrossStatuses(taskId);
             if (t != null && isRuntimeJsonTask(t)) {
-                cosmosTask = t;
+                runtimeTask = t;
             }
         }
-        List<RuntimeChunkPlan> runtimeChunkPlans = cosmosTask != null ? buildRuntimeChunkPlan(cosmosTask) : Collections.emptyList();
+        List<RuntimeChunkPlan> runtimeChunkPlans = runtimeTask != null ? buildRuntimeChunkPlan(runtimeTask) : Collections.emptyList();
         if (!runtimeChunkPlans.isEmpty()) {
-            return executeJsonRuntimeChunked(safeRequest, cosmosTask, runtimeChunkPlans, redisPrefix);
+            return executeJsonRuntimeChunked(safeRequest, runtimeTask, runtimeChunkPlans, redisPrefix);
         }
 
         String inputBlobUri = safeText(safeRequest.getInputBlobUri());
@@ -1425,14 +1425,14 @@ public class TranslateV3Service {
         if (taskId.isEmpty() || inputBlobUri.isEmpty() || outputBlobUri.isEmpty() || reportBlobUri.isEmpty()) {
             finalResponse.put("status", "FAILED");
             finalResponse.put("durationMs", System.currentTimeMillis() - startedMs);
-            maybeSyncCosmosAfterJsonRuntime(taskId, finalResponse);
+            maybeSyncTaskAfterJsonRuntime(taskId, finalResponse);
             return finalResponse;
         }
 
         List<RuntimeQualityPair> singleQualityPairs = new ArrayList<>();
         Map<String, Object> result = translateJsonRuntimeSingleBlob(
                 safeRequest, finalResponse, redisPrefix, startedMs, "", "", 1, 1, singleQualityPairs);
-        if (cosmosTask != null) {
+        if (runtimeTask != null) {
             List<String> oneChunk = new ArrayList<>();
             String inputUri = safeText(asString(result.get("inputBlobUri")));
             String fn = inputUri;
@@ -1447,22 +1447,22 @@ public class TranslateV3Service {
                     String.valueOf(result.get("done")),
                     String.valueOf(result.get("failed"))));
             long singleDurMs = parseLongFlexible(result.get("durationMs"));
-            writeJsonRuntimeTranslationSummaryTxt(cosmosTask, false, result,
+            writeJsonRuntimeTranslationSummaryTxt(runtimeTask, false, result,
                     singleDurMs,
                     1,
                     1,
                     oneChunk);
-            maybeWriteJsonRuntimeLlmTranslationReport(cosmosTask, safeRequest, false, result, singleDurMs, 1, 1, oneChunk);
-            maybeWriteJsonRuntimeQualityReport(cosmosTask, safeRequest, singleQualityPairs);
+            maybeWriteJsonRuntimeLlmTranslationReport(runtimeTask, safeRequest, false, result, singleDurMs, 1, 1, oneChunk);
+            maybeWriteJsonRuntimeQualityReport(runtimeTask, safeRequest, singleQualityPairs);
         }
-        maybeSyncCosmosAfterJsonRuntime(taskId, result);
+        maybeSyncTaskAfterJsonRuntime(taskId, result);
         return result;
     }
 
     /**
-     * 将 runtime 最终结果同步到 Cosmos：与 Redis/Blob 一致。无论通过定时任务、HTTP 还是 Agent 触发，只要 Cosmos 中存在同 id 的 json-runtime 任务即会 patch。
+     * 将 runtime 最终结果同步到 Blob 任务元数据：与 Redis/Blob 一致。
      */
-    private void maybeSyncCosmosAfterJsonRuntime(String taskId, Map<String, Object> result) {
+    private void maybeSyncTaskAfterJsonRuntime(String taskId, Map<String, Object> result) {
         if (safeText(taskId).isEmpty() || result == null) {
             return;
         }
@@ -1501,11 +1501,11 @@ public class TranslateV3Service {
         if (totalTok > 0) {
             metrics.put("usedToken", (int) Math.min(totalTok, Integer.MAX_VALUE));
         }
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(task.getId(), task.getShopName(), checkpoint, metrics);
         if ("COMPLETED".equals(status) || "PARTIAL_FAILED".equals(status)) {
-            translateTaskV3CosmosRepo.patchStatus(task.getId(), task.getShopName(), 2);
+            translateTaskV3TaskRepo.patchStatus(task.getId(), task.getShopName(), 2);
         } else {
-            translateTaskV3CosmosRepo.patchStatus(task.getId(), task.getShopName(), 4);
+            translateTaskV3TaskRepo.patchStatus(task.getId(), task.getShopName(), 4);
         }
     }
 
@@ -1791,7 +1791,7 @@ public class TranslateV3Service {
         finalResponse.put("status", "FAILED");
         finalResponse.put("failed", failMap.size());
         finalResponse.put("durationMs", System.currentTimeMillis() - startedMs);
-        maybeSyncCosmosAfterJsonRuntime(taskId, finalResponse);
+        maybeSyncTaskAfterJsonRuntime(taskId, finalResponse);
         return finalResponse;
     }
 
@@ -2977,7 +2977,7 @@ public class TranslateV3Service {
                                         Predicate<TranslateTaskV3DO> skipTaskPredicate,
                                         Consumer<TranslateTaskV3DO> taskHandler,
                                         Runnable emptyTaskCallback) {
-        List<TranslateTaskV3DO> tasks = translateTaskV3CosmosRepo.listByStatus(status);
+        List<TranslateTaskV3DO> tasks = translateTaskV3TaskRepo.listByStatus(status);
         if (tasks.isEmpty()) {
             if (emptyTaskCallback != null) {
                 emptyTaskCallback.run();
@@ -3094,7 +3094,7 @@ public class TranslateV3Service {
             LOG.warn("v3 init stop locale mismatch, taskId={}, shop={}, primaryLocale={}, source={}",
                     taskId, task.getShopName(), primaryLocale, task.getSource());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_STOPPED_PRIMARY_LOCALE_MISMATCH");
-            translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 4);
+            translateTaskV3TaskRepo.patchStatus(taskId, task.getShopName(), 4);
             return;
         }
 
@@ -3103,7 +3103,7 @@ public class TranslateV3Service {
         if (CollectionUtils.isEmpty(moduleList)) {
             LOG.info("v3 init empty modules directly move to translate, taskId={}, shop={}", taskId, task.getShopName());
             translateTaskMonitorV3RedisService.setPhase(taskId, "INIT_DONE_EMPTY_MODULES");
-            translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 1);
+            translateTaskV3TaskRepo.patchStatus(taskId, task.getShopName(), 1);
             return;
         }
         LOG.info("v3 init start dump modules, taskId={}, shop={}, moduleCount={}, modules={}",
@@ -3154,8 +3154,8 @@ public class TranslateV3Service {
         metrics.put("savedCount", 0);
         metrics.put("usedToken", 0);
 
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, task.getShopName(), checkpoint, metrics);
-        translateTaskV3CosmosRepo.patchStatus(taskId, task.getShopName(), 1);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(taskId, task.getShopName(), checkpoint, metrics);
+        translateTaskV3TaskRepo.patchStatus(taskId, task.getShopName(), 1);
         LOG.info("v3 init done and status moved to 1, taskId={}, shop={}, totalCount={}, totalChars={}",
                 taskId, task.getShopName(), totalCount, totalChars);
     }
@@ -3193,7 +3193,7 @@ public class TranslateV3Service {
             checkpoint.put("agentRuntimeTraceStampedPath", blobPath(shop, tid, stampedTail));
             checkpoint.put("agentRuntimeTraceSavedAt", Instant.now().toString());
             Map<String, Object> metrics = task.getMetrics() == null ? new HashMap<>() : new HashMap<>(task.getMetrics());
-            translateTaskV3CosmosRepo.patchCheckpointAndMetrics(tid, shop, checkpoint, metrics);
+            translateTaskV3TaskRepo.patchCheckpointAndMetrics(tid, shop, checkpoint, metrics);
             task.setCheckpoint(checkpoint);
             LOG.info("json-runtime agent trace blob saved taskId={}, latest={}", tid, latestTail);
         } catch (Exception e) {
@@ -3257,7 +3257,7 @@ public class TranslateV3Service {
         String primaryLocale = getPrimaryLocaleFromShopifyData(primaryLocaleData);
         if (!StringUtils.isEmpty(primaryLocale) && !sameLocaleCode(primaryLocale, source)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_STOPPED_PRIMARY_LOCALE_MISMATCH");
-            translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 4);
+            translateTaskV3TaskRepo.patchStatus(taskId, shopName, 4);
             return;
         }
 
@@ -3265,7 +3265,7 @@ public class TranslateV3Service {
         });
         if (CollectionUtils.isEmpty(modules)) {
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_DONE_EMPTY_MODULES");
-            translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 2);
+            translateTaskV3TaskRepo.patchStatus(taskId, shopName, 2);
             return;
         }
 
@@ -3356,8 +3356,8 @@ public class TranslateV3Service {
         if (stoppedByTokenLimit) {
             checkpoint.put("phase", "TRANSLATE_STOPPED_TOKEN_LIMIT");
             translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_STOPPED_TOKEN_LIMIT");
-            translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
-            translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 3);
+            translateTaskV3TaskRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
+            translateTaskV3TaskRepo.patchStatus(taskId, shopName, 3);
             translatesService.updateTranslateStatus(shopName, 3, target, source);
             pendingProgressMap.remove(taskId);
             return;
@@ -3365,8 +3365,8 @@ public class TranslateV3Service {
 
         checkpoint.put("phase", "TRANSLATE_DONE");
         translateTaskMonitorV3RedisService.setPhase(taskId, "TRANSLATE_DONE");
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
-        translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 2);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, baseMetrics);
+        translateTaskV3TaskRepo.patchStatus(taskId, shopName, 2);
         translatesService.updateTranslateStatus(shopName, 1, target, source);
         pendingProgressMap.remove(taskId);
 
@@ -3701,7 +3701,7 @@ public class TranslateV3Service {
     }
 
     private TranslateTaskV3DO findSavePendingTask(InitialTaskV2DO initialTaskV2DO) {
-        List<TranslateTaskV3DO> taskList = translateTaskV3CosmosRepo.listByShopSource(
+        List<TranslateTaskV3DO> taskList = translateTaskV3TaskRepo.listByShopSource(
                 initialTaskV2DO.getShopName(), normalizeLocaleCode(initialTaskV2DO.getSource()));
         if (CollectionUtils.isEmpty(taskList)) {
             return null;
@@ -4017,7 +4017,7 @@ public class TranslateV3Service {
         }
         task.setCheckpoint(cp);
         task.setMetrics(metrics);
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(task.getId(), shopName, cp, metrics);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(task.getId(), shopName, cp, metrics);
     }
 
     private void finalizeSaveWithCheckpointPhase(TranslateTaskV3DO task,
@@ -4031,7 +4031,7 @@ public class TranslateV3Service {
         metrics.put("updatedAt", Instant.now().toString());
         patchSaveCheckpoint(task, shopName, metrics, checkpointPhase, null, null, null);
         translateTaskMonitorV3RedisService.setPhase(taskId, redisPhase);
-        translateTaskV3CosmosRepo.patchStatus(taskId, shopName, 6);
+        translateTaskV3TaskRepo.patchStatus(taskId, shopName, 6);
         translatesService.updateTranslateStatus(shopName, 2, task.getTarget(), task.getSource());
     }
 
@@ -4160,7 +4160,7 @@ public class TranslateV3Service {
         checkpoint.put("phase", phase);
         checkpoint.put("updatedAt", Instant.now().toString());
         checkpoint.put("verifyReportPath", blobPath(shopName, taskId, "qa/save-verify.json"));
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, metrics);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(taskId, shopName, checkpoint, metrics);
     }
 
     private boolean isChunkDataPath(String path) {
@@ -4277,7 +4277,7 @@ public class TranslateV3Service {
         checkpoint.put("module", progress.module);
         checkpoint.put("chunkPath", progress.chunkPath);
         checkpoint.put("updatedAt", progress.updatedAt);
-        translateTaskV3CosmosRepo.patchCheckpointAndMetrics(taskId, progress.shopName, checkpoint, metrics);
+        translateTaskV3TaskRepo.patchCheckpointAndMetrics(taskId, progress.shopName, checkpoint, metrics);
     }
 
     private void generateQaReport(String taskId, String shopName, List<String> modules) {

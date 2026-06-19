@@ -1,11 +1,8 @@
 package com.bogda.repository.container;
 
-import com.azure.spring.data.cosmos.core.mapping.Container;
-import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,14 +10,9 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Container(containerName = "translate_tasks_v3", autoCreateContainer = false)
 public class TranslateTaskV3DO {
-    @Id
     private String id;
-
-    @PartitionKey
     private String shopName;
-
     private String source;
     private String target;
     private Integer status;
