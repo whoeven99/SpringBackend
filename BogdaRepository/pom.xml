@@ -25,26 +25,6 @@
             <version>1.57.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-storage-blob</artifactId>
-            <version>12.29.0</version>
-        </dependency>
-
-        <!-- Azure Cosmos DB SDK -->
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-cosmos</artifactId>
-            <version>4.76.0</version>
-        </dependency>
-
-        <!-- Spring Data Cosmos (for @Container, @PartitionKey annotations) -->
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-spring-data-cosmos</artifactId>
-            <version>5.16.0</version>
-        </dependency>
-
         <!-- MyBatis-Plus Core -->
         <dependency>
             <groupId>com.baomidou</groupId>

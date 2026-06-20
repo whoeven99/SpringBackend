@@ -1,8 +1,4 @@
-# 勿忽略 bootstrap.yml：Docker 内 Maven 打包 AgentTask 时必须带上，否则镜像里没有 datasource/redis/cosmos 等配置，Render 启动会因占位符无法解析而失败。
 # 密钥建议用 Render 环境变量覆盖（如 DATASOURCE_URL、Azure_Client_Secret），勿依赖仅存在于本地的 yml。
-AgentTask/src/main/resources/application.properties
-AgentTask/src/main/resources/application-prod.properties
-AgentTask/src/main/resources/application.local.properties
 **/application-local.yml
 **/target/
 .git
