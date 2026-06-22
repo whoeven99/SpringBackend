@@ -14,6 +14,7 @@ import com.bogda.service.logic.TranslateService;
 import com.bogda.service.logic.UserTypeTokenService;
 import com.bogda.service.logic.redis.RedisStoppedRepository;
 import com.bogda.service.logic.redis.TranslationParametersRedisService;
+import com.bogda.service.logic.redis.TsfMigrationRedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
@@ -39,6 +40,8 @@ public class TranslateController {
     private UserTypeTokenService userTypeTokensService;
     @Autowired
     private TranslationParametersRedisService translationParametersRedisService;
+    @Autowired
+    private TsfMigrationRedisService tsfMigrationRedisService;
     @Autowired
     private IUsersService iUsersService;
     @Autowired
@@ -226,6 +229,15 @@ public class TranslateController {
             translateService.syncShopifyAndDatabase(request.getShopName(), usersDO.getAccessToken(), request.getSource());
         }
         return translatesService.updateAutoTranslateByShopName(request.getShopName(), request.getAutoTranslate(), request.getSource(), request.getTarget());
+    }
+
+    /**
+     * TSF 通知：该店已迁移到新版翻译。记录后自动翻译任务跳过该店，避免新旧两版重复翻译。
+     */
+    @PostMapping("/markShopMigratedToTsf")
+    public BaseResponse<Object> markShopMigratedToTsf(@RequestParam String shopName) {
+        tsfMigrationRedisService.markMigrated(shopName);
+        return new BaseResponse<>().CreateSuccessResponse(shopName);
     }
 
     /**
