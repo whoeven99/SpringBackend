@@ -1814,8 +1814,8 @@ public class TranslateV2Service {
                 return false;
             }
 
-            // 原字段如果 包含 class='jdgm-all-reviews__header' 不翻译
-            if (value.contains("class='jdgm-all-reviews__header'")) {
+            // 原字段如果 包含 class='jdgm-all-reviews__header' 或 subscribe_newsletter 不翻译
+            if (value.contains("class='jdgm-all-reviews__header'") || value.contains("subscribe_newsletter")) {
                 return false;
             }
 
