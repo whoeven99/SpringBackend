@@ -12,6 +12,7 @@ import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.service.logic.redis.TsfMigrationRedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,9 @@ public class TranslateTask {
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private AliyunSlsIntegration aliyunSlsIntegration;
+    /** 已迁移到 TSF 的店铺记录（Java 自己的 Redis），自动翻译跳过这些店。 */
+    @Autowired
+    private TsfMigrationRedisService tsfMigrationRedisService;
 
     private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
@@ -225,7 +229,12 @@ public class TranslateTask {
         if (CollectionUtils.isEmpty(translatesDOList)) {
             return;
         }
+        Set<String> migratedShops = tsfMigrationRedisService.getMigratedShops();
         for (TranslatesDO translatesDO : translatesDOList) {
+            if (migratedShops.contains(translatesDO.getShopName())) {
+                // 已迁移到 TSF 新版翻译，自动翻译交给新版 worker，这里跳过避免重复翻译
+                continue;
+            }
             translateV2Service.autoTranslateV2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
         }
     }
