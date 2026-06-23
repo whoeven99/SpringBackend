@@ -12,6 +12,7 @@ import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import javax.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,10 +45,26 @@ public class TranslateTask {
 
     private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
+    private static final int EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS = 55;
+
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
     private final Set<String> initializingShops = new HashSet<>();
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();
+
+    @PreDestroy
+    public void shutdownExecutor() {
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+                executorService.awaitTermination(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
 
     private <T> void process(int status,
                              Function<InitialTaskV2DO, T> groupByFunc,

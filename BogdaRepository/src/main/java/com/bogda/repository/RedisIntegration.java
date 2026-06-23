@@ -36,24 +36,44 @@ public class RedisIntegration {
         void execute() throws Exception;
     }
 
+    /** 应用关闭期间 Redis 连接工厂已停止/销毁，重试无意义 */
+    private static boolean isShutdownRelated(Exception e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current instanceof IllegalStateException) {
+                String message = current.getMessage();
+                if (message != null
+                        && (message.contains("STOPPING") || message.contains("was destroyed"))) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
     /**
      * 带重试的 Redis 操作执行器（有返回值）
      * <p>最多重试 {@link #MAX_RETRIES} 次，每次失败后按指数退避等待。
-     * 若线程被中断则立即终止重试；全部重试耗尽后上报异常并返回默认值。</p>
-     *
-     * @param methodName   方法名，用于日志和异常上报
-     * @param context      操作上下文描述，用于日志和异常上报
-     * @param operation    实际的 Redis 操作
-     * @param defaultValue 全部重试失败后的兜底返回值
+     * 若线程被中断或应用关闭则立即终止重试；全部重试耗尽后上报异常并返回默认值。</p>
      */
     private <T> T executeWithRetry(String methodName, String context,
                                    RedisOperation<T> operation, T defaultValue) {
         Exception lastException = null;
+        boolean shutdownRelated = false;
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
                 return operation.execute();
             } catch (Exception e) {
                 lastException = e;
+                if (isShutdownRelated(e)) {
+                    shutdownRelated = true;
+                    log.debug("[{}] 应用关闭中，跳过重试, context: {}", methodName, context);
+                    break;
+                }
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
                 if (attempt < MAX_RETRIES) {
                     long backoff = INITIAL_BACKOFF_MS * (1L << (attempt - 1));
                     log.warn("FatalException [{}] 第 {}/{} 次重试，{}ms 后执行, context: {}",
@@ -67,9 +87,11 @@ public class RedisIntegration {
                 }
             }
         }
-        TraceReporterHolder.report(methodName,
-                "FatalException after " + MAX_RETRIES + " retries, " + context);
-        ExceptionReporterHolder.report(methodName, lastException);
+        if (!shutdownRelated && lastException != null) {
+            TraceReporterHolder.report(methodName,
+                    "FatalException after " + MAX_RETRIES + " retries, " + context);
+            ExceptionReporterHolder.report(methodName, lastException);
+        }
         return defaultValue;
     }
 
