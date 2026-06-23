@@ -24,7 +24,7 @@ public class AiModelConfigService {
 
     /**
      * 从Redis统一配置中获取指定类型的AI模型配置。
-     * Redis数据格式: {"gpt":{"model":"gpt-4.1","magnification":"3"},"qwen":{"model":"qwen-max","magnification":"2"}}
+     * Redis数据格式: {"gpt":{"model":"gpt-4.1","magnification":"3"},"qwen":{"model":"qwen3.6-plus","magnification":"2"}}
      */
     private Map<String, String> getTypeConfig(String type) {
         String json = configRedisRepo.getConfig(AI_MODEL_CONFIG_KEY);
@@ -46,7 +46,7 @@ public class AiModelConfigService {
         }
         return switch (type) {
             case "gpt" -> ChatGptIntegration.GPT_4_1;
-            case "qwen" -> ALiYunTranslateIntegration.QWEN_MAX;
+            case "qwen" -> ALiYunTranslateIntegration.QWEN_PLUS;
             case "gemini" -> GeminiIntegration.GEMINI_3_FLASH;
             case "kimi" -> KimiIntegration.KIMI_K25;
             default -> null;
@@ -80,13 +80,13 @@ public class AiModelConfigService {
     public String getSingleTranslateModel() {
         String config = configRedisRepo.getConfig(SINGLE_TRANSLATE_MODEL_KEY);
         if (config == null || config.trim().isEmpty()) {
-            return ALiYunTranslateIntegration.QWEN_MAX;
+            return ALiYunTranslateIntegration.QWEN_PLUS;
         }
         return switch (config.trim().toLowerCase()) {
             case "gpt" -> ChatGptIntegration.GPT_4_1_NANO;
             case "gemini" -> GeminiIntegration.GEMINI_3_FLASH;
             case "kimi" -> KimiIntegration.KIMI_K25;
-            default -> ALiYunTranslateIntegration.QWEN_MAX;
+            default -> ALiYunTranslateIntegration.QWEN_PLUS;
         };
     }
 }

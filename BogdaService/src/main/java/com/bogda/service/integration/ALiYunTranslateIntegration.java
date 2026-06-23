@@ -1,13 +1,9 @@
 package com.bogda.service.integration;
 
 
-import com.alibaba.dashscope.aigc.generation.Generation;
-import com.alibaba.dashscope.aigc.generation.GenerationParam;
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationParam;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
-import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MultiModalMessage;
 import com.alibaba.dashscope.common.Role;
 import com.alibaba.dashscope.exception.NoSpecialTokenExists;
@@ -41,7 +37,7 @@ public class ALiYunTranslateIntegration {
 
     private static Tokenizer tokenizer;
     public static String TRANSLATE_APP = "TRANSLATE_APP";
-    public static String QWEN_MAX = "qwen-max";
+    public static String QWEN_PLUS = "qwen3.6-plus";
 
     public ALiYunTranslateIntegration() {
         tokenizer = TokenizerFactory.qwen();
@@ -61,31 +57,29 @@ public class ALiYunTranslateIntegration {
     public static String switchModel(String languageCode) {
         return switch (languageCode) {
 //            case "en", "zh-CN", "de", "ja", "it", "ru", "zh-TW", "da", "nl", "id", "th", "vi", "uk", "fr", "ko", "hi", "bg", "cs", "el", "hr", "lt", "nb", "pl", "ro", "sk", "sv", "ar", "no" -> "qwen-plus";
-            default -> "qwen-max-latest"; //32k token
+            default -> QWEN_PLUS; //32k token
         };
 //        return "qwen-max";
     }
 
     public Pair<String, Integer> userTranslate(String prompt, String target, double magnification) {
         String model = switchModel(target);
-        Generation gen = new Generation();
-        Message userMsg = Message.builder()
+        MultiModalMessage userMsg = MultiModalMessage.builder()
                 .role(Role.USER.getValue())
-                .content(prompt)
+                .content(Collections.singletonList(Map.of("text", prompt)))
                 .build();
 
-        GenerationParam param = GenerationParam.builder()
-                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+        MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Collections.singletonList(userMsg))
-                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
 
+        MultiModalConversation conv = new MultiModalConversation();
         try {
-            GenerationResult call = TimeOutUtils.callWithTimeoutAndRetry(() -> {
+            MultiModalConversationResult call = TimeOutUtils.callWithTimeoutAndRetry(() -> {
                         try {
-                            return gen.call(param);
+                            return conv.call(param);
                         } catch (Exception e) {
                             TraceReporterHolder.report("ALiYunTranslateIntegration.userTranslate", "FatalException 飞书机器人报错 userTranslate call errors ： " + e.getMessage() +
                                     " translateText : " + prompt);
@@ -100,7 +94,7 @@ public class ALiYunTranslateIntegration {
             if (call == null) {
                 return null;
             }
-            String content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            String content = extractTextContent(call);
 
             int totalToken = (int) (call.getUsage().getTotalTokens() * magnification);
             Integer inputTokens = call.getUsage().getInputTokens();
@@ -129,7 +123,7 @@ public class ALiYunTranslateIntegration {
 
         MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(TranslateConstants.QWEN_VL_LAST)
+                .model(QWEN_PLUS)
                 .message(userMessage)
                 .build();
         MultiModalConversationResult result;
@@ -167,27 +161,25 @@ public class ALiYunTranslateIntegration {
     }
 
     /**
-     * 调用qwen-max用户产品描述图片为空的情况
+     * 调用qwen3.6-plus用户产品描述图片为空的情况
      */
     public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit) {
-        Generation gen = new Generation();
-        Message userMsg = Message.builder()
+        MultiModalConversation conv = new MultiModalConversation();
+        MultiModalMessage userMsg = MultiModalMessage.builder()
                 .role(Role.USER.getValue())
-                .content(prompt)
+                .content(Collections.singletonList(Map.of("text", prompt)))
                 .build();
-        GenerationParam param = GenerationParam.builder()
-                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+        MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model("qwen-max-latest")
+                .model(QWEN_PLUS)
                 .messages(Collections.singletonList(userMsg))
-                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
         String content;
         int totalToken;
         try {
-            GenerationResult call = callWithTimeoutAndRetry(() -> {
+            MultiModalConversationResult call = callWithTimeoutAndRetry(() -> {
                         try {
-                            return gen.call(param);
+                            return conv.call(param);
                         } catch (Exception e) {
                             TraceReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", "FatalException 每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
                             ExceptionReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", e);
@@ -200,7 +192,7 @@ public class ALiYunTranslateIntegration {
             if (call == null) {
                 return null;
             }
-            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            content = extractTextContent(call);
             totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
@@ -218,29 +210,27 @@ public class ALiYunTranslateIntegration {
 
     public String textTranslate(String text, String prompt, String target, String shopName, Integer limitChars) {
         String model = switchModel(target);
-        Generation gen = new Generation();
+        MultiModalConversation conv = new MultiModalConversation();
 
-        Message systemMsg = Message.builder()
+        MultiModalMessage systemMsg = MultiModalMessage.builder()
                 .role(Role.SYSTEM.getValue())
-                .content(prompt)
+                .content(Collections.singletonList(Map.of("text", prompt)))
                 .build();
-        Message userMsg = Message.builder()
+        MultiModalMessage userMsg = MultiModalMessage.builder()
                 .role(Role.USER.getValue())
-                .content(text)
+                .content(Collections.singletonList(Map.of("text", text)))
                 .build();
-        GenerationParam param = GenerationParam.builder()
-                // 若没有配置环境变量，请用百炼API Key将下行替换为：.apiKey("sk-xxx")
+        MultiModalConversationParam param = MultiModalConversationParam.builder()
                 .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
                 .model(model)
                 .messages(Arrays.asList(systemMsg, userMsg))
-                .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .build();
         String content;
         int totalToken;
         try {
-            GenerationResult call = callWithTimeoutAndRetry(() -> {
+            MultiModalConversationResult call = callWithTimeoutAndRetry(() -> {
                         try {
-                            return gen.call(param);
+                            return conv.call(param);
                         } catch (Exception e) {
                             TraceReporterHolder.report("ALiYunTranslateIntegration.textTranslate", "FatalException 每日须看 textTranslate 百炼翻译报错信息 errors ： " + e.getMessage() + " translateText : " + text + " 用户：" + shopName);
                             ExceptionReporterHolder.report("ALiYunTranslateIntegration.textTranslate", e);
@@ -253,7 +243,7 @@ public class ALiYunTranslateIntegration {
             if (call == null) {
                 return null;
             }
-            content = call.getOutput().getChoices().get(0).getMessage().getContent();
+            content = extractTextContent(call);
             totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
             Integer inputTokens = call.getUsage().getInputTokens();
             Integer outputTokens = call.getUsage().getOutputTokens();
@@ -264,5 +254,10 @@ public class ALiYunTranslateIntegration {
             return null;
         }
         return content;
+    }
+
+    private static String extractTextContent(MultiModalConversationResult result) {
+        List<Map<String, Object>> content = result.getOutput().getChoices().get(0).getMessage().getContent();
+        return (String) content.get(0).get("text");
     }
 }

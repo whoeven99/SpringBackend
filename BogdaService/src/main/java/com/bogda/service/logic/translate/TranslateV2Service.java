@@ -117,7 +117,7 @@ public class TranslateV2Service {
     public static final Map<String, Double> AVG_TOKEN_PER_ITEM = new HashMap<String, Double>() {{
         put(GeminiIntegration.GEMINI_3_FLASH, 1.58);
         put(ModuleCodeUtils.GPT, 0.99);
-        put(ALiYunTranslateIntegration.QWEN_MAX, 0.85);
+        put(ALiYunTranslateIntegration.QWEN_PLUS, 0.85);
     }};
 
     /**
@@ -126,7 +126,7 @@ public class TranslateV2Service {
     public static Map<String, Double> TOKEN_PER_SECOND = new HashMap<String, Double>() {{
         put(GeminiIntegration.GEMINI_3_FLASH, 0.31);
         put(ModuleCodeUtils.GPT, 0.17);
-        put(ALiYunTranslateIntegration.QWEN_MAX, 0.31);
+        put(ALiYunTranslateIntegration.QWEN_PLUS, 0.31);
     }};
 
     private static int parseIntSafe(String s, int defaultValue) {
@@ -554,7 +554,7 @@ public class TranslateV2Service {
         initialTask.setTaskType("auto");
         initialTaskV2Repo.insert(initialTask);
 
-        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, ALiYunTranslateIntegration.QWEN_MAX);
+        translateTaskMonitorV2RedisService.createRecord(initialTask.getId(), shopName, source, target, ALiYunTranslateIntegration.QWEN_PLUS);
     }
 
 
@@ -1814,8 +1814,8 @@ public class TranslateV2Service {
                 return false;
             }
 
-            // 原字段如果 包含 class='jdgm-all-reviews__header' 不翻译
-            if (value.contains("class='jdgm-all-reviews__header'")) {
+            // 原字段如果 包含 class='jdgm-all-reviews__header' 或 subscribe_newsletter 不翻译
+            if (value.contains("class='jdgm-all-reviews__header'") || value.contains("subscribe_newsletter")) {
                 return false;
             }
 

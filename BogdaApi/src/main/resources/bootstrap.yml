@@ -1,10 +1,16 @@
 # Spring Cloud Azure Key Vault
+translate:
+  v3:
+    enabled: false
+
 spring:
   application:
     name: bogda-web
 
   cloud:
     azure:
+      cosmos:
+        enabled: false
       profile:
         tenant-id: ${appRegistration.tenant-id}
 
