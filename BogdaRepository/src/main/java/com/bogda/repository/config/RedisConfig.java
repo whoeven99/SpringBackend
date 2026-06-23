@@ -35,6 +35,10 @@ public class RedisConfig {
         poolConfig.setMaxIdle(20);
         poolConfig.setMinIdle(5);
         poolConfig.setMaxWait(Duration.ofMillis(3000));
+        // Azure Redis 约10分钟断开空闲TCP连接，testOnBorrow防止使用到已断开的连接
+        poolConfig.setTestOnBorrow(true);
+        poolConfig.setTestWhileIdle(true);
+        poolConfig.setTimeBetweenEvictionRuns(Duration.ofSeconds(60));
 
         // 配置Redis基本信息
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();

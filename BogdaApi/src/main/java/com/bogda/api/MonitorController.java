@@ -174,7 +174,9 @@ public class MonitorController {
         Map<String, Object> responseMap = new HashMap<>();
         for (InitialTaskV2DO initialTaskV2DO : initialList) {
             Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
-            if ("0".equals(taskMap.get("totalCount"))) {
+            // 仅当 Redis 中完全没有该任务的监控数据时才跳过；
+            // totalCount 为 0 可能是初始化阶段被中断/重启导致，此时任务仍存在，不应隐藏
+            if (taskMap.isEmpty()) {
                 continue;
             }
             taskMap.put("task_type", initialTaskV2DO.getTaskType());
