@@ -7,6 +7,9 @@ spring:
   application:
     name: bogda-task
 
+  lifecycle:
+    timeout-per-shutdown-phase: 60s
+
   cloud:
     azure:
       cosmos:
