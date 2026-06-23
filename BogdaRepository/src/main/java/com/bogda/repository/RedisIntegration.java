@@ -43,7 +43,7 @@ public class RedisIntegration {
             if (current instanceof IllegalStateException) {
                 String message = current.getMessage();
                 if (message != null
-                        && (message.contains("STOPPING") || message.contains("was destroyed"))) {
+                        && (message.contains("STOPPING") || message.contains("STOPPED") || message.contains("was destroyed"))) {
                     return true;
                 }
             }
@@ -259,8 +259,8 @@ public class RedisIntegration {
     public String get(String key) {
         return executeWithRetry("RedisIntegration.get",
                 "get " + key,
-                () -> redisTemplate.opsForValue().get(key) + "",
-                "null");
+                () -> redisTemplate.opsForValue().get(key),
+                null);
     }
 
 
