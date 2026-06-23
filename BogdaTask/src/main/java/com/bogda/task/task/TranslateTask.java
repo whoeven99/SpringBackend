@@ -255,7 +255,7 @@ public class TranslateTask {
     /**
      * 检查 DB 状态为 0～2 的 InitialTask：若 Redis 监控中 lastUpdatedTime（无则 initStartTime）距现在超过 30 分钟，飞书告警。
      */
-    @Scheduled(fixedDelay = 10 * 60 * 1000)
+//    @Scheduled(fixedDelay = 10 * 60 * 1000)
     public void checkInitialTaskMonitorStall() {
         List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatusesInProgress();
         if (CollectionUtils.isEmpty(tasks)) {
