@@ -14,7 +14,7 @@ CREATE TABLE dbo.Initial_Translate_Tasks_V2
     saving_shopify_minutes INT            NOT NULL default 0,
     save_status            BIT                     DEFAULT 0 NOT NULL,
     used_token             INT            NOT NULL default 0,
-    ai_model               NVARCHAR(25)   NOT NULL DEFAULT 'qwen-max',
+    ai_model               NVARCHAR(25)   NOT NULL DEFAULT 'qwen3.6-plus',
     is_deleted             BIT                     DEFAULT 0 NOT NULL,
     updated_at             DATETIME                DEFAULT GETUTCDATE(),
     created_at             DATETIME                DEFAULT GETUTCDATE()

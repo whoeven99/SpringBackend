@@ -15,7 +15,7 @@ public class ModuleCodeUtilsTest {
         assertEquals("kimi-k2.5", ModuleCodeUtils.getModuleCode("1"));
         assertEquals("gpt-4.1", ModuleCodeUtils.getModuleCode("3"));
         assertEquals("gemini-3-flash-preview", ModuleCodeUtils.getModuleCode("4"));
-        assertEquals("qwen-max", ModuleCodeUtils.getModuleCode("default"));
+        assertEquals("qwen3.6-plus", ModuleCodeUtils.getModuleCode("default"));
     }
 
     @Test
