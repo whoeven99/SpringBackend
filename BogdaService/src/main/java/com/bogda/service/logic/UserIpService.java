@@ -6,11 +6,9 @@ import com.bogda.service.Service.*;
 import com.bogda.common.entity.DO.CurrenciesDO;
 import com.bogda.common.entity.DO.TranslationCounterDO;
 import com.bogda.common.entity.DO.UserIpDO;
-import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import com.bogda.common.entity.VO.IncludeCrawlerVO;
 import com.bogda.common.entity.VO.IpRedirectionVO;
 import com.bogda.common.entity.VO.NoCrawlerVO;
-import com.bogda.service.WidgetReturnVO;
 import com.bogda.service.logic.token.UserTokenService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.UserIPCountDO;
@@ -38,8 +36,6 @@ public class UserIpService {
     private ITranslationCounterService iTranslationCounterService;
     @Autowired
     private UserIPRedirectionRepo userIPRedirectionRepo;
-    @Autowired
-    private IWidgetConfigurationsService iWidgetConfigurationsService;
     @Autowired
     private UserIPCountRepo userIPCountRepo;
     @Autowired
@@ -377,25 +373,5 @@ public class UserIpService {
 
     public List<UserIPRedirectionDO> selectAllIpRedirectionByShopName(String shopName) {
         return userIPRedirectionRepo.selectAllIpRedirectionByShopName(shopName);
-    }
-
-    public BaseResponse<Object> getWidgetConfigurations(String shopName) {
-        WidgetConfigurationsDO data = iWidgetConfigurationsService.getData(shopName);
-        if (data == null) {
-            return new BaseResponse<>().CreateErrorResponse("query error");
-        }
-
-        // 获取ip的跳转数据一块返回
-        List<UserIPRedirectionDO> userIPRedirectionDOS = userIPRedirectionRepo.selectIpRedirectionByShopName(shopName);
-        WidgetReturnVO widgetReturnVO = new WidgetReturnVO(shopName, data.getLanguageSelector(), data.getCurrencySelector()
-                , data.getIpOpen(), data.getIncludedFlag(), data.getFontColor(), data.getBackgroundColor(), data.getButtonColor(), data.getButtonBackgroundColor()
-                , data.getOptionBorderColor(), data.getSelectorPosition(), data.getPositionData(), data.getIsTransparent(), userIPRedirectionDOS);
-
-        if (userIPRedirectionDOS != null) {
-            return new BaseResponse<>().CreateSuccessResponse(widgetReturnVO);
-        } else {
-            return new BaseResponse<>().CreateErrorResponse("query error");
-        }
-
     }
 }

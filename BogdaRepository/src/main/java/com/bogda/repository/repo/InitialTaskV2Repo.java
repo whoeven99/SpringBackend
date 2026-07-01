@@ -64,16 +64,6 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
-    /**
-     * 可继续的任务：翻译阶段停止(5) + 初始化阶段停止(6)
-     */
-    public List<InitialTaskV2DO> selectResumableByShopName(String shopName) {
-        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .eq(InitialTaskV2DO::getShopName, shopName)
-                .in(InitialTaskV2DO::getStatus, 5, 6)
-                .eq(InitialTaskV2DO::getIsDeleted, false));
-    }
-
     public List<InitialTaskV2DO> selectByShopNameAndType(String shopName, String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getShopName, shopName)
@@ -96,31 +86,12 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .eq(InitialTaskV2DO::getIsDeleted, false));
     }
 
-    /**
-     * 进行中任务：读取 Shopify / 翻译中 / 写入 Shopify（0～2）
-     */
-    public List<InitialTaskV2DO> selectByStatusesInProgress() {
-        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .in(InitialTaskV2DO::getStatus, 0, 1, 2)
-                .eq(InitialTaskV2DO::getIsDeleted, false));
-    }
-
     public List<InitialTaskV2DO> selectByStatusAndTaskType(int status, String taskType) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .eq(InitialTaskV2DO::getStatus, status)
                 .eq(InitialTaskV2DO::getTaskType, taskType)
                 .eq(InitialTaskV2DO::isSendEmail, false)
                 .eq(InitialTaskV2DO::getIsDeleted, false));
-    }
-
-    public boolean existsTranslatingTask(String shopName, String source, String target) {
-        return baseMapper.selectCount(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .eq(InitialTaskV2DO::getShopName, shopName)
-                .eq(InitialTaskV2DO::getSource, source)
-                .eq(InitialTaskV2DO::getTarget, target)
-                .in(InitialTaskV2DO::getTaskType, "manual", "auto")
-                .in(InitialTaskV2DO::getStatus, 0, 1, 2, 3)
-                .eq(InitialTaskV2DO::getIsDeleted, false)) > 0;
     }
 
     public List<InitialTaskV2DO> selectByTaskTypeAndNotEmail(String taskType) {
@@ -178,14 +149,6 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
                 .set(InitialTaskV2DO::getIsDeleted, true)
                 .set(InitialTaskV2DO::getUpdatedAt, new Timestamp(System.currentTimeMillis()))
         ) > 0;
-    }
-
-    public List<InitialTaskV2DO> selectByShopNameSourceManual(String shopName, String source) {
-        return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
-                .eq(InitialTaskV2DO::getShopName, shopName)
-                .eq(InitialTaskV2DO::getSource, source)
-                .eq(InitialTaskV2DO::getIsDeleted, false)
-                .eq(InitialTaskV2DO::getTaskType, "manual"));
     }
 
     public boolean deleteById(Integer id) {

@@ -2,11 +2,8 @@ package com.bogda.task.task;
 
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.common.utils.AliyunLogSqlUtils;
-import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import com.bogda.service.logic.TencentEmailService;
-import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
@@ -46,15 +43,9 @@ public class TranslateTask {
     private TranslateTaskV2Repo translateTaskV2Repo;
     @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
-    @Autowired
-    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
-    @Autowired
-    private AliyunSlsIntegration aliyunSlsIntegration;
 
     @Value("${spring.profiles.active:${ApplicationEnv:${spring.config.activate.on-profile:local}}}")
     private String env;
-
-    private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
     private static final int EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS = 55;
 
@@ -254,14 +245,6 @@ public class TranslateTask {
         }
     }
 
-    // 自动翻译，每小时整点执行一次，只翻译拆创建小时=当前小时的店铺
-    // 2026-06-30：v4 全量切入口前暂停 Java 侧自动翻译调度（改由 TSF worker 负责）。
-    // 恢复时重新加上 @Scheduled(cron = "0 0 * * * ?") 并还原方法体。
-    // @Scheduled(cron = "0 0 * * * ?")
-    public void autoTranslateTask() {
-        // disabled — auto translation now handled by TSF v4 worker
-    }
-
     @Scheduled(fixedRate = CLEAN_TASK_SCHEDULE_INTERVAL_MS)
     public void cleanTask() {
         while (cleaningInitialTaskIds.size() < CLEAN_TASK_POOL_SIZE) {
@@ -322,62 +305,5 @@ public class TranslateTask {
         return Arrays.stream(rawEnv.split(","))
                 .map(String::trim)
                 .anyMatch(v -> "test".equalsIgnoreCase(v) || "prod".equalsIgnoreCase(v));
-    }
-
-    /**
-     * 检查 DB 状态为 0～2 的 InitialTask：若 Redis 监控中 lastUpdatedTime（无则 initStartTime）距现在超过 30 分钟，飞书告警。
-     */
-//    @Scheduled(fixedDelay = 10 * 60 * 1000)
-    public void checkInitialTaskMonitorStall() {
-        List<InitialTaskV2DO> tasks = initialTaskV2Repo.selectByStatusesInProgress();
-        if (CollectionUtils.isEmpty(tasks)) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        List<String> lines = new ArrayList<>();
-        for (InitialTaskV2DO task : tasks) {
-            Map<String, String> monitor = translateTaskMonitorV2RedisService.getAllByTaskId(task.getId());
-            if (monitor == null || monitor.isEmpty()) {
-                continue;
-            }
-
-            Long refMs = parseMonitorMillis(monitor.get("lastUpdatedTime"));
-            if (refMs == null) {
-                continue;
-            }
-
-            if (now - refMs > INITIAL_TASK_STALL_THRESHOLD_MS) {
-                // 判断日志中是否有该用户最新数据，然后觉得是否发飞书报错
-                long currentTime = System.currentTimeMillis() / 1000;
-                int from = (int) (currentTime - 0.5 * 60 * 60);
-                int to = (int) currentTime;
-                Map<String, String> map = aliyunSlsIntegration.readSingleLog(from, to, AliyunLogSqlUtils.getNewestLog(task.getShopName()));
-                if (map != null) {
-                    TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "找到了用户初始化的日志 : " + map);
-                    continue;
-                }
-
-                lines.add("taskId=" + task.getId() + " shop=" + task.getShopName() + " status=" + task.getStatus()
-                        + " updateTime=" + refMs + "now=" + now + " taskType=" + task.getTaskType());
-            }
-        }
-
-        if (!lines.isEmpty()) {
-            TraceReporterHolder.report("TranslateTask.checkInitialTaskMonitorStall", "FatalException 飞书机器人报错 InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
-                    + String.join("\n", lines));
-            feiShuRobotIntegration.sendMessage("InitialTask 监控告警：Redis 进度超过30分钟未更新，请排查。详情：\n"
-                    + String.join("\n", lines));
-        }
-    }
-
-    private static Long parseMonitorMillis(String raw) {
-        if (raw == null || raw.isEmpty()) {
-            return null;
-        }
-        try {
-            return Long.parseLong(raw.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 }

@@ -2,7 +2,6 @@ package com.bogda.service.logic.translate;
 
 import com.bogda.common.entity.VO.SingleReturnVO;
 import com.bogda.common.entity.VO.SingleTranslateVO;
-import com.bogda.common.controller.request.ClickTranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.common.TranslateContext;
@@ -371,36 +370,6 @@ class TranslateV2ServiceTest {
     }
 
     @Test
-    void testCreateInitialTask_WithMissingParameters_ShouldReturnFailedResponse() {
-        // Given
-        ClickTranslateRequest request = new ClickTranslateRequest();
-        request.setShopName("");
-
-        // When
-        BaseResponse<Object> response = translateV2Service.createInitialTask(request);
-
-        // Then
-        assertFalse(response.getSuccess());
-        assertEquals("Missing parameters", response.getErrorMsg());
-    }
-
-    @Test
-    void testCreateInitialTask_WithTokenLimit_ShouldReturnErrorResponse() {
-        // Given
-        ClickTranslateRequest request = createValidClickTranslateRequest();
-        when(userTokenService.getMaxToken(testShopName)).thenReturn(1000);
-        when(userTokenService.getUsedToken(testShopName)).thenReturn(1000);
-
-        // When
-        BaseResponse<Object> response = translateV2Service.createInitialTask(request);
-
-        // Then
-        assertFalse(response.getSuccess());
-        verify(userTokenService).getMaxToken(testShopName);
-        verify(userTokenService).getUsedToken(testShopName);
-    }
-
-    @Test
     void testRetrySaveAllFailedTasks_WithNoFailedRecord_ShouldReturnDirectly() {
         when(translateSaveFailedTaskRepo.selectOneUnretried()).thenReturn(null);
 
@@ -618,18 +587,6 @@ class TranslateV2ServiceTest {
     }
 
     // Helper methods
-    private ClickTranslateRequest createValidClickTranslateRequest() {
-        ClickTranslateRequest request = new ClickTranslateRequest();
-        request.setShopName(testShopName);
-        request.setSource("en");
-        request.setTarget(new String[]{"zh", "fr"});
-        request.setTranslateSettings3(Arrays.asList("PRODUCT", "PAGE"));
-        request.setTranslateSettings1("gemini-3-flash");
-        request.setIsCover(false);
-        request.setAccessToken("test-token");
-        return request;
-    }
-
     private Map<String, String> createTaskContext(String totalCount, String translatedCount, String savedCount) {
         Map<String, String> context = new HashMap<>();
         context.put("totalCount", totalCount);
