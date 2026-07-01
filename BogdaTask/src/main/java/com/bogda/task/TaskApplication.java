@@ -8,7 +8,13 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(
-    exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class},
+    exclude = {
+            DataSourceAutoConfiguration.class,
+            HibernateJpaAutoConfiguration.class,
+            com.azure.spring.cloud.autoconfigure.implementation.cosmos.AzureCosmosAutoConfiguration.class,
+            com.azure.spring.cloud.autoconfigure.implementation.data.cosmos.CosmosDataAutoConfiguration.class,
+            com.azure.spring.cloud.autoconfigure.implementation.data.cosmos.CosmosRepositoriesAutoConfiguration.class,
+    },
     scanBasePackages = {"com.bogda.task", "com.bogda.repository", "com.bogda.common"
             , "com.bogda.integration", "com.bogda.service"}
 )
@@ -16,8 +22,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class TaskApplication {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(TaskApplication.class);
-        // Task 进程仅承担定时任务，不需要启动内嵌 Web 服务器，避免 servlet/jackson web 链路冲突。
-        app.setWebApplicationType(WebApplicationType.NONE);
+        // Task 进程虽以定时任务为主，但部署在 Azure App Service for Containers 上，
+        // 平台需周期性 ping 容器的 HTTP 端口判断存活，否则会判定不健康并回收重启。
+        // 因此启动最小内嵌 Web 服务器，仅对外暴露健康检查端点。
+        app.setWebApplicationType(WebApplicationType.SERVLET);
         app.run(args);
     }
 }

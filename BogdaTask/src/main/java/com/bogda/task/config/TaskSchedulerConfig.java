@@ -13,6 +13,8 @@ public class TaskSchedulerConfig {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(10);
         scheduler.setThreadNamePrefix("bogda-task-scheduler-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setAwaitTerminationSeconds(55);
         scheduler.initialize();
         return scheduler;
     }

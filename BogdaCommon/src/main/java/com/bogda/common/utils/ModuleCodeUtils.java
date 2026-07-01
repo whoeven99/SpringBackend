@@ -14,7 +14,7 @@ public class ModuleCodeUtils {
             case "1" -> "kimi-k2.5"; // KimiIntegration.KIMI_K25
             case "3" -> "gpt-4.1"; // ALiYunTranslateIntegration.GPT_4_1;
             case "4" -> "gemini-3-flash-preview"; // GeminiIntegration.GEMINI_3_FLASH
-            default -> "qwen-max"; // ALiYunTranslateIntegration.QWEN_MAX;
+            default -> "qwen3.6-plus"; // ALiYunTranslateIntegration.QWEN_PLUS;
         };
     }
 
