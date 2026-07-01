@@ -80,7 +80,7 @@
             <version>1.0.160</version>
         </dependency>
 
-        <!-- FastJSON (MicrosoftMachineIntegration 使用) - 已通过 BogdaCommon 传递，但显式声明以确保版本一致 -->
+        <!-- FastJSON - 已通过 BogdaCommon 传递，但显式声明以确保版本一致 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>

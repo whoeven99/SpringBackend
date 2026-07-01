@@ -7,8 +7,6 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.integration.aimodel.HunYuanIntegration;
 import com.bogda.integration.aimodel.RateHttpIntegration;
-import com.bogda.service.Service.ITranslatesService;
-import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.VO.UserDataReportVO;
 import com.bogda.integration.shopify.ShopifyHttpIntegration;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
@@ -16,7 +14,6 @@ import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.logic.RedisDataReportService;
 import com.bogda.service.logic.RedisProcessService;
 import com.bogda.service.logic.redis.RateRedisService;
-import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.common.controller.request.CloudServiceRequest;
 import com.bogda.common.controller.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +37,6 @@ public class TestController {
     private RedisProcessService redisProcessService;
     @Autowired
     private RedisDataReportService redisDataReportService;
-    @Autowired
-    private TranslateV2Service translateV2Service;
-    @Autowired
-    private ITranslatesService iTranslatesService;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
@@ -167,14 +160,6 @@ public class TestController {
             return new BaseResponse<>().CreateSuccessResponse(userDataReport);
         }
         return new BaseResponse<>().CreateErrorResponse(false);
-    }
-
-    @GetMapping("/testAutoEmail")
-    public void testAutoEmail(@RequestParam String shopName) {
-        List<TranslatesDO> translatesDOList = iTranslatesService.listAutoTranslates(shopName);
-        for (TranslatesDO translatesDO : translatesDOList) {
-            translateV2Service.testAutoTranslate(shopName, translatesDO.getSource(), translatesDO.getTarget());
-        }
     }
 
     // 手动获取rate
