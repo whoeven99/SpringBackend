@@ -36,6 +36,22 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         return list.isEmpty() ? null : list.get(0);
     }
 
+    /**
+     * 一次性清理候选：已软删且 3 天内，或未软删且超过 3 天。
+     */
+    public InitialTaskV2DO selectOneEligibleForLegacyOneTimeCleanup(Collection<Integer> excludeIds) {
+        LocalDateTime retentionCutoff = LocalDateTime.now().minusHours(24 * 3);
+        LambdaQueryWrapper<InitialTaskV2DO> wrapper = new LambdaQueryWrapper<InitialTaskV2DO>()
+                .apply("(is_deleted = 1 AND created_at > {0}) OR (is_deleted = 0 AND created_at <= {0})", retentionCutoff)
+                .orderByAsc(InitialTaskV2DO::getId);
+        if (excludeIds != null && !excludeIds.isEmpty()) {
+            wrapper.notIn(InitialTaskV2DO::getId, excludeIds);
+        }
+        wrapper.last("OFFSET 0 ROWS FETCH NEXT 1 ROW ONLY");
+        List<InitialTaskV2DO> list = baseMapper.selectList(wrapper);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
     public List<InitialTaskV2DO> selectByLastDaysAndType(String type, Integer day) {
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .ge(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * day))
