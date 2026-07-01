@@ -10,9 +10,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
     exclude = {
             DataSourceAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
-            com.azure.spring.cloud.autoconfigure.implementation.cosmos.AzureCosmosAutoConfiguration.class,
-            com.azure.spring.cloud.autoconfigure.implementation.data.cosmos.CosmosDataAutoConfiguration.class,
-            com.azure.spring.cloud.autoconfigure.implementation.data.cosmos.CosmosRepositoriesAutoConfiguration.class,
     },
     scanBasePackages = {"com.bogda.api", "com.bogda.repository", "com.bogda.common",
             "com.bogda.integration", "com.bogda.service"}
