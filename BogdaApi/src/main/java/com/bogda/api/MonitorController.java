@@ -12,7 +12,6 @@ import com.bogda.service.logic.redis.RedisStoppedRepository;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.service.logic.translate.stragety.HtmlTranslateStrategyService;
-import com.bogda.common.controller.response.ProgressResponse;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import org.jsoup.nodes.Document;
@@ -79,11 +78,6 @@ public class MonitorController {
     }
 
     // For Monitor
-    @GetMapping("/getProgressByShopName")
-    public List<ProgressResponse.Progress> getProgressByShopName(@RequestParam String shopName) {
-        return new ArrayList<>();
-    }
-
     @GetMapping("/bogdaconfig")
     public Map<String, String> config() {
         return configRedisRepo.getAllConfigs();
