@@ -5,14 +5,11 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.AliyunLogSqlUtils;
 import com.bogda.integration.aimodel.AliyunSlsIntegration;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
-import com.bogda.service.Service.ITranslatesService;
-import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.service.logic.TencentEmailService;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
-import com.bogda.service.logic.redis.TsfMigrationRedisService;
 import javax.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,16 +33,11 @@ public class TranslateTask {
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
     @Autowired
-    private ITranslatesService translatesService;
-    @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private AliyunSlsIntegration aliyunSlsIntegration;
-    /** 已迁移到 TSF 的店铺记录（Java 自己的 Redis），自动翻译跳过这些店。 */
-    @Autowired
-    private TsfMigrationRedisService tsfMigrationRedisService;
 
     private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
@@ -240,21 +232,11 @@ public class TranslateTask {
     }
 
     // 自动翻译，每小时整点执行一次，只翻译拆创建小时=当前小时的店铺
-    // TODO 刚启动的时候断电怎么处理
-    @Scheduled(cron = "0 0 * * * ?")
+    // 2026-06-30：v4 全量切入口前暂停 Java 侧自动翻译调度（改由 TSF worker 负责）。
+    // 恢复时重新加上 @Scheduled(cron = "0 0 * * * ?") 并还原方法体。
+    // @Scheduled(cron = "0 0 * * * ?")
     public void autoTranslateTask() {
-        List<TranslatesDO> translatesDOList = translatesService.readAllTranslates();
-        if (CollectionUtils.isEmpty(translatesDOList)) {
-            return;
-        }
-        Set<String> migratedShops = tsfMigrationRedisService.getMigratedShops();
-        for (TranslatesDO translatesDO : translatesDOList) {
-            if (migratedShops.contains(translatesDO.getShopName())) {
-                // 已迁移到 TSF 新版翻译，自动翻译交给新版 worker，这里跳过避免重复翻译
-                continue;
-            }
-            translateV2Service.autoTranslateV2(translatesDO.getShopName(), translatesDO.getSource(), translatesDO.getTarget());
-        }
+        // disabled — auto translation now handled by TSF v4 worker
     }
 
     @Scheduled(fixedDelay = 13 * 1000 * 60)
