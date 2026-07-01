@@ -1,6 +1,6 @@
 package com.bogda.api.controller;
 
-import com.bogda.common.controller.request.ImageTranslateVO;
+import com.bogda.common.entity.VO.ImageTranslateVO;
 import com.bogda.common.controller.request.TargetListRequest;
 import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
