@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -17,6 +18,22 @@ public class InitialTaskV2Repo extends ServiceImpl<InitialTaskV2Mapper, InitialT
         return baseMapper.selectList(new LambdaQueryWrapper<InitialTaskV2DO>()
                 .le(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * day))
                 .eq(InitialTaskV2DO::getIsDeleted, true));
+    }
+
+    /**
+     * 取一条可物理清理的 Initial 任务（已软删且超过 retention 天），排除正在清理中的 taskId。
+     */
+    public InitialTaskV2DO selectOneEligibleForCleanup(Integer day, Collection<Integer> excludeIds) {
+        LambdaQueryWrapper<InitialTaskV2DO> wrapper = new LambdaQueryWrapper<InitialTaskV2DO>()
+                .le(InitialTaskV2DO::getCreatedAt, LocalDateTime.now().minusHours(24 * day))
+                .eq(InitialTaskV2DO::getIsDeleted, true)
+                .orderByAsc(InitialTaskV2DO::getId);
+        if (excludeIds != null && !excludeIds.isEmpty()) {
+            wrapper.notIn(InitialTaskV2DO::getId, excludeIds);
+        }
+        wrapper.last("OFFSET 0 ROWS FETCH NEXT 1 ROW ONLY");
+        List<InitialTaskV2DO> list = baseMapper.selectList(wrapper);
+        return list.isEmpty() ? null : list.get(0);
     }
 
     public List<InitialTaskV2DO> selectByLastDaysAndType(String type, Integer day) {
