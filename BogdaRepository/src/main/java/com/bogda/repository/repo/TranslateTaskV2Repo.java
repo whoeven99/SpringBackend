@@ -12,7 +12,6 @@ import java.util.List;
 
 @Service
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
-    private static final int DELETE_BY_INITIAL_TASK_BATCH = 1000;
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 id, resource_id, module")
@@ -75,10 +74,7 @@ public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, Tran
     }
 
     public int deleteByInitialTaskId(Integer initialTaskId) {
-        QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP " + DELETE_BY_INITIAL_TASK_BATCH + " *")
-                .eq("initial_task_id", initialTaskId);
-        return baseMapper.delete(wrapper);
+        return baseMapper.deleteTopByInitialTaskId(initialTaskId);
     }
 
     public boolean logicalDeletionById(Integer initialTaskId) {

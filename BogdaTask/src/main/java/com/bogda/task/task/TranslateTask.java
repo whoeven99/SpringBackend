@@ -17,8 +17,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -27,7 +29,8 @@ import java.util.stream.Collectors;
 @Component
 public class TranslateTask {
     private static final int CLEAN_TASK_RETENTION_DAYS = 3;
-    private static final int CLEAN_TASK_INITIAL_BATCH_SIZE = 60;
+    private static final int CLEAN_TASK_POOL_SIZE = 30;
+    private static final int CLEAN_TASK_SCHEDULE_INTERVAL_MS = 1000;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -46,20 +49,27 @@ public class TranslateTask {
     private static final int EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS = 55;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
+    private final ExecutorService cleanTaskExecutor = Executors.newFixedThreadPool(CLEAN_TASK_POOL_SIZE);
+    private final Set<Integer> cleaningInitialTaskIds = ConcurrentHashMap.newKeySet();
     private final Set<String> initializingShops = new HashSet<>();
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();
 
     @PreDestroy
     public void shutdownExecutor() {
-        executorService.shutdown();
+        shutdownExecutorQuietly(cleanTaskExecutor);
+        shutdownExecutorQuietly(executorService);
+    }
+
+    private void shutdownExecutorQuietly(ExecutorService executor) {
+        executor.shutdown();
         try {
-            if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-                executorService.awaitTermination(10, TimeUnit.SECONDS);
+            if (!executor.awaitTermination(EXECUTOR_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+                executor.awaitTermination(10, TimeUnit.SECONDS);
             }
         } catch (InterruptedException e) {
-            executorService.shutdownNow();
+            executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }
@@ -241,21 +251,32 @@ public class TranslateTask {
         // disabled — auto translation now handled by TSF v4 worker
     }
 
-    @Scheduled(fixedDelay = 60 * 1000)
+    @Scheduled(fixedRate = CLEAN_TASK_SCHEDULE_INTERVAL_MS)
     public void cleanTask() {
-        // retention 天前且 isDeleted 的任务物理清理（每轮最多 CLEAN_TASK_INITIAL_BATCH_SIZE 条）
-        List<InitialTaskV2DO> cleanTask = initialTaskV2Repo.selectTaskBeforeDaysAndDeleted(CLEAN_TASK_RETENTION_DAYS);
-        if (CollectionUtils.isEmpty(cleanTask)) {
-            return;
-        }
-
-        int batchSize = Math.min(CLEAN_TASK_INITIAL_BATCH_SIZE, cleanTask.size());
-        TraceReporterHolder.report("TranslateTask.cleanTask",
-                "TranslateTaskV2 cleanTask: eligible=" + cleanTask.size() + " processing=" + batchSize);
-        for (int i = 0; i < batchSize; i++) {
-            InitialTaskV2DO task = cleanTask.get(i);
-            translateV2Service.cleanTask(task);
-            translateV2Service.cleanDeleteTask(task);
+        while (cleaningInitialTaskIds.size() < CLEAN_TASK_POOL_SIZE) {
+            InitialTaskV2DO task = initialTaskV2Repo.selectOneEligibleForCleanup(
+                    CLEAN_TASK_RETENTION_DAYS, cleaningInitialTaskIds);
+            if (task == null) {
+                break;
+            }
+            if (!cleaningInitialTaskIds.add(task.getId())) {
+                break;
+            }
+            try {
+                cleanTaskExecutor.submit(() -> {
+                    try {
+                        translateV2Service.cleanTask(task);
+                        translateV2Service.cleanDeleteTask(task);
+                    } catch (Exception e) {
+                        ExceptionReporterHolder.report("TranslateTask.cleanTask", e);
+                    } finally {
+                        cleaningInitialTaskIds.remove(task.getId());
+                    }
+                });
+            } catch (RejectedExecutionException e) {
+                cleaningInitialTaskIds.remove(task.getId());
+                break;
+            }
         }
     }
 

@@ -12,7 +12,6 @@ import java.util.List;
 
 @Service
 public class DeleteTasksRepo extends ServiceImpl<DeleteTasksMapper, DeleteTasksDO> {
-    private static final int DELETE_BY_INITIAL_TASK_BATCH = 1000;
     public boolean saveSingleData(Integer InitialTaskId, String resourceId, String key) {
         return baseMapper.insert(new DeleteTasksDO(InitialTaskId, resourceId, key, false)) > 0;
     }
@@ -46,9 +45,6 @@ public class DeleteTasksRepo extends ServiceImpl<DeleteTasksMapper, DeleteTasksD
     }
 
     public int deleteByInitialTaskId(Integer initialTaskId) {
-        QueryWrapper<DeleteTasksDO> wrapper = new QueryWrapper<>();
-        wrapper.select("TOP " + DELETE_BY_INITIAL_TASK_BATCH + " *")
-                .eq("initial_task_id", initialTaskId);
-        return baseMapper.delete(wrapper);
+        return baseMapper.deleteTopByInitialTaskId(initialTaskId);
     }
 }
