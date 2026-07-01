@@ -6,16 +6,13 @@ import com.bogda.common.utils.StringUtils;
 import com.bogda.service.Service.*;
 import com.bogda.service.utils.CurrencyConfig;
 import com.bogda.service.integration.EmailIntegration;
-import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.common.controller.request.TencentSendEmailRequest;
-import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.contants.MailChimpConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,8 +34,6 @@ public class TencentEmailService {
     private ITranslationCounterService translationCounterService;
     @Autowired
     private IAPGEmailService iapgEmailService;
-    @Autowired
-    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
 
     /**
      * 发送IP请求即将不足的邮件
@@ -64,78 +59,6 @@ public class TencentEmailService {
         templateData.put("shop_name", name);
         return emailIntegration.sendEmailByTencent(
                 new TencentSendEmailRequest(141471L, templateData, MailChimpConstants.EMAIL_IP_OUT, MailChimpConstants.TENCENT_FROM_EMAIL, userByName.getEmail()));
-    }
-
-    public boolean sendAutoTranslateEmail(String shopName, List<InitialTaskV2DO> shopTasks) {
-        String name = parseShopName(shopName);
-
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("user", usersDO.getFirstName());
-        templateData.put("shop_name", name);
-
-        StringBuilder divBuilder = new StringBuilder();
-        for (InitialTaskV2DO shopTask : shopTasks) {
-            if (shopTask.getUsedToken().equals(0)) {
-                continue;
-            }
-            divBuilder.append("<div class=\"language-block\">");
-            divBuilder.append("<h4>").append(shopTask.getTarget()).append("</h4>");
-            divBuilder.append("<ul>");
-            divBuilder.append("<li><span>Credits Used:</span> ").append(shopTask.getUsedToken()).append(" credits used").append("</li>");
-            divBuilder.append("<li><span>Translation Time:</span> ").append(shopTask.getTranslationMinutes()).append(" minutes").append("</li>");
-            divBuilder.append("</ul>");
-            divBuilder.append("</div>");
-        }
-
-        // 都continue了
-        if (divBuilder.toString().isEmpty()) {
-            TraceReporterHolder.report("TencentEmailService.sendAutoTranslateEmail", "sendAutoTranslateEmail divBuilder is empty " + shopName);
-            return true;
-        }
-        templateData.put("html_data", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(140352L, MailChimpConstants.SUCCESSFUL_AUTO_TRANSLATION_SUBJECT,
-                templateData, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
-    }
-
-    public boolean sendSuccessEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, Integer usedToken, Integer totalToken) {
-        // 发送的具体内容
-        Map<String, String> templateData = new HashMap<>();
-        setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
-
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        templateData.put("user", usersDO.getFirstName());
-
-        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        templateData.put("remaining_credits", totalToken < usedToken ? "0" : formatter.format(totalToken - usedToken));
-
-        return emailIntegration.sendEmailByTencent(137353L, MailChimpConstants.SUCCESSFUL_TRANSLATION_SUBJECT,
-                templateData, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
-    }
-
-    public boolean sendFailedEmail(String shopName, String target, Integer translateTime, Integer usedTokenByTask, String translatedModules, String unTranslatedModules) {
-        // 发送的具体内容
-        Map<String, String> templateData = new HashMap<>();
-        setCommonTemplate(templateData, shopName, target, translateTime, usedTokenByTask);
-
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        templateData.put("user", usersDO.getFirstName());
-
-        // 获取用户已翻译的和未翻译的文本
-        templateData.put("translated_content", translatedModules);
-        templateData.put("remaining_content", unTranslatedModules);
-
-        return emailIntegration.sendEmailByTencent(137317L, MailChimpConstants.TRANSLATION_FAILED_SUBJECT,
-                templateData, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
-    }
-
-    public void setCommonTemplate(Map<String, String> templateData, String shopName, String target, Integer translateTime, Integer usedTokenByTask) {
-        templateData.put("language", target);
-        templateData.put("shop_name", shopName.substring(0, shopName.length() - ".myshopify.com".length()));
-        templateData.put("time", translateTime + " minutes");
-
-        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
-        templateData.put("credit_count", formatter.format(usedTokenByTask));
     }
 
     /**
@@ -362,51 +285,4 @@ public class TencentEmailService {
                 MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
     }
 
-    public boolean sendTranslatePartialEmail(String shopName, List<InitialTaskV2DO> partialTasks, String translateType) {
-        String name = StringUtils.parseShopName(shopName);
-
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("username", usersDO.getFirstName());
-        templateData.put("translation", translateType);
-        templateData.put("admin", name);
-
-        StringBuilder divBuilder = new StringBuilder();
-
-        for (InitialTaskV2DO taskV2DO : partialTasks) {
-            // 计算百分比数据
-            Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(taskV2DO.getId());
-            String totalCountStr = taskMap.getOrDefault("totalCount", null);
-            String translatedCountStr = taskMap.getOrDefault("translatedCount", null);
-            // totalCount或translatedCount为null时，默认为0
-            int total = (totalCountStr == null || totalCountStr.isEmpty()) ? 0 : Integer.parseInt(totalCountStr);
-            int translated = (translatedCountStr == null || translatedCountStr.isEmpty()) ? 0 : Integer.parseInt(translatedCountStr);
-
-            DecimalFormat df = new DecimalFormat("0.00");
-            double percentage = 0;
-            if (translated != 0 && total != 0) {
-                percentage = translated * 100.0 / total;
-            }
-
-            String percentageStr = df.format(percentage);
-
-            divBuilder.append("<tr>")
-                    .append("<td style=\"padding:8px;border-bottom:1px solid #e5e7eb;\">")
-                    .append(taskV2DO.getTarget())
-                    .append("</td>")
-                    .append("<td style=\"padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;\">")
-                    .append(percentageStr).append("%")
-                    .append("</td>")
-                    .append("</tr>");
-        }
-
-        // 都continue了
-        if (divBuilder.toString().isEmpty()) {
-            TraceReporterHolder.report("TencentEmailService.sendTranslatePartialEmail", "sendAutoTranslateEmail divBuilder is empty " + shopName);
-            return true;
-        }
-        templateData.put("language_progress_rows", String.valueOf(divBuilder));
-        return emailIntegration.sendEmailByTencent(159297L, MailChimpConstants.BATCH_FAILED_EMAIL, templateData,
-                MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail());
-    }
 }

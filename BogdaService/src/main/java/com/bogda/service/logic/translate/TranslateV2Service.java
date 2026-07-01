@@ -1,31 +1,14 @@
 package com.bogda.service.logic.translate;
 
-import com.bogda.common.TranslateContext;
-import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.entity.DO.TranslateResourceDTO;
-import com.bogda.common.entity.DO.UsersDO;
-import com.bogda.common.entity.VO.SingleReturnVO;
-import com.bogda.common.entity.VO.SingleTranslateVO;
 import com.bogda.common.reporter.ExceptionReporterHolder;
-import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.PictureUtils;
-import com.bogda.common.utils.ShopifyRequestUtils;
-import com.bogda.common.utils.StringUtils;
 import com.bogda.integration.aimodel.ChatGptIntegration;
 import com.bogda.integration.aimodel.GeminiIntegration;
 import com.bogda.integration.aimodel.KimiIntegration;
-import com.bogda.repository.entity.TranslateTaskV2DO;
-import com.bogda.service.Service.IUsersService;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
-import com.bogda.service.logic.GlossaryService;
-import com.bogda.service.logic.ShopifyService;
-import com.bogda.service.logic.token.UserTokenService;
-import com.bogda.service.logic.translate.stragety.ITranslateStrategyService;
-import com.bogda.service.logic.translate.stragety.TranslateStrategyFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,20 +25,10 @@ import java.util.Map;
 
 /**
  * v2 批量翻译主路径已下线（Spark worker v4 接管）。
- * 保留：Monitor 调试翻译、单条翻译（legacy API）、资源排序工具。
+ * 保留：Monitor 调试翻译、资源排序工具。
  */
 @Component
 public class TranslateV2Service {
-    @Autowired
-    private IUsersService usersService;
-    @Autowired
-    private ShopifyService shopifyService;
-    @Autowired
-    private UserTokenService userTokenService;
-    @Autowired
-    private GlossaryService glossaryService;
-    @Autowired
-    private TranslateStrategyFactory translateStrategyFactory;
     @Autowired
     private ALiYunTranslateIntegration aLiYunTranslateIntegration;
     @Autowired
@@ -66,52 +39,6 @@ public class TranslateV2Service {
     private KimiIntegration kimiIntegration;
     @Autowired
     private AiModelConfigService aiModelConfigService;
-
-    public BaseResponse<SingleReturnVO> singleTextTranslate(SingleTranslateVO request) {
-        if (request.getContext() == null || request.getTarget() == null
-                || request.getType() == null || request.getKey() == null
-                || StringUtils.isEmpty(request.getShopName())) {
-            return BaseResponse.FailedResponse("Missing parameters");
-        }
-
-        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "单条翻译参数如下 request ： " + request);
-        String shopName = request.getShopName();
-        String key = request.getKey();
-        String resourceId = request.getResourceId();
-        String target = request.getTarget();
-        String shopifyData = null;
-        if (request.getResourceId() != null) {
-            UsersDO userByName = usersService.getUserByName(shopName);
-            String token = userByName.getAccessToken();
-            TranslateTaskV2DO taskDO = new TranslateTaskV2DO();
-            taskDO.setNodeKey(key);
-            taskDO.setResourceId(resourceId);
-
-            refreshDigestAndSourceValueFromShopify(shopName, token, target, taskDO);
-            shopifyData = taskDO.getTargetValue();
-        }
-
-        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "查询shopify的翻译数据如下： " + shopifyData);
-        Integer maxToken = userTokenService.getMaxToken(shopName);
-        Integer usedToken = userTokenService.getUsedToken(shopName);
-        if (usedToken >= maxToken) {
-            return BaseResponse.FailedResponse("Token limit reached");
-        }
-        String aiModel = aiModelConfigService.getSingleTranslateModel();
-        TranslateContext context = new TranslateContext(request.getContext(), target, request.getType(), key,
-                glossaryService.getGlossaryDoByShopName(shopName, target), aiModel, request.getResourceType(), shopifyData);
-        context.setShopName(shopName);
-        ITranslateStrategyService service = translateStrategyFactory.getServiceByContext(context);
-        service.translate(context);
-        service.finishAndGetJsonRecord(context);
-        userTokenService.addUsedToken(shopName, context.getUsedToken());
-        TraceReporterHolder.report("TranslateV2Service.singleTextTranslate", "shopName : " + shopName
-                + " token 单条翻译消耗 " + context.getUsedToken());
-        SingleReturnVO returnVO = new SingleReturnVO();
-        returnVO.setTargetText(context.getTranslatedContent());
-        returnVO.setTranslateVariables(context.getTranslateVariables());
-        return BaseResponse.SuccessResponse(returnVO);
-    }
 
     /** For MonitorController promptTest */
     public Map<String, Object> testTranslate(Map<String, Object> map) {
@@ -229,67 +156,6 @@ public class TranslateV2Service {
         List<String> sortedList = new ArrayList<>(list);
         sortedList.sort(Comparator.comparingInt(name -> orderMap.getOrDefault(name, Integer.MAX_VALUE)));
         return sortedList;
-    }
-
-    private boolean refreshDigestAndSourceValueFromShopify(String shopName, String token, String target, TranslateTaskV2DO taskDO) {
-        if (taskDO == null || taskDO.getResourceId() == null || taskDO.getResourceId().isEmpty()
-                || taskDO.getNodeKey() == null || taskDO.getNodeKey().isEmpty()) {
-            return false;
-        }
-
-        String resourceId = taskDO.getResourceId();
-        String nodeKey = taskDO.getNodeKey();
-        boolean refreshData = false;
-
-        String graphQuery = ShopifyRequestUtils.singleQueryByResourceId(resourceId, target);
-        String shopifyData = shopifyService.getShopifyData(shopName, token, TranslateConstants.API_VERSION_LAST, graphQuery);
-        if (shopifyData == null || shopifyData.isEmpty()) {
-            return refreshData;
-        }
-
-        JsonNode root = JsonUtils.readTree(shopifyData);
-        if (root == null) {
-            return refreshData;
-        }
-
-        JsonNode nodes = root.path("translatableResourcesByIds").path("nodes");
-        if (nodes == null || !nodes.isArray() || nodes.isEmpty()) {
-            return refreshData;
-        }
-
-        for (JsonNode node : nodes) {
-            JsonNode translatableContentList = node.path("translatableContent");
-            JsonNode translationsList = node.path("translations");
-            if (translatableContentList == null || !translatableContentList.isArray() || translationsList == null) {
-                continue;
-            }
-            for (JsonNode translatableContent : translatableContentList) {
-                if (nodeKey.equals(translatableContent.path("key").asText(null))) {
-                    String latestDigest = translatableContent.path("digest").asText(null);
-                    String latestSourceValue = translatableContent.path("value").asText(null);
-                    if (latestDigest != null && !latestDigest.isEmpty()) {
-                        taskDO.setDigest(latestDigest);
-                    }
-                    if (latestSourceValue != null) {
-                        taskDO.setSourceValue(latestSourceValue);
-                    }
-                    refreshData = true;
-                }
-            }
-
-            for (JsonNode translation : translationsList) {
-                if (nodeKey.equals(translation.path("key").asText(null))) {
-                    String latestTargetValue = translation.path("value").asText(null);
-                    if (latestTargetValue != null) {
-                        taskDO.setTargetValue(latestTargetValue);
-                    }
-                }
-            }
-        }
-
-        TraceReporterHolder.report("TranslateV2Service.refreshDigestAndSourceValueFromShopify",
-                "Digest not found for key. shop=" + shopName + " resourceId=" + resourceId + " nodeKey=" + nodeKey);
-        return refreshData;
     }
 
     /** 历史 v2 任务状态码，MonitorController /monitorv2 仍读取 DB 中存量任务。 */
