@@ -239,17 +239,22 @@ public class TranslateTask {
         // disabled — auto translation now handled by TSF v4 worker
     }
 
-    @Scheduled(fixedDelay = 13 * 1000 * 60)
+    @Scheduled(fixedDelay = 3 * 1000 * 60)
     public void cleanTask() {
-        // 3天前 且 isDeleted 的任务清理掉
+        // 3天前 且 isDeleted 的任务清理掉（每轮最多 5 条）
         List<InitialTaskV2DO> cleanTask = initialTaskV2Repo.selectTaskBeforeDaysAndDeleted(3);
         if (CollectionUtils.isEmpty(cleanTask)) {
             return;
         }
 
-        TraceReporterHolder.report("TranslateTask.cleanTask", "TranslateTaskV2 cleanTask: " + cleanTask.size() + " tasks.");
-        translateV2Service.cleanTask(cleanTask.get(0));
-        translateV2Service.cleanDeleteTask(cleanTask.get(0));
+        int batchSize = Math.min(5, cleanTask.size());
+        TraceReporterHolder.report("TranslateTask.cleanTask",
+                "TranslateTaskV2 cleanTask: eligible=" + cleanTask.size() + " processing=" + batchSize);
+        for (int i = 0; i < batchSize; i++) {
+            InitialTaskV2DO task = cleanTask.get(i);
+            translateV2Service.cleanTask(task);
+            translateV2Service.cleanDeleteTask(task);
+        }
     }
 
     /**
