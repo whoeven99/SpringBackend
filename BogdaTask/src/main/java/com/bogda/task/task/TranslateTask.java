@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Component
 public class TranslateTask {
     private static final int CLEAN_TASK_RETENTION_DAYS = 3;
-    private static final int CLEAN_TASK_INITIAL_BATCH_SIZE = 30;
+    private static final int CLEAN_TASK_INITIAL_BATCH_SIZE = 60;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired

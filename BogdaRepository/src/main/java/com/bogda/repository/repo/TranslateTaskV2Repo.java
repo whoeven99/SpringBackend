@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 public class TranslateTaskV2Repo extends ServiceImpl<TranslateTaskV2Mapper, TranslateTaskV2DO> {
-    private static final int DELETE_BY_INITIAL_TASK_BATCH = 500;
+    private static final int DELETE_BY_INITIAL_TASK_BATCH = 1000;
     public TranslateTaskV2DO selectOneByInitialTaskIdAndNotSaved(Integer initialTaskId) {
         QueryWrapper<TranslateTaskV2DO> wrapper = new QueryWrapper<>();
         wrapper.select("TOP 1 id, resource_id, module")
