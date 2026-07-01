@@ -10,8 +10,12 @@ import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
+import com.bogda.repository.repo.TranslateTaskV2Repo;
 import javax.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -22,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,7 +35,7 @@ import java.util.stream.Collectors;
 public class TranslateTask {
     private static final int CLEAN_TASK_RETENTION_DAYS = 3;
     private static final int CLEAN_TASK_POOL_SIZE = 30;
-    private static final int CLEAN_TASK_SCHEDULE_INTERVAL_MS = 1000;
+    private static final int CLEAN_TASK_SCHEDULE_INTERVAL_MS = 3 * 60 * 1000;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -38,11 +43,16 @@ public class TranslateTask {
     @Autowired
     private InitialTaskV2Repo initialTaskV2Repo;
     @Autowired
+    private TranslateTaskV2Repo translateTaskV2Repo;
+    @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
     @Autowired
     private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
     @Autowired
     private AliyunSlsIntegration aliyunSlsIntegration;
+
+    @Value("${spring.profiles.active:${ApplicationEnv:${spring.config.activate.on-profile:local}}}")
+    private String env;
 
     private static final long INITIAL_TASK_STALL_THRESHOLD_MS = 30L * 60 * 1000;
 
@@ -51,6 +61,7 @@ public class TranslateTask {
     private final ExecutorService executorService = Executors.newFixedThreadPool(100);
     private final ExecutorService cleanTaskExecutor = Executors.newFixedThreadPool(CLEAN_TASK_POOL_SIZE);
     private final Set<Integer> cleaningInitialTaskIds = ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean orphanTranslateCleanupStarted = new AtomicBoolean(false);
     private final Set<String> initializingShops = new HashSet<>();
     private final Set<String> savingShops = new HashSet<>();
     private final Set<Integer> translatingInitialIds = new HashSet<>();
@@ -278,6 +289,39 @@ public class TranslateTask {
                 break;
             }
         }
+    }
+
+    /**
+     * 启动后一次性清理孤儿 Translate 子任务（Initial 已不存在）。
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void cleanOrphanTranslateTasksOnce() {
+        if (!isCloudEnv(env) || !orphanTranslateCleanupStarted.compareAndSet(false, true)) {
+            return;
+        }
+        cleanTaskExecutor.submit(this::runOrphanTranslateCleanup);
+    }
+
+    private void runOrphanTranslateCleanup() {
+        try {
+            while (true) {
+                int deleted = translateTaskV2Repo.deleteOrphanBatch();
+                if (deleted <= 0) {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            ExceptionReporterHolder.report("TranslateTask.runOrphanTranslateCleanup", e);
+        }
+    }
+
+    private boolean isCloudEnv(String rawEnv) {
+        if (rawEnv == null || rawEnv.trim().isEmpty()) {
+            return false;
+        }
+        return Arrays.stream(rawEnv.split(","))
+                .map(String::trim)
+                .anyMatch(v -> "test".equalsIgnoreCase(v) || "prod".equalsIgnoreCase(v));
     }
 
     /**
