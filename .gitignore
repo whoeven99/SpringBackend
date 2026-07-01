@@ -17,3 +17,4 @@ target/
 # 勿忽略 bootstrap.yml：需提交到仓库，CI/Render 否则打不出该文件，application.yml 的 spring.config.import 会报 “bootstrap.yml does not exist”
 *.iml
 /.vscode
+/.tmp-db-query
