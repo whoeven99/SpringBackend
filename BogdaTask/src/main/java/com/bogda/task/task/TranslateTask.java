@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class TranslateTask {
+    private static final int CLEAN_TASK_RETENTION_DAYS = 3;
+    private static final int CLEAN_TASK_INITIAL_BATCH_SIZE = 30;
     @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
@@ -239,15 +241,15 @@ public class TranslateTask {
         // disabled — auto translation now handled by TSF v4 worker
     }
 
-    @Scheduled(fixedDelay = 3 * 1000 * 60)
+    @Scheduled(fixedDelay = 60 * 1000)
     public void cleanTask() {
-        // 3天前 且 isDeleted 的任务清理掉（每轮最多 5 条）
-        List<InitialTaskV2DO> cleanTask = initialTaskV2Repo.selectTaskBeforeDaysAndDeleted(3);
+        // retention 天前且 isDeleted 的任务物理清理（每轮最多 CLEAN_TASK_INITIAL_BATCH_SIZE 条）
+        List<InitialTaskV2DO> cleanTask = initialTaskV2Repo.selectTaskBeforeDaysAndDeleted(CLEAN_TASK_RETENTION_DAYS);
         if (CollectionUtils.isEmpty(cleanTask)) {
             return;
         }
 
-        int batchSize = Math.min(5, cleanTask.size());
+        int batchSize = Math.min(CLEAN_TASK_INITIAL_BATCH_SIZE, cleanTask.size());
         TraceReporterHolder.report("TranslateTask.cleanTask",
                 "TranslateTaskV2 cleanTask: eligible=" + cleanTask.size() + " processing=" + batchSize);
         for (int i = 0; i < batchSize; i++) {
