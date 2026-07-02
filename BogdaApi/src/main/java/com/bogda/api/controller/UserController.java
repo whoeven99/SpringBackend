@@ -35,18 +35,6 @@ public class UserController {
         return new BaseResponse<>().CreateSuccessResponse(userService.unInstallApp(userRequest));
     }
 
-    // 客户可以向店主请求其数据
-    @PostMapping("/requestData")
-    public BaseResponse<Object> requestData() {
-        return new BaseResponse<>().CreateSuccessResponse(userService.requestData());
-    }
-
-    // 店主可以代表客户请求删除数据
-    @DeleteMapping("/deleteData")
-    public BaseResponse<Object> deleteData() {
-        return new BaseResponse<>().CreateSuccessResponse(userService.deleteData());
-    }
-
     // 用户初始化检测
     @GetMapping("/InitializationDetection")
     public BaseResponse<Object> initializationDetection(@RequestParam String shopName) {

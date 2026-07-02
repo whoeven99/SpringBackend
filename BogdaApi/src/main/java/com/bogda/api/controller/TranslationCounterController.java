@@ -50,18 +50,6 @@ public class TranslationCounterController {
     }
 
     /**
-     * 获取用户额度信息
-     * */
-    @GetMapping("/getCharsByShopName")
-    public BaseResponse<Object> getCharsByShopName(@RequestParam @NotBlank(message = "店铺名不能为空") String shopName) {
-       TranslationCounterDO translatesDOS = iTranslationCounterService.readCharsByShopName(shopName);
-        if (translatesDOS != null){
-            return new BaseResponse().CreateSuccessResponse(translatesDOS);
-        }
-        return new BaseResponse<>().CreateErrorResponse(SQL_SELECT_ERROR);
-    }
-
-    /**
      * 添加字符额度
      * */
     @PostMapping("/addCharsByShopName")
