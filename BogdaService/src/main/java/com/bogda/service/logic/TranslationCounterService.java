@@ -39,8 +39,6 @@ public class TranslationCounterService {
     private OrdersRedisService ordersRedisService;
     @Autowired
     private ShopifyService shopifyService;
-    @Autowired
-    private IUserIpService iUserIpService;
 
     public final String ACTIVE = "ACTIVE";
 
@@ -107,11 +105,6 @@ public class TranslationCounterService {
                 Integer charsByPlan = iSubscriptionPlansService.getCharsByPlanName("Gift Amount");
                 boolean update = iTranslationCounterService.update(new LambdaUpdateWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName).set(TranslationCounterDO::getGoogleChars, charsByPlan + 200000).set(TranslationCounterDO::getOpenAiChars, 1).setSql("chars = chars + " + charsByPlan));
 
-                // 初始化ip，或将ip数清零
-                iUserIpService.addOrUpdateUserIp(shopName);
-
-                // 将ip额度清零
-                iUserIpService.clearIP(shopName);
                 TraceReporterHolder.report("TranslationCounterService.addCharsByShopNameAfterSubscribe", "addCharsByShopNameAfterSubscribe " + shopName + " 用户 免费试用额度添加 ：" + charsByPlan + " 是否成功： " + update);
                 return update;
             }
