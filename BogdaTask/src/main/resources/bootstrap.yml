@@ -55,3 +55,7 @@ datasource:
 redis:
   hostname: azurecache-redis-prod.redis.cache.windows.net
 
+bogda:
+  migrated-tables-cleanup:
+    enabled: true
+
