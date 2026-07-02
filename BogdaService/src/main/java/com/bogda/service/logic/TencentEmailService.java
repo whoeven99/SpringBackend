@@ -4,10 +4,8 @@ import com.bogda.common.entity.DO.*;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.common.utils.StringUtils;
 import com.bogda.service.Service.*;
-import com.bogda.service.utils.CurrencyConfig;
 import com.bogda.service.integration.EmailIntegration;
 import com.bogda.common.controller.request.TencentSendEmailRequest;
-import com.bogda.common.utils.ModuleCodeUtils;
 import com.bogda.common.contants.MailChimpConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,10 +15,6 @@ import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.bogda.common.utils.StringUtils.parseShopName;
 
 @Component
 public class TencentEmailService {
@@ -34,32 +28,6 @@ public class TencentEmailService {
     private ITranslationCounterService translationCounterService;
     @Autowired
     private IAPGEmailService iapgEmailService;
-
-    /**
-     * 发送IP请求即将不足的邮件
-     */
-    public Boolean sendEmailByIpRunningOut(String shopName) {
-        UsersDO userByName = usersService.getUserByName(shopName);
-        String name = parseShopName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("user", userByName.getFirstName());
-        templateData.put("shop_name", name);
-        return emailIntegration.sendEmailByTencent(
-                new TencentSendEmailRequest(141470L, templateData, MailChimpConstants.EMAIL_IP_RUNNING_OUT, MailChimpConstants.TENCENT_FROM_EMAIL, userByName.getEmail()));
-    }
-
-    /**
-     * 发送IP请求不足的邮件
-     */
-    public Boolean sendEmailByIpOut(String shopName) {
-        UsersDO userByName = usersService.getUserByName(shopName);
-        String name = parseShopName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("user", userByName.getFirstName());
-        templateData.put("shop_name", name);
-        return emailIntegration.sendEmailByTencent(
-                new TencentSendEmailRequest(141471L, templateData, MailChimpConstants.EMAIL_IP_OUT, MailChimpConstants.TENCENT_FROM_EMAIL, userByName.getEmail()));
-    }
 
     /**
      * 发送订阅计划付费后的邮件
@@ -172,69 +140,6 @@ public class TencentEmailService {
         //存入数据库中
         iapgEmailService.saveEmail(new APGEmailDO(null, apgUsersDO.getId(), MailChimpConstants.TENCENT_FROM_EMAIL,
                 apgUsersDO.getEmail(), MailChimpConstants.APG_TASK_INTERRUPT_EMAIL, b));
-    }
-
-    /**
-     * 发送ip上报邮件 156623L
-     */
-    public void sendIpReportEmail(String shopName, int noCurrencyCount, int noLanguageCount,
-                                  List<Map<String, Integer>> languageEmailData, List<Map<String, Integer>> currencyEmailData) {
-        UsersDO user = usersService.getUserByName(shopName);
-        if (user == null) {
-            TraceReporterHolder.report("TencentEmailService.sendIpReportEmail", "FatalException sendIpReportEmail user is null " + shopName);
-            return;
-        }
-
-        String targetShop = shopName.replace(".myshopify.com", "");
-
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("name", user.getFirstName());
-        templateData.put("admin", targetShop);
-        templateData.put("missing_currency_count", String.valueOf(noCurrencyCount));
-        templateData.put("missing_language_count", String.valueOf(noLanguageCount));
-        templateData.put("estimated_revenue_loss", String.valueOf((noLanguageCount + noCurrencyCount) * 0.5));
-
-        // HTML 列表生成
-        templateData.put("Language_top",
-                buildHtmlList(languageEmailData, ModuleCodeUtils::getLanguageName));
-
-        templateData.put("Currency_top",
-                buildHtmlList(currencyEmailData, CurrencyConfig::getCurrentName));
-        // 发送邮件（如果需要）
-        boolean result = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(156623L,
-                templateData, MailChimpConstants.IP_REPORT_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, user.getEmail()));
-        TraceReporterHolder.report("TencentEmailService.sendIpReportEmail", "sendIpReportEmail " + shopName + " 邮件发送结果为： " + result);
-    }
-
-    /**
-     * 根据传入的数据构建 HTML 列表。
-     *
-     * @param data         数据列表，每条数据是 Map<code, count>
-     * @param nameResolver 将 code 转成可读名称
-     */
-    private String buildHtmlList(List<Map<String, Integer>> data,
-                                 Function<String, String> nameResolver) {
-
-        if (data == null || data.isEmpty()) {
-            return "";
-        }
-
-        return data.stream()
-                .flatMap(map -> map.entrySet().stream())
-                .filter(entry -> {
-                    String displayName = nameResolver.apply(entry.getKey());
-                    return !entry.getKey().equals(displayName);
-                })
-                .map(entry -> {
-                    String displayName = nameResolver.apply(entry.getKey());
-                    int value = entry.getValue();
-                    return String.format(
-                            "<li>%s - %d visitors</li>\n",
-                            displayName,
-                            value
-                    );
-                })
-                .collect(Collectors.joining());
     }
 
     public Boolean sendInitialUserEmail(long emailId, Map<String, String> templateData, String firstInstallSubject, String tencentFromEmail, String email) {

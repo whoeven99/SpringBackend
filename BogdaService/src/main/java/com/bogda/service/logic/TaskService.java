@@ -54,8 +54,6 @@ public class TaskService {
     @Autowired
     private IUserSubscriptionsService iUserSubscriptionsService;
     @Autowired
-    private IUserIpService iUserIpService;
-    @Autowired
     private TencentEmailService tencentEmailService;
     @Autowired
     private ShopifyService shopifyService;
@@ -224,9 +222,6 @@ public class TaskService {
             subscriptionQuotaRecordRepo.saveNewRecord(userPriceRequest.getSubscriptionId(), billingCycle);
             Boolean flag = translationCounterService.updateCharsByShopName(userPriceRequest.getShopName(), userPriceRequest.getAccessToken(), userPriceRequest.getSubscriptionId(), chars);
             TraceReporterHolder.report("TaskService.addCharsByUserData", "addCharsByUserData 用户： " + userPriceRequest.getShopName() + " 添加字符额度： " + chars + " 是否成功： " + flag);
-
-            // 将用户免费Ip清零
-            iUserIpService.clearIP(userPriceRequest.getShopName());
 
             // 修改该用户过期时间
             iUserSubscriptionsService.update(new LambdaUpdateWrapper<UserSubscriptionsDO>().eq(UserSubscriptionsDO::getShopName, userPriceRequest.getShopName()).set(UserSubscriptionsDO::getEndDate, subEnd));

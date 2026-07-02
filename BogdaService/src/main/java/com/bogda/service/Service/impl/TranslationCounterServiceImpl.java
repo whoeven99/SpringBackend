@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslationCounterService;
-import com.bogda.service.Service.IUserIpService;
 import com.bogda.common.entity.DO.TranslationCounterDO;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.service.logic.redis.OrdersRedisService;
@@ -27,8 +26,6 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     private OrdersRedisService ordersRedisService;
     @Autowired
     private ShopifyService shopifyService;
-    @Autowired
-    private IUserIpService iUserIpService;
 
     @Override
     public TranslationCounterDO readCharsByShopName(String shopName) {
@@ -80,14 +77,6 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
         String status = queryValid.getString("status");
         if (!"ACTIVE".equals(status)) {
             return false;
-        }
-
-        // 判断是否是订阅计划，是的话，初始化ip，或将ip数清零；不是的话，不管
-        if (!gid.contains("AppPurchaseOneTime")) {
-            iUserIpService.addOrUpdateUserIp(shopName);
-
-            // 将ip额度清零
-            iUserIpService.clearIP(shopName);
         }
 
         return baseMapper.updateCharsByShopName(shopName, chars);
