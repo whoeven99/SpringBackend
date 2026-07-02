@@ -54,10 +54,6 @@ public class TaskService {
     @Autowired
     private IUserSubscriptionsService iUserSubscriptionsService;
     @Autowired
-    private IWidgetConfigurationsService iWidgetConfigurationsService;
-    @Autowired
-    private IGlossaryService iGlossaryService;
-    @Autowired
     private IUserIpService iUserIpService;
     @Autowired
     private TencentEmailService tencentEmailService;
@@ -301,12 +297,6 @@ public class TaskService {
 
                         // 修改用户定时翻译任务
                         translatesService.update(new UpdateWrapper<TranslatesDO>().eq("shop_name", userTrialsDO.getShopName()).set("auto_translate", false));
-
-                        // 修改用户IP开关方法
-                        iWidgetConfigurationsService.update(new UpdateWrapper<WidgetConfigurationsDO>().eq("shop_name", userTrialsDO.getShopName()).set("ip_open", false));
-
-                        // 词汇表改为0
-                        iGlossaryService.update(new UpdateWrapper<GlossaryDO>().eq("shop_name", userTrialsDO.getShopName()).set("status", 0));
                     } catch (Exception e) {
                         TraceReporterHolder.report("TaskService.freeTrialTask", "FatalException " + userTrialsDO.getShopName() + "用户  errors 修改用户计划失败: " + e.getMessage());
                     }
