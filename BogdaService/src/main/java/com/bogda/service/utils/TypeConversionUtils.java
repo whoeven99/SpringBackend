@@ -1,6 +1,5 @@
 package com.bogda.service.utils;
 
-import com.bogda.common.controller.request.ResourceTypeRequest;
 import com.bogda.common.controller.request.ShopifyRequest;
 import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.entity.DO.APGOfficialTemplateDO;
@@ -10,14 +9,6 @@ import com.bogda.common.entity.DTO.TemplateDTO;
 public class TypeConversionUtils {
 
     public static ShopifyRequest convertTranslateRequestToShopifyRequest(TranslateRequest request) {
-        ShopifyRequest shopifyRequest = new ShopifyRequest();
-        shopifyRequest.setShopName(request.getShopName());
-        shopifyRequest.setAccessToken(request.getAccessToken());
-        shopifyRequest.setTarget(request.getTarget());
-        return shopifyRequest;
-    }
-
-    public static ShopifyRequest resourceTypeRequestToShopifyRequest(ResourceTypeRequest request) {
         ShopifyRequest shopifyRequest = new ShopifyRequest();
         shopifyRequest.setShopName(request.getShopName());
         shopifyRequest.setAccessToken(request.getAccessToken());

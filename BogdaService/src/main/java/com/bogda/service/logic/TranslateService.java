@@ -25,10 +25,8 @@ import org.springframework.stereotype.Component;
 import javax.tools.DiagnosticCollector;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 @Component
 @EnableAsync
@@ -50,7 +48,6 @@ public class TranslateService {
 
 
     // 判断是否可以终止翻译流程
-    public static ConcurrentHashMap<String, Future<?>> userTasks = new ConcurrentHashMap<>(); // 存储每个用户的翻译任务
     public static ExecutorService executorService = Executors.newFixedThreadPool(50);
 
     /**

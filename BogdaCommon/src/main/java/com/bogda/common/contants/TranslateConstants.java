@@ -8,9 +8,6 @@ public class TranslateConstants {
     public static final String META_TITLE = "meta_title";
     public static final String LOWERCASE_HANDLE = "handle";
     public static final String URI = "URI";
-    public static final String APIVERSION = "2025-07";
-    public static final String DEEPL_API_KEY = "DEEPL_API_KEY";
-
     public static final String PRODUCT = "PRODUCT";
     public static final String PRODUCT_OPTION = "PRODUCT_OPTION";
     public static final String PRODUCT_OPTION_VALUE = "PRODUCT_OPTION_VALUE";
@@ -46,8 +43,6 @@ public class TranslateConstants {
     public static final String EMAIL = "EMAIL"; //手动翻译邮件标识
     public static final String CHARACTER_LIMIT = "Character Limit Reached";
     public static final String SHOP_NAME = "shop_name";
-    public static final String DEEPL_MODEL = "3";
-    public static final String OPENAI_MODEL = "2";
     public static final float MAGNIFICATION = 1.5f;
     public static final int DEEPL_MAGNIFICATION = 4;
     public static final String API_VERSION_LAST = "2025-07";
@@ -57,6 +52,4 @@ public class TranslateConstants {
     public static final int MONTHLY_FEE = 1;
     //图片翻译费用
     public static final int PIC_FEE = 1000;
-    //翻译的语言是否都发布
-    public static final String IS_PUBLISH = "Published Languages";
 }

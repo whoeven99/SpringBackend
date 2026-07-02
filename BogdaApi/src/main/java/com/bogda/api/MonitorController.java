@@ -11,7 +11,6 @@ import com.bogda.service.logic.redis.ConfigRedisRepo;
 import com.bogda.service.logic.redis.RedisStoppedRepository;
 import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
-import com.bogda.service.logic.translate.stragety.HtmlTranslateStrategyService;
 import com.bogda.repository.entity.InitialTaskV2DO;
 import com.bogda.repository.repo.InitialTaskV2Repo;
 import org.jsoup.nodes.Document;
@@ -26,8 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.isHtmlEntity;
-import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.parseHtml;
+import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.*;
 
 @RestController
 public class MonitorController {
@@ -109,7 +107,7 @@ public class MonitorController {
 
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
-        boolean hasHtmlTag = HtmlTranslateStrategyService.HTML_TAG_PATTERN.matcher(value).find();
+        boolean hasHtmlTag = LiquidHtmlTranslatorUtils.HTML_TAG_PATTERN.matcher(value).find();
         Document doc = parseHtml(value, "en", hasHtmlTag);
 
         List<TextNode> nodes = new ArrayList<>();

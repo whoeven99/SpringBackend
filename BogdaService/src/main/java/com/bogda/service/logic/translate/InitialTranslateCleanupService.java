@@ -24,10 +24,4 @@ public class InitialTranslateCleanupService {
         }
         initialTaskV2Repo.deleteById(initialTaskId);
     }
-
-    public void physicalDeleteOrphanTranslateTasks() {
-        while (translateTaskV2Repo.deleteOrphanBatch() > 0) {
-            // batch delete until empty
-        }
-    }
 }

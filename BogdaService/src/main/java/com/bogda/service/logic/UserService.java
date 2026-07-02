@@ -182,28 +182,6 @@ public class UserService {
         return userSubscriptionsService.checkUserPlan(shopName, planId);
     }
 
-    public String getEncryptedEmail(String shopName) {
-        UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-        );
-        if (usersDO.getEncryptionEmail() != null) {
-            return usersDO.getEncryptionEmail();
-        }
-        String encryptionEmail = null;
-        try {
-            encryptionEmail = AESUtils.encrypt(usersDO.getEmail());
-        } catch (Exception e) {
-            TraceReporterHolder.report("UserService.checkUserPlan", "FatalException getEncryptedEmail " + shopName + "加密邮箱失败");
-        }
-
-        //更新加密邮箱
-        usersService.update(new UpdateWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-                .set("encryption_email", encryptionEmail));
-        //返回对应的值
-        return encryptionEmail;
-    }
-
     public BaseResponse<Object> userInitialization(String shopName, UserInitialVO userInitialVO) {
         // 判断主题数据，然后判断原语言数据
         String themeName = userInitialVO.getDefaultThemeName();
@@ -278,10 +256,6 @@ public class UserService {
             // 修改theme为新theme
             userInitialRedisService.setUserDefaultTheme(shopName, themeId);
 
-            // 判断switch是否创建，如果创建，再发送一封switch更换的邮件
-//            if (widgetConfigurationsService.getData(shopName) != null) {
-//                tencentEmailService.sendThemeSwitchEmail(shopName);
-//            }
             TraceReporterHolder.report("UserService.webhookDefaultTheme", "UserEmail webhookDefaultTheme 用户主题改变 ： " + shopName + " name : " + themeName + " id : " + themeId + " 原主题id：" + userDefaultTheme);
         }
 

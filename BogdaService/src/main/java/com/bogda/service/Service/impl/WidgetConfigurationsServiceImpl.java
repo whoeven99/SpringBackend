@@ -13,11 +13,6 @@ import java.util.List;
 @Service
 public class WidgetConfigurationsServiceImpl extends ServiceImpl<WidgetConfigurationsMapper, WidgetConfigurationsDO> implements IWidgetConfigurationsService {
     @Override
-    public WidgetConfigurationsDO getData(String shopName) {
-        return baseMapper.selectOne(new LambdaQueryWrapper<WidgetConfigurationsDO>().eq(WidgetConfigurationsDO::getShopName, shopName));
-    }
-
-    @Override
     public List<WidgetConfigurationsDO> getAllIpOpenByTrue() {
         return baseMapper.selectList(new LambdaQueryWrapper<WidgetConfigurationsDO>().eq(WidgetConfigurationsDO::getIpOpen
                 , true));
