@@ -245,24 +245,6 @@ public class TaskService {
         }
     }
 
-    //自动翻译模块顺序
-    public static final List<String> AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
-            TranslateConstants.SHOP, TranslateConstants.MENU, TranslateConstants.LINK, TranslateConstants.FILTER,
-            TranslateConstants.PACKING_SLIP_TEMPLATE, TranslateConstants.DELIVERY_METHOD_DEFINITION, TranslateConstants.METAOBJECT,
-            TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE, TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP, TranslateConstants.
-                    ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS,
-            TranslateConstants.COLLECTION, TranslateConstants.PRODUCT, TranslateConstants.PRODUCT_OPTION,
-            TranslateConstants.PRODUCT_OPTION_VALUE, TranslateConstants.BLOG, TranslateConstants.ARTICLE,
-            TranslateConstants.PAGE, TranslateConstants.METAFIELD, TranslateConstants.SHOP_POLICY,
-            TranslateConstants.EMAIL_TEMPLATE, TranslateConstants.SELLING_PLAN, TranslateConstants.SELLING_PLAN_GROUP
-    ));
-
-    // test自动翻译模块
-    public static final List<String> TEST_AUTO_TRANSLATE_MAP = new ArrayList<>(Arrays.asList(
-            TranslateConstants.ONLINE_STORE_THEME_JSON_TEMPLATE, TranslateConstants.ONLINE_STORE_THEME_SECTION_GROUP, TranslateConstants.
-                    ONLINE_STORE_THEME_SETTINGS_CATEGORY, TranslateConstants.ONLINE_STORE_THEME_SETTINGS_DATA_SECTIONS, TranslateConstants.ONLINE_STORE_THEME_LOCALE_CONTENT
-    ));
-
     /**
      * 获取所有计划不过期的用户，判断是否过期
      */

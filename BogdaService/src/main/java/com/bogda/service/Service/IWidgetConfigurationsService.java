@@ -6,8 +6,6 @@ import com.bogda.common.entity.DO.WidgetConfigurationsDO;
 import java.util.List;
 
 public interface IWidgetConfigurationsService extends IService<WidgetConfigurationsDO> {
-    WidgetConfigurationsDO getData(String shopName);
-
     List<WidgetConfigurationsDO> getAllIpOpenByTrue();
 
     boolean updateIpTo0ByShopName(String shopName);
