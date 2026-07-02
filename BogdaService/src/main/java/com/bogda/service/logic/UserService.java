@@ -40,10 +40,6 @@ public class UserService {
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
-    private IGlossaryService iGlossaryService;
-    @Autowired
-    private IWidgetConfigurationsService widgetConfigurationsService;
-    @Autowired
     private UserInitialRedisService userInitialRedisService;
 
     //添加用户
@@ -107,13 +103,6 @@ public class UserService {
 
                 // 将用户翻译状态改为0
                 translatesService.updateAllStatusTo0(shopName);
-
-                // 将用户ip关掉
-                // 将词汇表改为0
-                iGlossaryService.updateStatusTo0ByShopName(shopName);
-
-                widgetConfigurationsService.updateIpTo0ByShopName(shopName);
-
 
                 // 获取用户订单表里计划为Active的订单
                 // 删除对应的额度
@@ -180,28 +169,6 @@ public class UserService {
 
     public Integer checkUserPlan(String shopName, int planId) {
         return userSubscriptionsService.checkUserPlan(shopName, planId);
-    }
-
-    public String getEncryptedEmail(String shopName) {
-        UsersDO usersDO = usersService.getOne(new QueryWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-        );
-        if (usersDO.getEncryptionEmail() != null) {
-            return usersDO.getEncryptionEmail();
-        }
-        String encryptionEmail = null;
-        try {
-            encryptionEmail = AESUtils.encrypt(usersDO.getEmail());
-        } catch (Exception e) {
-            TraceReporterHolder.report("UserService.checkUserPlan", "FatalException getEncryptedEmail " + shopName + "加密邮箱失败");
-        }
-
-        //更新加密邮箱
-        usersService.update(new UpdateWrapper<UsersDO>()
-                .eq("shop_name", shopName)
-                .set("encryption_email", encryptionEmail));
-        //返回对应的值
-        return encryptionEmail;
     }
 
     public BaseResponse<Object> userInitialization(String shopName, UserInitialVO userInitialVO) {
@@ -278,10 +245,6 @@ public class UserService {
             // 修改theme为新theme
             userInitialRedisService.setUserDefaultTheme(shopName, themeId);
 
-            // 判断switch是否创建，如果创建，再发送一封switch更换的邮件
-//            if (widgetConfigurationsService.getData(shopName) != null) {
-//                tencentEmailService.sendThemeSwitchEmail(shopName);
-//            }
             TraceReporterHolder.report("UserService.webhookDefaultTheme", "UserEmail webhookDefaultTheme 用户主题改变 ： " + shopName + " name : " + themeName + " id : " + themeId + " 原主题id：" + userDefaultTheme);
         }
 

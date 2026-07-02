@@ -7,8 +7,6 @@ import com.bogda.service.logic.translate.InitialTranslateCleanupService;
 import javax.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class InitialTranslateCleanupTask {
@@ -40,8 +37,6 @@ public class InitialTranslateCleanupTask {
 
     private final ExecutorService cleanupExecutor = Executors.newFixedThreadPool(CLEANUP_POOL_SIZE);
     private final Set<Integer> cleaningInitialTaskIds = ConcurrentHashMap.newKeySet();
-    private final AtomicBoolean legacyOneTimeCleanupStarted = new AtomicBoolean(false);
-    private final AtomicBoolean orphanOneTimeCleanupStarted = new AtomicBoolean(false);
 
     @PreDestroy
     public void shutdownExecutor() {
@@ -55,36 +50,6 @@ public class InitialTranslateCleanupTask {
             cleanupExecutor.shutdownNow();
             Thread.currentThread().interrupt();
         }
-    }
-
-    /**
-     * 一次性：已软删且 3 天内 + 未软删且超过 3 天的 Initial 任务物理清理。
-     */
-    @EventListener(ApplicationReadyEvent.class)
-    public void runLegacyInitialCleanupOnce() {
-        if (!isCloudEnv(env) || !legacyOneTimeCleanupStarted.compareAndSet(false, true)) {
-            return;
-        }
-        cleanupExecutor.submit(() -> drainInitialTasks(
-                "InitialTranslateCleanupTask.runLegacyInitialCleanupOnce",
-                () -> initialTaskV2Repo.selectOneEligibleForLegacyOneTimeCleanup(cleaningInitialTaskIds)));
-    }
-
-    /**
-     * 一次性：孤儿 Translate 子任务物理清理。
-     */
-    @EventListener(ApplicationReadyEvent.class)
-    public void runOrphanTranslateCleanupOnce() {
-        if (!isCloudEnv(env) || !orphanOneTimeCleanupStarted.compareAndSet(false, true)) {
-            return;
-        }
-        cleanupExecutor.submit(() -> {
-            try {
-                initialTranslateCleanupService.physicalDeleteOrphanTranslateTasks();
-            } catch (Exception e) {
-                ExceptionReporterHolder.report("InitialTranslateCleanupTask.runOrphanTranslateCleanupOnce", e);
-            }
-        });
     }
 
     /**

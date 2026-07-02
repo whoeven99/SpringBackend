@@ -175,19 +175,4 @@ public class TencentEmailService {
                 MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
     }
 
-    // 这个switch的邮件是要的，不是无用代码
-    public void sendThemeSwitchEmail(String shopName) {
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("username", usersDO.getFirstName());
-
-        // 定义要移除的后缀
-        String name = StringUtils.parseShopName(shopName);
-        templateData.put("admin", name);
-        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159296L,
-                templateData, MailChimpConstants.USER_SWITCH_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, "feynman@ciwi.ai"));
-        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
-                MailChimpConstants.USER_SWITCH_EMAIL, flag ? 1 : 0));
-    }
-
 }
