@@ -1,6 +1,7 @@
 package com.bogda.api.controller;
 
 import com.bogda.common.reporter.TraceReporterHolder;
+import com.bogda.service.Service.IUserIpService;
 import com.bogda.service.logic.UserIpService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.repository.entity.UserIPRedirectionDO;
@@ -9,11 +10,33 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.bogda.common.utils.RetryUtils.retryWithParam;
+
 @RestController
 @RequestMapping("/userIp")
 public class UserIpController {
     @Autowired
+    private IUserIpService iUserIpService;
+    @Autowired
     private UserIpService userIpService;
+
+    /**
+     * 初始化 UserIp 表记录（开启 IP 定位时由 Admin 调用）
+     */
+    @PostMapping("/addOrUpdateUserIp")
+    public BaseResponse<Object> addOrUpdateUserIp(@RequestParam String shopName) {
+        boolean result = retryWithParam(
+                iUserIpService::addOrUpdateUserIp,
+                shopName,
+                3,
+                1000,
+                8000
+        );
+        if (result) {
+            return new BaseResponse<>().CreateSuccessResponse(shopName);
+        }
+        return new BaseResponse<>().CreateErrorResponse(shopName);
+    }
 
     // 批量初始化数据
     @PostMapping("/syncUserIp")
