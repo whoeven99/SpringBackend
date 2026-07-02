@@ -107,7 +107,7 @@ public class MonitorController {
 
         value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
 
-        boolean hasHtmlTag = LiquidHtmlTranslatorUtils.HTML_TAG_PATTERN.matcher(value).find();
+        boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
         Document doc = parseHtml(value, "en", hasHtmlTag);
 
         List<TextNode> nodes = new ArrayList<>();
