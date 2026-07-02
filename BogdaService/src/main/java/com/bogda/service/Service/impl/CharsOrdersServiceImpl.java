@@ -27,14 +27,6 @@ public class CharsOrdersServiceImpl extends ServiceImpl<CharsOrdersMapper, Chars
     }
 
     @Override
-    public List<CharsOrdersDO> getCharsOrdersDoByShopName(String shopName) {
-        return baseMapper.selectList(new LambdaQueryWrapper<CharsOrdersDO>().select(CharsOrdersDO::getShopName, CharsOrdersDO::getId, CharsOrdersDO::getCreatedAt)
-                .eq(CharsOrdersDO::getStatus, "ACTIVE")
-                .eq(CharsOrdersDO::getShopName, shopName))
-                .stream().filter(data -> data.getShopName() != null && data.getId().contains("AppSubscription")).toList();
-    }
-
-    @Override
     public List<CharsOrdersDO> listDataByShopNameAndStatus(String shopName, String active) {
         return baseMapper.selectList(new QueryWrapper<CharsOrdersDO>()
                 .eq("shop_name", shopName)

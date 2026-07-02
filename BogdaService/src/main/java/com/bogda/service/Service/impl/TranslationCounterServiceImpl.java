@@ -87,11 +87,6 @@ public class TranslationCounterServiceImpl extends ServiceImpl<TranslationCounte
     }
 
     @Override
-    public TranslationCounterDO getOneForUpdate(String shopName) {
-        return baseMapper.getOneForUpdate(shopName);
-    }
-
-    @Override
     public Boolean deleteTrialCounter(String shopName) {
         TranslationCounterDO translationCounterDO = baseMapper.selectOne(new LambdaQueryWrapper<TranslationCounterDO>().eq(TranslationCounterDO::getShopName, shopName));
         if (translationCounterDO != null && translationCounterDO.getOpenAiChars() == 1) {

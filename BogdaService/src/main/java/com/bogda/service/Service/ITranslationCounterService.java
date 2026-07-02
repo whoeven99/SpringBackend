@@ -12,8 +12,6 @@ public interface ITranslationCounterService extends IService<TranslationCounterD
 
     Boolean updateCharsByShopName(String shopName, String accessToken, String gid, Integer chars);
 
-    TranslationCounterDO getOneForUpdate(String shopName);
-
     Boolean deleteTrialCounter(String shopName);
 
     TranslationCounterDO getTranslationCounterByShopName(String shopName);

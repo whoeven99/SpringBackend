@@ -16,23 +16,8 @@ public interface TranslatesMapper extends BaseMapper<TranslatesDO> {
             "#{accessToken}, #{target}, #{shopName}, #{status})")
     Integer insertShopTranslateInfo(String source,String accessToken, String target, String shopName, int status);
 
-    @Select("SELECT id,source,target,shop_name,status,create_at,update_at FROM Translates WHERE status = #{status}")
-    List<TranslatesDO> readTranslateInfo(int status);
-
-    @Select("SELECT source,target,shop_name,status,resource_type,auto_translate FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
-    TranslatesDO readTranslatesDOByArray(String shopName, String source, String target);
-
-    @Select("SELECT shop_name FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
-    String getShopName(String shopName, String target, String source);
-
-    @Delete("DELETE FROM Translates WHERE shop_name = #{shopName} and source = #{source} and target = #{target}")
-    Boolean deleteFromTranslates(String shopName, String source, String target);
-
     @Update("UPDATE Translates SET status = 3 WHERE shop_name = #{shopName} and status = 2")
     Integer updateStatusByShopNameAnd2(String shopName);
-
-    @Select("SELECT status FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
-    Integer getStatusByShopNameAndTargetAndSource(String shopName, String target, String source);
 
     @Select("SELECT id FROM Translates WHERE shop_name = #{shopName} and target = #{target} and source = #{source}")
     Integer getIdByShopNameAndTarget(String shopName, String target, String source);
