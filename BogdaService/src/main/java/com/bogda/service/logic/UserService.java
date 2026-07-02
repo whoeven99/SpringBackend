@@ -40,10 +40,6 @@ public class UserService {
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
-    private IGlossaryService iGlossaryService;
-    @Autowired
-    private IWidgetConfigurationsService widgetConfigurationsService;
-    @Autowired
     private UserInitialRedisService userInitialRedisService;
 
     //添加用户
@@ -107,13 +103,6 @@ public class UserService {
 
                 // 将用户翻译状态改为0
                 translatesService.updateAllStatusTo0(shopName);
-
-                // 将用户ip关掉
-                // 将词汇表改为0
-                iGlossaryService.updateStatusTo0ByShopName(shopName);
-
-                widgetConfigurationsService.updateIpTo0ByShopName(shopName);
-
 
                 // 获取用户订单表里计划为Active的订单
                 // 删除对应的额度
