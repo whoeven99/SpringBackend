@@ -70,7 +70,7 @@ public class TranslationCounterController {
 
         // 判断是否有订单标识 有的话 就直接返回true
         String orderId = ordersRedisService.getOrderId(shopName, addCharsVO.getGid());
-        if (!"null".equals(orderId)) {
+        if (orderId != null) {
             TraceReporterHolder.report("TranslationCounterController.addCharsByShopName", "addCharsByShopName 用户 " + shopName + " orderId: " + orderId  + " id: " + addCharsVO.getGid());
             return new BaseResponse<>().CreateErrorResponse(false);
         }
