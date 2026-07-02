@@ -8,11 +8,7 @@ import com.bogda.common.entity.DO.CharsOrdersDO;
 import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.DO.TranslationCounterDO;
 import com.bogda.service.logic.redis.ConfigRedisRepo;
-import com.bogda.service.logic.redis.RedisStoppedRepository;
-import com.bogda.service.logic.redis.TranslateTaskMonitorV2RedisService;
 import com.bogda.service.logic.translate.TranslateV2Service;
-import com.bogda.repository.entity.InitialTaskV2DO;
-import com.bogda.repository.repo.InitialTaskV2Repo;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
@@ -37,12 +33,6 @@ public class MonitorController {
     private ITranslationCounterService translationCounterService;
     @Autowired
     private ConfigRedisRepo configRedisRepo;
-    @Autowired
-    private InitialTaskV2Repo initialTaskV2Repo;
-    @Autowired
-    private TranslateTaskMonitorV2RedisService translateTaskMonitorV2RedisService;
-    @Autowired
-    private RedisStoppedRepository redisStoppedRepository;
     @Autowired
     private TranslationCounterServiceImpl translationCounterServiceRepo;
 
@@ -146,47 +136,6 @@ public class MonitorController {
         map2.put("addChars", addChars.toString());
         map2.put("newChars", newChars.toString());
         return map2;
-    }
-
-    @GetMapping("/monitorv2")
-    public Map<String, Object> monitorv2(@RequestParam(required = false) String type, @RequestParam(required = false) Boolean includeFinish) {
-        List<InitialTaskV2DO> initialList;
-        if ("auto".equals(type)) {
-            initialList = initialTaskV2Repo.selectByLastDaysAndType("auto", 1);
-        } else if ("manual".equals(type)) {
-            initialList = initialTaskV2Repo.selectByLastDaysAndType("manual", 3);
-        } else {
-            initialList = initialTaskV2Repo.selectByLastDaysAndType("auto", 1);
-            initialList.addAll(initialTaskV2Repo.selectByLastDaysAndType("manual", 3));
-        }
-        initialList = initialList.stream()
-                .filter(initialTaskV2DO -> (includeFinish != null && includeFinish) || !initialTaskV2DO.getStatus().equals(4))
-                .toList();
-
-        Map<String, Object> responseMap = new HashMap<>();
-        for (InitialTaskV2DO initialTaskV2DO : initialList) {
-            Map<String, String> taskMap = translateTaskMonitorV2RedisService.getAllByTaskId(initialTaskV2DO.getId());
-            // 仅当 Redis 中完全没有该任务的监控数据时才跳过；
-            // totalCount 为 0 可能是初始化阶段被中断/重启导致，此时任务仍存在，不应隐藏
-            if (taskMap.isEmpty()) {
-                continue;
-            }
-            taskMap.put("task_type", initialTaskV2DO.getTaskType());
-            taskMap.put("status", initialTaskV2DO.getStatus().toString());
-            if (initialTaskV2DO.getStatus().equals(5) || initialTaskV2DO.getStatus().equals(4)) {
-                taskMap.remove("lastUpdatedTime");
-            }
-            if (initialTaskV2DO.getStatus().equals(5)) {
-                boolean isTokenLimit = redisStoppedRepository.isStoppedByTokenLimit(initialTaskV2DO.getShopName(), initialTaskV2DO.getId());
-                if (isTokenLimit) {
-                    taskMap.put("status", "6");
-                }
-            }
-            taskMap.put("send_email", initialTaskV2DO.isSendEmail() ? "1" : "0");
-            responseMap.put("" + initialTaskV2DO.getId(), taskMap);
-        }
-
-        return responseMap;
     }
 
 }

@@ -10,7 +10,6 @@ import com.bogda.integration.aimodel.KimiIntegration;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import kotlin.Pair;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -156,26 +155,5 @@ public class TranslateV2Service {
         List<String> sortedList = new ArrayList<>(list);
         sortedList.sort(Comparator.comparingInt(name -> orderMap.getOrDefault(name, Integer.MAX_VALUE)));
         return sortedList;
-    }
-
-    /** 历史 v2 任务状态码，MonitorController /monitorv2 仍读取 DB 中存量任务。 */
-    @Getter
-    public enum InitialTaskStatus {
-        INIT_READING_SHOPIFY(0, "用户刚创建任务，读取shopify数据中"),
-        READ_DONE_TRANSLATING(1, "读取shopify数据，存数据库结束，翻译中"),
-        TRANSLATE_DONE_SAVING_SHOPIFY(2, "翻译结束，写入中"),
-        SAVE_DONE_SENDING_EMAIL(3, "写入shopify结束，待发送邮件，完成任务"),
-        ALL_DONE(4, "全部完成"),
-        STOPPED(5, "手动中断 or tokenLimit中断"),
-        INIT_STOPPED(6, "初始化阶段已停止"),
-        ;
-
-        private final int status;
-        private final String desc;
-
-        InitialTaskStatus(int status, String desc) {
-            this.status = status;
-            this.desc = desc;
-        }
     }
 }

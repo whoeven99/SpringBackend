@@ -1,11 +1,8 @@
 package com.bogda.service.logic;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
-import com.bogda.repository.entity.InitialTaskV2DO;
-import com.bogda.repository.repo.InitialTaskV2Repo;
 import com.bogda.service.Service.ITranslatesService;
 import com.bogda.service.Service.ITranslationCounterService;
 import com.bogda.service.Service.IUsersService;
@@ -13,7 +10,6 @@ import com.bogda.common.entity.DO.TranslatesDO;
 import com.bogda.common.entity.DO.UsersDO;
 import com.bogda.service.integration.ALiYunTranslateIntegration;
 import com.bogda.service.integration.AidgeIntegration;
-import com.bogda.service.logic.redis.RedisStoppedRepository;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
@@ -22,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import javax.tools.DiagnosticCollector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -41,29 +36,15 @@ public class TranslateService {
     private ShopifyService shopifyService;
     @Autowired
     private AidgeIntegration aidgeIntegration;
-    @Autowired
-    private RedisStoppedRepository redisStoppedRepository;
-    @Autowired
-    private InitialTaskV2Repo initialTaskV2Repo;
 
 
     // 判断是否可以终止翻译流程
     public static ExecutorService executorService = Executors.newFixedThreadPool(50);
 
     /**
-     * 手动停止用户的翻译任务
+     * 手动停止用户的翻译任务（卸载应用时更新 Spring 侧翻译状态）。
      */
     public String stopTranslationManually(String shopName) {
-        // 获取这个用户没有逻辑删除的任务
-        List<InitialTaskV2DO> initialTaskV2s = initialTaskV2Repo.selectByShopNameAndNotDeleted(shopName);
-        for (InitialTaskV2DO initialTaskV2DO : initialTaskV2s
-        ) {
-            redisStoppedRepository.manuallyStopped(shopName, initialTaskV2DO.getId());
-            TraceReporterHolder.report("TranslateService.stopTranslationManually", "stopTranslationManually 用户 " + shopName + " initialId: " + initialTaskV2DO.getId()
-                    + " 的翻译标识存储成功");
-        }
-
-        // 将翻译状态改为“部分翻译” shopName, status=3
         translatesService.updateStatusByShopNameAnd2(shopName);
         return "stopTranslationManually 翻译任务已停止 用户 " + shopName + " 的翻译任务已停止";
     }
@@ -143,15 +124,6 @@ public class TranslateService {
 
         // 调用图片翻译方法
         return aidgeIntegration.aidgeStandPictureTranslate(shopName, imageUrl, sourceCode, targetCode, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
-    }
-
-    public BaseResponse<Object> stopTranslatingTaskV2(String shopName, Integer taskId) {
-        if (taskId == null) {
-            return new BaseResponse<>().CreateErrorResponse(false);
-        }
-        // 如果不存在，则走最新的停止逻辑
-        redisStoppedRepository.manuallyStopped(shopName, taskId);
-        return new BaseResponse<>().CreateSuccessResponse(taskId);
     }
 }
 
