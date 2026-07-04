@@ -7,7 +7,6 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.*;
 import com.bogda.service.logic.ShopifyService;
 import com.bogda.common.controller.response.BaseResponse;
-import com.bogda.common.contants.TranslateConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,15 +23,6 @@ public class ShopifyController {
     private ShopifyService shopifyService;
     @Autowired
     private ITranslationCounterService translationCounterService;
-
-    //查询需要翻译的总字数
-    @PostMapping("/getUnTranslatedToken")
-    public BaseResponse<Object> getTotalWords(@RequestParam String shopName, @RequestParam String modelType, @RequestParam String source, @RequestBody ShopifyRequest shopifyRequest) {
-        TranslateResourceDTO translateResourceDTO = new TranslateResourceDTO(modelType, TranslateConstants.MAX_LENGTH, shopifyRequest.getTarget(), "");
-        shopifyRequest.setShopName(shopName);
-        int totalWords = shopifyService.getUnTranslatedToken(shopifyRequest, null, translateResourceDTO, source);
-        return new BaseResponse<>().CreateSuccessResponse(totalWords);
-    }
 
     //根据前端的传值,更新shopify后台和数据库
     @PostMapping("/updateShopifyDataByTranslateTextRequest")

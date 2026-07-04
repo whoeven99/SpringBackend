@@ -2,7 +2,6 @@ package com.bogda.service.logic;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bogda.common.controller.request.*;
 import com.bogda.common.entity.DO.*;
@@ -55,8 +54,6 @@ public class ShopifyService {
     private IUserTypeTokenService userTypeTokenService;
     @Autowired
     private IUserSubscriptionsService userSubscriptionsService;
-    @Autowired
-    private ITranslatesService translatesService;
     @Autowired
     private ShopifyHttpIntegration shopifyHttpIntegration;
     @Autowired
@@ -450,79 +447,6 @@ public class ShopifyService {
             return baseHttpIntegration.httpPost(
                     "https://springbackendservice-e3hgbjgqafb9cpdh.canadacentral-01.azurewebsites.net/" + "test123",
                     body);
-        }
-    }
-
-    // 包装一层，用于获取用户实际未翻译和部分翻译的语言数
-    public int getUnTranslatedToken(ShopifyRequest request, String method, TranslateResourceDTO translateResource, String source) {
-        // 获取该用户所有的未翻译和部分翻译的所有token数据
-        List<String> all = getUserShopifyLanguage(request.getShopName(), source, request.getAccessToken());
-
-        if (all == null || all.isEmpty()) {
-            return 0;
-        }
-
-        int allLanguage = 0;
-        for (String status : all) {
-            if ("0".equals(status) || "3".equals(status) || "7".equals(status) || "6".equals(status)) {
-                allLanguage++;
-            }
-        }
-
-        if (allLanguage == 0) {
-            return 0;
-        }
-
-        int totalWords = getTotalWords(request, method, translateResource);
-        return totalWords * allLanguage;
-    }
-
-    /**
-     * 获取用户未翻译和部分翻译的语言数
-     */
-    public List<String> getUserShopifyLanguage(String shopName, String sourceCode, String accessToken) {
-        try {
-            // Step 1: 获取 Shopify 数据
-            String query = ShopifyRequestUtils.getLanguagesQuery();
-            String shopifyData = getShopifyData(shopName, accessToken, TranslateConstants.API_VERSION_LAST, query);
-            JsonNode root = JsonUtils.readTree(shopifyData);
-
-            if (root == null || !root.has("shopLocales")) {
-                TraceReporterHolder.report("ShopifyService.getUserShopifyLanguage", "Shopify response is empty or missing 'shopLocales' field for shop: " + shopName);
-                return Collections.emptyList();
-            }
-
-            // Step 2: 提取语言列表
-            List<String> shopLanguageList = new ArrayList<>();
-            for (JsonNode node : root.path("shopLocales")) {
-                String locale = node.path("locale").asText(null);
-                if (locale != null && !locale.isEmpty()) {
-                    shopLanguageList.add(locale);
-                }
-            }
-
-            if (shopLanguageList.isEmpty()) {
-                TraceReporterHolder.report("ShopifyService.getUserShopifyLanguage", "No locales found for shop: " + shopName);
-                return Collections.emptyList();
-            }
-
-            // Step 3: 查询数据库中对应语言的状态
-            List<TranslatesDO> usedLanguages = translatesService.list(
-                    new LambdaQueryWrapper<TranslatesDO>()
-                            .eq(TranslatesDO::getShopName, shopName)
-                            .eq(TranslatesDO::getSource, sourceCode)
-                            .in(TranslatesDO::getTarget, shopLanguageList)
-            );
-
-            // Step 4: 提取状态值
-            return usedLanguages.stream()
-                    .map(translate -> String.valueOf(translate.getStatus()))
-                    .toList();
-
-        } catch (Exception e) {
-            ExceptionReporterHolder.report("ShopifyService.getUserShopifyLanguage", e);
-            TraceReporterHolder.report("ShopifyService.getUserShopifyLanguage", "FatalException Failed to sync Shopify languages for shop: " + shopName + " - " + e.getMessage());
-            return Collections.emptyList();
         }
     }
 
