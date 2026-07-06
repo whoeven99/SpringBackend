@@ -167,6 +167,21 @@ public class UserService {
         usersService.updateUserTokenByShopName(shopName, accessToken);
     }
 
+    /**
+     * 只读判定该 shop 是否属于老用户系统，供 TSF 新用户系统在安装时做账本路由判定。
+     * 不产生任何副作用（不建用户、不更新登录时间）。
+     * legacy = 已存在于 Users 表 或 有过订阅记录。
+     */
+    public Map<String, Boolean> checkUserExists(String shopName) {
+        Map<String, Boolean> map = new HashMap<>();
+        boolean exists = usersService.getUserByName(shopName) != null;
+        boolean hasSubscription = userSubscriptionsService.getDataByShopName(shopName) != null;
+        map.put("exists", exists);
+        map.put("hasSubscription", hasSubscription);
+        map.put("legacy", exists || hasSubscription);
+        return map;
+    }
+
     public Integer checkUserPlan(String shopName, int planId) {
         return userSubscriptionsService.checkUserPlan(shopName, planId);
     }
