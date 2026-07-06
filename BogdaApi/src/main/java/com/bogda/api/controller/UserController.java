@@ -53,6 +53,12 @@ public class UserController {
         return new BaseResponse<>().CreateSuccessResponse(userService.InitializationDetection(shopName));
     }
 
+    // 只读判定 shop 是否为老用户系统用户（供 TSF 新用户系统安装时做账本路由判定，无副作用）
+    @GetMapping("/exists")
+    public BaseResponse<Object> exists(@RequestParam String shopName) {
+        return new BaseResponse<>().CreateSuccessResponse(userService.checkUserExists(shopName));
+    }
+
     // 修改用户订阅计划
     @PostMapping("/checkUserPlan")
     public BaseResponse<Object> checkUserPlan(@RequestBody UserSubscriptionsRequest userSubscriptionsRequest) {
