@@ -2,7 +2,6 @@ package com.bogda.api.controller;
 
 
 import com.bogda.common.entity.DO.UsersDO;
-import com.bogda.common.entity.VO.ThemeAndLanguageVO;
 import com.bogda.common.entity.VO.UserInitialVO;
 import com.bogda.service.logic.TranslateService;
 import com.bogda.service.logic.UserService;
@@ -63,17 +62,5 @@ public class UserController {
     @PostMapping("/checkUserPlan")
     public BaseResponse<Object> checkUserPlan(@RequestBody UserSubscriptionsRequest userSubscriptionsRequest) {
         return new BaseResponse<>().CreateSuccessResponse(userService.checkUserPlan(userSubscriptionsRequest.getShopName(), userSubscriptionsRequest.getPlanId()));
-    }
-
-    // webhook 回调默认theme是否需要发送邮件
-    @PostMapping("/webhookDefaultTheme")
-    public BaseResponse<Object> webhookDefaultTheme(@RequestParam String shopName, @RequestBody ThemeAndLanguageVO data) {
-        return userService.webhookDefaultTheme(shopName, data);
-    }
-
-    // webhook 回调默认语言是否需要发送邮件
-    @PostMapping("/webhookDefaultLanguage")
-    public BaseResponse<Object> webhookDefaultLanguage(@RequestParam String shopName, @RequestBody ThemeAndLanguageVO data) {
-        return userService.webhookDefaultLanguage(shopName, data);
     }
 }

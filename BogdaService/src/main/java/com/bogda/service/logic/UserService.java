@@ -6,15 +6,11 @@ import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.*;
 import com.bogda.common.entity.DO.EmailDO;
 import com.bogda.common.entity.DO.UsersDO;
-import com.bogda.common.entity.VO.ThemeAndLanguageVO;
 import com.bogda.common.entity.VO.UserInitialVO;
 import com.bogda.common.contants.MailChimpConstants;
 import com.bogda.common.enums.ErrorEnum;
-import com.bogda.service.logic.redis.UserInitialRedisService;
 import com.bogda.common.controller.response.BaseResponse;
 import com.bogda.common.utils.AESUtils;
-import com.bogda.common.utils.JsonUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +33,6 @@ public class UserService {
     private IEmailService emailService;
     @Autowired
     private ITranslatesService translatesService;
-    @Autowired
-    private UserInitialRedisService userInitialRedisService;
 
     //添加用户
     public BaseResponse<Object> addUser(UsersDO usersDO) {
@@ -178,34 +172,6 @@ public class UserService {
     }
 
     public BaseResponse<Object> userInitialization(String shopName, UserInitialVO userInitialVO) {
-        // 判断主题数据，然后判断原语言数据
-        String themeName = userInitialVO.getDefaultThemeName();
-        String themeId = userInitialVO.getDefaultThemeId();
-        if (themeName == null || themeId == null) {
-            TraceReporterHolder.report("UserService.userInitialization", "FatalException userInitialization themeData is null : " + userInitialVO);
-            return new BaseResponse<>().CreateErrorResponse("Theme data is null");
-        }
-
-        // 判断redis中的数据是否改变，如果改变，发送邮件
-        String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
-
-        // redis 无值，直接写入
-        if ("null".equals(userDefaultTheme)) {
-            userInitialRedisService.setUserDefaultTheme(shopName, themeId);
-        }
-
-        // 判断原语言数据
-        String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
-        String defaultLanguageData = userInitialVO.getDefaultLanguageData();
-        if (defaultLanguageData == null) {
-            return new BaseResponse<>().CreateErrorResponse("Default language data is null");
-        }
-
-        // redis 无值
-        if ("null".equals(userDefaultLanguage)) {
-            userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
-        }
-
         userInitialVO.setShopName(shopName);
         if (getUser(shopName) == null) {
             UsersDO userRequest = new UsersDO();
@@ -220,67 +186,6 @@ public class UserService {
 
         // 更新user表里面的token
         updateUserTokenByShopName(shopName, userInitialVO.getAccessToken());
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
-    public BaseResponse<Object> webhookDefaultTheme(String shopName, ThemeAndLanguageVO data) {
-        TraceReporterHolder.report("UserService.webhookDefaultTheme", "UserEmail webhookDefaultTheme 主题相关数据 : " + data.getThemeData() + " shopName : " + shopName);
-
-        // 解析数据
-        JsonNode jsonNode = JsonUtils.readTree(data.getThemeData());
-        if (jsonNode == null) {
-            return new BaseResponse<>().CreateErrorResponse("Theme data is null");
-        }
-
-        String themeName = jsonNode.path("name").asText(null);
-        String themeId = jsonNode.path("admin_graphql_api_id").asText(null);
-        if (themeName == null || themeId == null) {
-            TraceReporterHolder.report("UserService.webhookDefaultTheme", "FatalException webhookDefaultTheme themeData is null : " + data);
-            return new BaseResponse<>().CreateErrorResponse("Theme data is null");
-        }
-
-        String userDefaultTheme = userInitialRedisService.getUserDefaultTheme(shopName);
-        if ("null".equals(userDefaultTheme)) {
-            return new BaseResponse<>().CreateErrorResponse("userDefaultTheme is null");
-        }
-
-        if (!themeId.equals(userDefaultTheme)) {
-            // 发送主题邮件
-            tencentEmailService.sendThemeEmail(shopName);
-
-            // 修改theme为新theme
-            userInitialRedisService.setUserDefaultTheme(shopName, themeId);
-
-            TraceReporterHolder.report("UserService.webhookDefaultTheme", "UserEmail webhookDefaultTheme 用户主题改变 ： " + shopName + " name : " + themeName + " id : " + themeId + " 原主题id：" + userDefaultTheme);
-        }
-
-        return new BaseResponse<>().CreateSuccessResponse(true);
-    }
-
-    public BaseResponse<Object> webhookDefaultLanguage(String shopName, ThemeAndLanguageVO data) {
-        TraceReporterHolder.report("UserService.webhookDefaultLanguage", "UserEmail webhookDefaultLanguage 语言相关数据 : " + data.getLanguageData() + " shopName : " + shopName);
-
-        // 解析数据
-        JsonNode jsonNode = JsonUtils.readTree(data.getLanguageData());
-        if (jsonNode == null) {
-            return new BaseResponse<>().CreateErrorResponse("Language data is null");
-        }
-
-        String defaultLanguageData = jsonNode.path("primary_locale").asText(null);
-        String userDefaultLanguage = userInitialRedisService.getUserDefaultLanguage(shopName);
-
-        if (defaultLanguageData == null || "null".equals(userDefaultLanguage)) {
-            return new BaseResponse<>().CreateErrorResponse("Default language data is null : " + data);
-        }
-
-        // redis 无值
-        if (!defaultLanguageData.equals(userDefaultLanguage)) {
-            // 发送默认语言邮件
-            tencentEmailService.sendDefaultLanguageEmail(shopName);
-            userInitialRedisService.setUserDefaultLanguage(shopName, defaultLanguageData);
-            TraceReporterHolder.report("UserService.webhookDefaultLanguage", "UserEmail webhookDefaultLanguage 用户默认语言改变 ： " + shopName + " source : " + userDefaultLanguage + " language : " + defaultLanguageData);
-        }
-
         return new BaseResponse<>().CreateSuccessResponse(true);
     }
 }
