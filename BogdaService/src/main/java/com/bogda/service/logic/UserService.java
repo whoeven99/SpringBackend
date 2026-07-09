@@ -30,8 +30,6 @@ public class UserService {
     @Autowired
     private ITranslationCounterService translationCounterService;
     @Autowired
-    private IAILanguagePacksService aiLanguagePacksService;
-    @Autowired
     private IUserSubscriptionsService userSubscriptionsService;
     @Autowired
     private TencentEmailService tencentEmailService;
@@ -145,13 +143,6 @@ public class UserService {
             map.put("insertCharsByShopName", true);
         } else {
             map.put("insertCharsByShopName", false);
-        }
-
-        //查询是否添加默认语言包
-        if (aiLanguagePacksService.getPackIdByShopName(shopName) != null) {
-            map.put("addDefaultLanguagePack", true);
-        } else {
-            map.put("addDefaultLanguagePack", false);
         }
 
         //查询是否添加用户付费计划
