@@ -147,32 +147,4 @@ public class TencentEmailService {
                 templateData, firstInstallSubject, tencentFromEmail, email));
     }
 
-    public void sendThemeEmail(String shopName) {
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("name", usersDO.getFirstName());
-
-        // 定义要移除的后缀
-        String name = StringUtils.parseShopName(shopName);
-        templateData.put("admin", name);
-        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159294L,
-                templateData, MailChimpConstants.USER_THEME_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
-                MailChimpConstants.USER_THEME_EMAIL, flag ? 1 : 0));
-    }
-
-    public void sendDefaultLanguageEmail(String shopName) {
-        UsersDO usersDO = usersService.getUserByName(shopName);
-        Map<String, String> templateData = new HashMap<>();
-        templateData.put("username", usersDO.getFirstName());
-
-        // 定义要移除的后缀
-        String name = StringUtils.parseShopName(shopName);
-        templateData.put("admin", name);
-        Boolean flag = emailIntegration.sendEmailByTencent(new TencentSendEmailRequest(159295L,
-                templateData, MailChimpConstants.USER_LANGUAGE_EMAIL, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail()));
-        emailService.saveEmail(new EmailDO(0, shopName, MailChimpConstants.TENCENT_FROM_EMAIL, usersDO.getEmail(),
-                MailChimpConstants.USER_LANGUAGE_EMAIL, flag ? 1 : 0));
-    }
-
 }

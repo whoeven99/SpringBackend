@@ -20,10 +20,6 @@ public class MailChimpConstants {
     public static final String PC_PLAN_SUBSCRIBE_SUCCESSFUL = "Your Ciwi Image Translate Subscription Is Now Active";
     // 订阅计划更新额度
     public static final String PC_PLAN_UPGRADE_SUCCESSFUL = "Your Plan Has Renewed — Ciwi Image Translate";
-    //from_email
-    public static final String USER_THEME_EMAIL = "Theme Change Detected — Some Content May Need Translation｜Ciwi Translator";
-    public static final String USER_LANGUAGE_EMAIL = "Store Default Language Changed — Translation Update Required ｜Ciwi Translator";
-
     // from_email
     public static final String CC_EMAIL = "feynman@ciwi.ai";
     public static final String[] CC_EMAIL_ARRAY = {"feynman@ciwi.ai", "yewen@ciwi.ai"};

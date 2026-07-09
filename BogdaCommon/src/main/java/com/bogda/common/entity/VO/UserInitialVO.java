@@ -14,7 +14,4 @@ public class UserInitialVO {
     private String userTag;
     private String firstName;
     private String lastName;
-    private String defaultThemeName; // 主题名称
-    private String defaultThemeId; // 主题id
-    private String defaultLanguageData; // 默认语言
 }
