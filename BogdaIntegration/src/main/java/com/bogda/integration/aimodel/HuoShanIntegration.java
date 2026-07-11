@@ -8,14 +8,11 @@ import com.volcengine.model.request.translate.TranslateImageRequest;
 import com.volcengine.model.response.translate.TranslateImageResponse;
 import com.volcengine.service.translate.ITranslateService;
 import com.volcengine.service.translate.impl.TranslateServiceImpl;
-import org.springframework.stereotype.Component;
-
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Base64;
 
-@Component
 public class HuoShanIntegration {
     // 火山图片翻译
     public byte[] huoShanImageTranslate(String imageUrl, String targetLanguage) {

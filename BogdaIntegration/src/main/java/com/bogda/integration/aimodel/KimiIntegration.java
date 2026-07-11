@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
@@ -20,7 +19,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class KimiIntegration {
 
     @Value("${kimi.key.vault}")

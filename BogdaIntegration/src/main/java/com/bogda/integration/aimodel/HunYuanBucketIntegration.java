@@ -17,7 +17,6 @@ import com.qcloud.cos.transfer.TransferManager;
 import com.qcloud.cos.transfer.TransferProgress;
 import com.qcloud.cos.transfer.Upload;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -25,7 +24,6 @@ import java.io.ByteArrayInputStream;
 
 import static com.bogda.common.utils.TimeOutUtils.*;
 
-@Component
 public class HunYuanBucketIntegration {
     @Value("${tencent.bucket.secret.id}")
     private String secretId;

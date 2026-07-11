@@ -11,10 +11,8 @@ import com.google.cloud.translate.Translation;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 
-@Component
 public class GoogleMachineIntegration {
     private static final int GOOGLE_MACHINE_COEFFICIENT = 2;
     private final Translate translate;

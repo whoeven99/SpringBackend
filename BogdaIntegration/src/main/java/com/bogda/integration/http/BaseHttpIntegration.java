@@ -12,8 +12,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-import org.springframework.stereotype.Component;
-
 import javax.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -21,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-@Component
 public class BaseHttpIntegration {
     private final CloseableHttpClient httpClient;
     private final PoolingHttpClientConnectionManager connectionManager;

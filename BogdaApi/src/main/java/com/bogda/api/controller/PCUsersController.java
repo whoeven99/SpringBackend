@@ -6,6 +6,8 @@ import com.bogda.common.entity.VO.AddCharsVO;
 import com.bogda.common.entity.VO.TranslationCharsVO;
 import org.springframework.web.bind.annotation.*;
 
+import static com.bogda.api.support.DisabledProductEndpoints.error;
+
 @RestController
 @RequestMapping("/pcUsers")
 public class PCUsersController {
