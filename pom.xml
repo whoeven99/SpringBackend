@@ -16,10 +16,6 @@
 	<description>BogdaApplication</description>
     <modules>
         <module>BogdaApi</module>
-        <module>BogdaTask</module>
-        <module>BogdaService</module>
-        <module>BogdaIntegration</module>
-        <module>BogdaRepository</module>
         <module>BogdaCommon</module>
     </modules>
     <properties>
