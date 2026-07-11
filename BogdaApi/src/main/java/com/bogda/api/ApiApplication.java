@@ -11,8 +11,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
             DataSourceAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
     },
-    scanBasePackages = {"com.bogda.api", "com.bogda.repository", "com.bogda.common",
-            "com.bogda.integration", "com.bogda.service"}
+    scanBasePackages = {"com.bogda.api", "com.bogda.common"}
 )
 @EnableAsync
 public class ApiApplication {
