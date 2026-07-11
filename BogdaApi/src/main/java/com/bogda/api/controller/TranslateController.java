@@ -1,6 +1,5 @@
 package com.bogda.api.controller;
 
-import com.bogda.common.entity.VO.ImageTranslateVO;
 import com.bogda.common.controller.request.TargetListRequest;
 import com.bogda.common.controller.request.TranslateRequest;
 import com.bogda.common.controller.response.BaseResponse;
@@ -67,23 +66,6 @@ public class TranslateController {
             translateRequest.setTarget("asdf");
             userTypeTokensService.getUserInitToken(translateRequest);
         }
-    }
-
-    @PutMapping("/imageTranslate")
-    public BaseResponse<Object> imageTranslate(
-            @RequestParam String shopName,
-            @RequestBody ImageTranslateVO imageTranslateVO) {
-        String targetPic = translateService.imageTranslate(
-                imageTranslateVO.getSourceCode(),
-                imageTranslateVO.getTargetCode(),
-                imageTranslateVO.getImageUrl(),
-                shopName,
-                imageTranslateVO.getAccessToken());
-
-        if (targetPic != null) {
-            return new BaseResponse<>().CreateSuccessResponse(targetPic);
-        }
-        return new BaseResponse<>().CreateErrorResponse(false);
     }
 
     private TranslateRequest targetListRequestToTranslateRequest(TargetListRequest targetListRequest) {

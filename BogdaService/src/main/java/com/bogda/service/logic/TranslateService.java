@@ -1,15 +1,9 @@
 package com.bogda.service.logic;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.service.Service.ITranslatesService;
-import com.bogda.service.Service.ITranslationCounterService;
-import com.bogda.service.Service.IUsersService;
 import com.bogda.common.entity.DO.TranslatesDO;
-import com.bogda.common.entity.DO.UsersDO;
-import com.bogda.service.integration.ALiYunTranslateIntegration;
-import com.bogda.service.integration.AidgeIntegration;
 import com.bogda.common.contants.TranslateConstants;
 import com.bogda.common.utils.JsonUtils;
 import com.bogda.common.utils.ShopifyRequestUtils;
@@ -29,13 +23,7 @@ public class TranslateService {
     @Autowired
     private ITranslatesService translatesService;
     @Autowired
-    private IUsersService iUsersService;
-    @Autowired
-    private ITranslationCounterService iTranslationCounterService;
-    @Autowired
     private ShopifyService shopifyService;
-    @Autowired
-    private AidgeIntegration aidgeIntegration;
 
 
     // 判断是否可以终止翻译流程
@@ -108,22 +96,6 @@ public class TranslateService {
                 translatesService.insertShopTranslateInfoByShopify(shopName, accessToken, locale, source);
             }
         }
-    }
-
-    public String imageTranslate(String sourceCode, String targetCode, String imageUrl, String shopName, String accessToken) {
-        TraceReporterHolder.report("TranslateService.imageTranslate", "imageTranslate 用户 " + shopName + " sourceCode " + sourceCode + " targetCode " + targetCode + " imageUrl " + imageUrl + " accessToken " + accessToken);
-
-        // 获取用户token，判断是否和数据库中一致再选择是否调用
-        UsersDO usersDO = iUsersService.getOne(new LambdaQueryWrapper<UsersDO>().eq(UsersDO::getShopName, shopName));
-        if (!usersDO.getAccessToken().equals(accessToken)) {
-            return null;
-        }
-
-        // 获取用户最大额度限制
-        Integer maxCharsByShopName = iTranslationCounterService.getMaxCharsByShopName(shopName);
-
-        // 调用图片翻译方法
-        return aidgeIntegration.aidgeStandPictureTranslate(shopName, imageUrl, sourceCode, targetCode, maxCharsByShopName, ALiYunTranslateIntegration.TRANSLATE_APP);
     }
 }
 
