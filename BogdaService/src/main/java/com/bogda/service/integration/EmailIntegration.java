@@ -16,13 +16,11 @@ import com.tencentcloudapi.ses.v20201002.models.SendEmailRequest;
 import com.tencentcloudapi.ses.v20201002.models.SendEmailResponse;
 import com.tencentcloudapi.ses.v20201002.models.Template;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 import static com.bogda.common.utils.TimeOutUtils.*;
 
-@Component
 public class EmailIntegration {
     private final SesClient sesClient;
 

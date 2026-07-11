@@ -3,11 +3,9 @@ package com.bogda.service.logic;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.model.ShopifyExtensions;
 import com.google.common.util.concurrent.RateLimiter;
-import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
 public class ShopifyRateLimitService {
 
     private final Map<String, RateLimiter> shopRateLimiters = new ConcurrentHashMap<>();

@@ -13,14 +13,12 @@ import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsRequest;
 import com.tencentcloudapi.hunyuan.v20230901.models.ChatCompletionsResponse;
 import com.tencentcloudapi.hunyuan.v20230901.models.Message;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 
 import javax.annotation.PostConstruct;
 
 import static com.bogda.common.utils.TimeOutUtils.*;
 
-@Component
 public class HunYuanIntegration {
     // 静态初始化的 Credential 和 HunyuanClient
     private Credential CREDENTIAL;

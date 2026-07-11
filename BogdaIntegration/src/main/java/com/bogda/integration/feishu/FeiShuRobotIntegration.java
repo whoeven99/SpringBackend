@@ -5,11 +5,9 @@ import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.integration.http.BaseHttpIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
-@Component
 public class FeiShuRobotIntegration {
 
     @Autowired

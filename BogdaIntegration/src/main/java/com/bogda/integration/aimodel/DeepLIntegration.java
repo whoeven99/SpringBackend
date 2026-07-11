@@ -7,14 +7,12 @@ import com.bogda.common.utils.CharacterCountUtils;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.TextResult;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.bogda.common.utils.TimeOutUtils.*;
 
-@Component
 public class DeepLIntegration {
     @Value("${deepl.key.vault}")
     private String apiKey;

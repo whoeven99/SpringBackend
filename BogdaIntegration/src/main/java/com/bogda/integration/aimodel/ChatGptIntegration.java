@@ -11,13 +11,11 @@ import com.bogda.integration.feishu.FeiShuRobotIntegration;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class ChatGptIntegration {
     public static final int GPT_4_OPENAI_MAGNIFICATION = 3;
     public static final double GPT_4_1_NANO_OPENAI_MAGNIFICATION = 1.5;
