@@ -13,9 +13,7 @@ import com.alibaba.dashscope.tokenizers.TokenizerFactory;
 import com.bogda.common.reporter.ExceptionReporterHolder;
 import com.bogda.common.reporter.TraceReporterHolder;
 import com.bogda.integration.feishu.FeiShuRobotIntegration;
-import com.bogda.service.Service.IAPGUserCounterService;
 import com.bogda.common.contants.TranslateConstants;
-import com.bogda.common.utils.CharacterCountUtils;
 import com.bogda.common.utils.ConfigUtils;
 import com.bogda.common.utils.TimeOutUtils;
 import kotlin.Pair;
@@ -30,8 +28,6 @@ import static com.bogda.common.utils.TimeOutUtils.*;
 
 @Component
 public class ALiYunTranslateIntegration {
-    @Autowired
-    private IAPGUserCounterService iapgUserCounterService;
     @Autowired
     private FeiShuRobotIntegration feiShuRobotIntegration;
 
@@ -108,104 +104,6 @@ public class ALiYunTranslateIntegration {
             feiShuRobotIntegration.sendMessage("FatalException userTranslate call errors ： " + e.getMessage() + " prompt : " + prompt);
             return null;
         }
-    }
-
-    /**
-     * 调用qwen视觉模型，根据传入的数据，生成对应的描述数据
-     */
-    public String callWithPicMess(String prompt, Long userId, CharacterCountUtils counter, String picUrl, Integer userMaxLimit) {
-        MultiModalConversation conv = new MultiModalConversation();
-
-        MultiModalMessage userMessage = MultiModalMessage.builder().role(Role.USER.getValue())
-                .content(Arrays.asList(
-                        Collections.singletonMap("image", picUrl),
-                        Collections.singletonMap("text", prompt))).build();
-
-        MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(QWEN_PLUS)
-                .message(userMessage)
-                .build();
-        MultiModalConversationResult result;
-        try {
-            result = callWithTimeoutAndRetry(() -> {
-                        try {
-                            return conv.call(param);
-                        } catch (Exception e) {
-                            TraceReporterHolder.report("ALiYunTranslateIntegration.callWithPicMess", "FatalException 每日须看 callWithPicMess 百炼翻译报错信息 errors ： " + e.getMessage() + " picUrl : " + picUrl + " 用户：" + userId);
-                            ExceptionReporterHolder.report("ALiYunTranslateIntegration.callWithPicMess", e);
-                            return null;
-                        }
-                    },
-                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
-                    DEFAULT_MAX_RETRIES                // 最多重试3次
-            );
-            if (result == null) {
-                return null;
-            }
-            List<Map<String, Object>> content = result.getOutput().getChoices().get(0).getMessage().getContent();
-            Integer inputTokens = result.getUsage().getInputTokens();
-            Integer outputTokens = result.getUsage().getOutputTokens();
-            int totalToken = (int) ((inputTokens + outputTokens) * TranslateConstants.MAGNIFICATION);
-            TraceReporterHolder.report("ALiYunTranslateIntegration.callWithPicMess", "callWithPicMess 用户 " + userId + " token ali-vl : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            //更新用户token计数和对应
-            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
-            //更新用户产品计数
-            counter.addChars(totalToken);
-            return (String) content.get(0).get("text");
-        } catch (Exception e) {
-            TraceReporterHolder.report("ALiYunTranslateIntegration.callWithPicMess", "FatalException callWithPicMess 用户 " + userId + " 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
-            ExceptionReporterHolder.report("ALiYunTranslateIntegration.callWithPicMess", e);
-            return null;
-        }
-    }
-
-    /**
-     * 调用qwen3.6-plus用户产品描述图片为空的情况
-     */
-    public String callWithQwenMaxToDes(String prompt, CharacterCountUtils countUtils, Long userId, Integer userMaxLimit) {
-        MultiModalConversation conv = new MultiModalConversation();
-        MultiModalMessage userMsg = MultiModalMessage.builder()
-                .role(Role.USER.getValue())
-                .content(Collections.singletonList(Map.of("text", prompt)))
-                .build();
-        MultiModalConversationParam param = MultiModalConversationParam.builder()
-                .apiKey(ConfigUtils.getConfig("BAILIAN_API_KEY"))
-                .model(QWEN_PLUS)
-                .messages(Collections.singletonList(userMsg))
-                .build();
-        String content;
-        int totalToken;
-        try {
-            MultiModalConversationResult call = callWithTimeoutAndRetry(() -> {
-                        try {
-                            return conv.call(param);
-                        } catch (Exception e) {
-                            TraceReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", "FatalException 每日须看 callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt : " + prompt + " 用户：" + userId);
-                            ExceptionReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", e);
-                            return null;
-                        }
-                    },
-                    DEFAULT_TIMEOUT, DEFAULT_UNIT,    // 超时时间
-                    DEFAULT_MAX_RETRIES                // 最多重试3次
-            );
-            if (call == null) {
-                return null;
-            }
-            content = extractTextContent(call);
-            totalToken = (int) (call.getUsage().getTotalTokens() * TranslateConstants.MAGNIFICATION);
-            Integer inputTokens = call.getUsage().getInputTokens();
-            Integer outputTokens = call.getUsage().getOutputTokens();
-            iapgUserCounterService.updateUserUsedCount(userId, totalToken, userMaxLimit);
-            TraceReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", "用户 token ali-max : " + content + " all: " + totalToken + " input: " + inputTokens + " output: " + outputTokens);
-            countUtils.addChars(totalToken);
-        } catch (Exception e) {
-            TraceReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", "FatalException callWithQwenMaxToDes 百炼翻译报错信息 errors ： " + e.getMessage() + " prompt: " + prompt);
-            ExceptionReporterHolder.report("ALiYunTranslateIntegration.callWithQwenMaxToDes", e);
-            return null;
-        }
-        return content;
-
     }
 
     public String textTranslate(String text, String prompt, String target, String shopName, Integer limitChars) {

@@ -26,14 +26,6 @@ appRegistration:
 keyvault:
   endpoint: https://springbackendvault.vault.azure.net/
 
-datasource:
-  url: jdbc:sqlserver://bogdatechtestsqlserver.database.windows.net:1433;database=bogdatech-test;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-  username: bogdatechtestsqlserver@bogdatechtestsqlserver
-  password: Hyw124563
-
-redis:
-  hostname: azure-cache-dev.redis.cache.windows.net
-
 ---
 # prod环境覆盖
 spring:
@@ -43,11 +35,3 @@ spring:
 
 keyvault:
   endpoint: https://userprivatekeyprod.vault.azure.net/
-
-datasource:
-  url: jdbc:sqlserver://bogdatechsqlserverprod.database.windows.net:1433;database=bogdatech-prod;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-  username: bogdatechsqlserverprod@bogdatechsqlserverprod
-  password: Bogda1234
-
-redis:
-  hostname: azurecache-redis-prod.redis.cache.windows.net

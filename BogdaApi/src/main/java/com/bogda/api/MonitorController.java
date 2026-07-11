@@ -1,18 +1,8 @@
 package com.bogda.api;
 
-import com.bogda.service.Service.ICharsOrdersService;
-import com.bogda.service.Service.ITranslatesService;
-import com.bogda.service.Service.ITranslationCounterService;
-import com.bogda.service.Service.impl.TranslationCounterServiceImpl;
-import com.bogda.common.entity.DO.CharsOrdersDO;
-import com.bogda.common.entity.DO.TranslatesDO;
-import com.bogda.common.entity.DO.TranslationCounterDO;
-import com.bogda.service.logic.redis.ConfigRedisRepo;
-import com.bogda.service.logic.translate.TranslateV2Service;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -21,20 +11,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import static com.bogda.common.utils.LiquidHtmlTranslatorUtils.*;
 
 @RestController
 public class MonitorController {
-    @Autowired
-    private ICharsOrdersService charsOrdersService;
-    @Autowired
-    private ITranslatesService iTranslatesService;
-    @Autowired
-    private ITranslationCounterService translationCounterService;
-    @Autowired
-    private ConfigRedisRepo configRedisRepo;
-    @Autowired
-    private TranslationCounterServiceImpl translationCounterServiceRepo;
 
     private static final String SERVER_START_TIME = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
@@ -47,55 +28,11 @@ public class MonitorController {
         return info;
     }
 
-    @GetMapping("/getTable")
-    public Map<String, Object> getTable(@RequestParam String shopName) {
-        List<CharsOrdersDO> list = charsOrdersService.getCharsOrdersDoByShopName(shopName);
-        Map<String, Object> map = new HashMap<>();
-        map.put("CharsOrder", list);
-
-        // 获取Translates表数据
-        List<TranslatesDO> translatesDOS = iTranslatesService.listTranslatesDOByShopName(shopName);
-        map.put("Translates", translatesDOS);
-
-        // 获取用户额度表数据
-        TranslationCounterDO translationCounterDO = translationCounterService.getTranslationCounterByShopName(shopName);
-        map.put("TranslationCounter", new ArrayList<TranslationCounterDO>() {{
-            add(translationCounterDO);
-        }});
-        return map;
-    }
-
-    // For Monitor
-    @GetMapping("/bogdaconfig")
-    public Map<String, String> config() {
-        return configRedisRepo.getAllConfigs();
-    }
-
-    @PutMapping("/bogdaconfig")
-    public Map<String, String> config(@RequestParam String key, @RequestParam String value) {
-        configRedisRepo.setConfig(key, value);
-        return configRedisRepo.getAllConfigs();
-    }
-
-    @DeleteMapping("/bogdaconfig")
-    public Map<String, String> config(@RequestParam String key) {
-        configRedisRepo.delConfig(key);
-        return configRedisRepo.getAllConfigs();
-    }
-
-    @Autowired
-    private TranslateV2Service translateV2Service;
-
-    @PostMapping("/promptTest")
-    public Map<String, Object> promptTest(@RequestBody Map<String, Object> map) {
-        return translateV2Service.testTranslate(map);
-    }
-
     @PostMapping("htmlToJson")
     public Map<Integer, String> htmlToJson(@RequestBody Map<String, Object> map) {
         String value = map.get("html").toString();
 
-        value = isHtmlEntity(value); //判断是否含有HTML实体,然后解码
+        value = isHtmlEntity(value);
 
         boolean hasHtmlTag = HTML_TAG_PATTERN.matcher(value).find();
         Document doc = parseHtml(value, "en", hasHtmlTag);
@@ -106,7 +43,6 @@ public class MonitorController {
         }
 
         Map<Integer, String> ans = new HashMap<>();
-        // 生成json
         int index = 0;
         for (TextNode node : nodes) {
             String text = node.text().trim();
@@ -117,25 +53,4 @@ public class MonitorController {
         }
         return ans;
     }
-
-    @PostMapping("/todoBConfig")
-    public Map<String, String> todoBConfig(@RequestBody Map<String, String> map) {
-        String shopName = map.get("shopName");
-        Integer addChars = map.get("addChars") != null ? Integer.parseInt(map.get("addChars")) : 0;
-
-        TranslationCounterDO counterDO = translationCounterServiceRepo.readCharsByShopName(shopName);
-        Integer chars = counterDO.getChars();
-
-        translationCounterServiceRepo.updateCharsByShopNameWithoutCheck(shopName, addChars);
-
-        counterDO = translationCounterServiceRepo.readCharsByShopName(shopName);
-        Integer newChars = counterDO.getChars();
-
-        Map<String, String> map2 = new HashMap<>();
-        map2.put("oldChars", chars.toString());
-        map2.put("addChars", addChars.toString());
-        map2.put("newChars", newChars.toString());
-        return map2;
-    }
-
 }
